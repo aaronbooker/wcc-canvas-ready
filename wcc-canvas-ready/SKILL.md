@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.5
+# WCC Canvas Ready, v1.0.6
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.5** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.6** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
@@ -43,10 +43,15 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
   says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
   give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
+- **A question about the skill itself is not a request to fix a file.** When the instructor only asks about the skill (which
+  version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
+  file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
 - You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## No file in the chat? Show them how to add one
+This section is for an instructor who asks you to use the skill or fix a file (for example "make my file Canvas ready" or "run
+WCC Canvas Ready") without attaching one. It is not for questions about the skill itself (see the Update check section).
 New users often ask for help before attaching anything, or paste a Canvas link, or paste the text of the document. **Look first:**
 check the uploads folder and the conversation for a file. If there is one, start work. If there isn't, don't guess, don't work
 from pasted text (pasting strips the headings, tables, images and alt text that Panorama scores), and don't just say "please
@@ -66,6 +71,9 @@ upload a file". Reply with these steps, in plain words, and leave out the lines 
 Also say what happens next in one sentence: you will check the file, ask a few questions before big changes, and hand back a
 fixed copy with a report. If they sent a file type the skill doesn't handle (a photo of a page, a video, a .pages file), say
 which types it does handle and how to export to one.
+**Keep it generic.** Say "your file", never a specific one. Don't name or suggest a document, course or task you remember from
+earlier chats, memory or project knowledge (not "your syllabus", not "the Week 3 slides"). Work only on a file attached to
+this chat.
 
 ## How Panorama scores (WCC)
 Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at **70–100%**. One Severe flag in a
@@ -529,3 +537,7 @@ lives in the title above and in this log. Bump it for each change that goes out,
 - **v1.0.5** (Nov 16, 2026): version numbers now have three parts (this is the release after v1.04). `check_update.py` reads the
   old two-part numbers as v1.0.0 to v1.0.4, so comparisons stay correct. The skill is now licensed under Apache 2.0; `LICENSE`
   and `NOTICE` are in the skill folder. Nothing about how files are fixed changed.
+- **v1.0.6** (Nov 16, 2026): a question about the skill itself (its version, updates, what it does) gets a plain answer, with no
+  request for a file. When an instructor asks to use the skill without attaching a file, the steps for adding one are generic:
+  never a specific document remembered from earlier chats. Three lines in `pptx_fix.py` and `pdf_tag2html.py` rewritten so they
+  also run on Python older than 3.12. Also the first release used to test the update notice in claude.ai.

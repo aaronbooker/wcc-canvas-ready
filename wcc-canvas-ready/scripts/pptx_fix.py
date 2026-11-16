@@ -220,7 +220,8 @@ for i, s in enumerate(prs.slides, 1):
                         lat = etree.Element(A + 'latin', typeface='+mn-lt')
                         after = [k for k in rp if etree.QName(k).localname in ('ln','noFill','solidFill','gradFill','blipFill','pattFill','grpFill','effectLst','effectDag','highlight','uLnTx','uLn','uFillTx','uFill')]
                         (after[-1].addnext(lat) if after else rp.insert(0, lat))
-                log.append(f'slide {i}: title placeholder from "{best.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:50]}"')
+                shown = best.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:50]
+                log.append(f'slide {i}: title placeholder from "{shown}"')
                 t = best
         else:
             log.append(f'slide {i}: NO heading-like text; needs a title written by the instructor')
@@ -237,7 +238,8 @@ for i, s in enumerate(prs.slides, 1):
                 if e.tag == '{%s}decorative' % ADEC:
                     ext = e.getparent(); lst = ext.getparent(); lst.remove(ext)
                     if len(lst) == 0: lst.getparent().remove(lst)
-            log.append(f'slide {i}: "{sh.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:30]}" was marked decorative; mark removed')
+            shown = sh.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:30]
+            log.append(f'slide {i}: "{shown}" was marked decorative; mark removed')
         if el.tag in (P + 'sp', P + 'cxnSp') and not has_text and not sh.is_placeholder:
             mark_dec(el);
     # Reading order = visual order. WCC Panorama flags "Check reading order of slide" (Major) when the
