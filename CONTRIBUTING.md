@@ -35,7 +35,7 @@ Panorama is configured by each institution. A rule that passes at another colleg
 
 ## Versions and releases
 
-Versions run v1.00, v1.01, v1.02 and so on. A larger change, such as folding in another contributor's skill, moves to the next tenth (v1.10). Comparison is numeric for each part, so 1.10 is newer than 1.09.
+Versions have three parts: major.minor.patch. A fix moves the last number (v1.0.5 to v1.0.6). A new feature, such as folding in another contributor's skill, moves the middle number (v1.1.0). A change that breaks how the skill is used moves the first (v2.0.0). Each part is compared as a number, so 1.10.0 is newer than 1.9.0. The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4.
 
 Contributors do not need to bump the version. The maintainer does it at release time, in every one of these places:
 
@@ -44,7 +44,7 @@ Contributors do not need to bump the version. The maintainer does it at release 
 - `CHANGELOG.md`
 - `README.md` (two places)
 - `wcc-canvas-ready.zip`, rebuilt from `wcc-canvas-ready/`
-- A GitHub release tagged `vX.YY` with the zip attached
+- A GitHub release tagged `vX.Y.Z` with the zip attached
 
 ## Licensing of contributions
 
