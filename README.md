@@ -2,11 +2,11 @@
 
 A skill for Claude that gets course files ready for Canvas at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what YuJa Panorama flags, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.01** (November 16, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.02** (November 16, 2026). See the [changelog](CHANGELOG.md).
 
 ## Download
 
-[Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release, version 1.01). Save it and do not unzip it.
+[Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release, version 1.02). Save it and do not unzip it.
 
 A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-15_v5.pdf).
 
@@ -22,7 +22,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Check your version and update
 
-**The skill tells you.** From version 1.01 on, at the start of a chat the skill asks GitHub for the current version number and, if a newer version exists, shows you one line with the download link. It cannot install the update for you. If you are offline or the request is blocked, it says nothing. The request is one read-only download of a one-line text file (`VERSION` in this repo). Nothing about you, your files or your chat is sent; GitHub sees it like any web visit. If you installed version 1.00, which has no check, reinstall once to get it.
+**The skill tells you, when it can.** At the start of a chat the skill asks GitHub for the newest release number and, if a newer version exists, shows you one line with the download link. It cannot install the update for you. On many accounts (Free plans, and any account where code execution has no network access) the skill's script cannot reach the internet. From version 1.02 on, Claude then reads this repo's releases page with its own web tool instead, if web search is turned on in your chat. If neither route works, the skill says nothing, and it will never tell you it is up to date when it could not check. So treat the automatic notice as a bonus: the reliable checks are the two below. Nothing about you, your files or your chat is sent; GitHub sees a request for a version number like any web visit. Versions 1.00 (no check) and 1.01 (check fails silently without network access) should be replaced once with 1.02 or later.
 
 **Ask it.** Start a new chat and type: Use the WCC Canvas Ready skill and tell me which version it is and whether there is an update. Claude should report the installed version and the latest one.
 
@@ -43,7 +43,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Folder layout
 
-- `wcc-canvas-ready.zip`: the installable skill, version 1.01.
+- `wcc-canvas-ready.zip`: the installable skill, version 1.02.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide.

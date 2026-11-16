@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.01
+# WCC Canvas Ready, v1.02
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,20 +14,35 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.01** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.02** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
 
 ## Update check (first step of every chat)
-Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It makes one read-only
-request to GitHub for the current version number and prints **one line only if a newer version exists**. Nothing about the
-instructor, their files or the chat is sent.
-- If it prints an `UPDATE AVAILABLE` line, show that line to the instructor in your first reply, then carry on with their request.
-  Don't stop the work to update.
-- If it prints nothing, errors, or is slow, say nothing about it and carry on. Never retry, never report a failure, never wait on it.
-- If the instructor asks which version they have, or whether an update exists, run it with `--verbose` and report exactly what it
-  prints. You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
+Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It asks GitHub for
+the newest release number. Nothing about the instructor, their files or the chat is sent. It prints one of three things:
+- **`UPDATE AVAILABLE` line:** show that line to the instructor in your first reply, then carry on with their request. Don't
+  stop the work to update.
+- **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
+- **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub. This is normal on many accounts
+  (Free plans, and any account with code-execution network access off) and it does **not** mean the skill is current. Do the
+  web fallback once, quietly:
+  1. If you have a web fetch tool, fetch `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest`. Your web tools run
+     outside the sandbox, so this can work when the script can't. The page names the newest release, such as "v1.03".
+  2. Run `python3 -I scripts/check_update.py --compare 1.03` with the number you read. It needs no network and compares
+     correctly (v1.10 is newer than v1.09). If it prints `UPDATE AVAILABLE`, show that line; otherwise say nothing.
+  3. If you have no web fetch tool, or the fetch is refused or shows no version: say nothing, **unless** the BLOCKED line says
+     `STALE` (this copy is over 30 days old). Then add one line to your first reply: "I couldn't check for a newer version of
+     this skill from here. Yours is vX.XX from <date>; the newest is always at
+     https://github.com/aaronbooker/wcc-canvas-ready/releases/latest".
+  Never retry, and never hold up the instructor's work for any of this.
+- **Never say or imply the skill is up to date unless** the script printed nothing, or `--compare` or `--verbose` said so. "The
+  check couldn't run" and "no update" are different facts. A recent date on this copy is not evidence either.
+- **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
+  says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
+  give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
+- You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## How Panorama scores (WCC)
@@ -481,3 +496,6 @@ lives in the title above and in this log. Bump it for each change that goes out,
   table warning, and the "your own PDFs count too" rule, added after two plain-export PDFs scored 70%.
 - **v1.01** (Nov 16, 2026): update check. `scripts/check_update.py` reads `VERSION` on GitHub and tells the instructor in one line
   when a newer version exists (notify only; silent if offline or blocked). Added the "Update check" step above.
+- **v1.02** (Nov 16, 2026): update check now works when the script sandbox has no internet (first seen on a Free account).
+  `check_update.py` tries four GitHub hosts, prints `UPDATE CHECK BLOCKED` when none answers, and takes `--compare` so Claude can
+  read the releases page with its web tool instead. Rule added: a check that could not run is never reported as "up to date".
