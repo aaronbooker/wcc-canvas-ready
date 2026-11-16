@@ -53,4 +53,4 @@ Get the contributor's permission and their preferred credit first. Record the cr
 
 ## Licensing
 
-Apache License 2.0 for the skill, CC BY 4.0 for `docs/`. Keep `NOTICE` accurate when contributors are added.
+Software and documents are licensed separately, because Creative Commons licenses are not meant for software. Apache License 2.0 for the skill (`wcc-canvas-ready/`, the zip, and files not listed next). CC BY 4.0 for `README.md` and everything in `docs/`, including the faculty guide. CC BY requires named attribution and a note of any changes, so the guide must carry its own license line and credit when it is next rebuilt. Keep `NOTICE` accurate when contributors are added.
