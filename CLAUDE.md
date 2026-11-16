@@ -16,6 +16,14 @@ The audience is faculty, many of them new to Claude and on Free accounts. Anythi
 - `docs/`: the faculty guide (CC BY 4.0).
 - `CHANGELOG.md`, `README.md`, `NOTICE`, `LICENSE`, `CONTRIBUTING.md`.
 
+## Current phase: before go-live (set November 16, 2026)
+
+Aaron is the only person using the skill right now. Until he says it has been released to other faculty, changes to the skill, `VERSION` and the zip cannot affect anyone else, so they do not need the caution described below. He will say when that changes.
+
+The plan: review a colleague's PDF and PowerPoint skill and likely merge it into this one, with the work recorded in the changelog under the current 1.0 series. Go-live to all faculty is the next tenth after that. Handout and README updates for faculty can wait for go-live.
+
+Once Aaron says the skill is live, delete this section and follow the rules below in full.
+
 ## Rules for working here
 
 - Aaron is the human in the loop and edits files himself. Re-read the current version of any file before changing it. Never overwrite his edits.
