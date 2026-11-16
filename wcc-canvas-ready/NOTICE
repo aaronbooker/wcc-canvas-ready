@@ -1,0 +1,38 @@
+WCC Canvas Ready
+Copyright 2026 Chris Pasquini, Aaron Booker, and the WCC Canvas Ready contributors
+
+Developed for Whatcom Community College (Bellingham, Washington).
+
+This skill began as Chris Pasquini's `canvas-accessible-docx` skill
+(v1, November 6, 2026; v3, November 13, 2026). Aaron Booker rebuilt it,
+extended it to PowerPoint, Excel, PDF and HTML files, and tested it against
+Whatcom Community College's YuJa Panorama. WCC colleagues contributed test
+files.
+
+Licensing:
+
+The software and the written documents are licensed separately.
+
+- Software: the skill (everything under `wcc-canvas-ready/`, the packaged
+  `wcc-canvas-ready.zip`, and the other files in this repository unless noted
+  below) is licensed under the Apache License, Version 2.0. See `LICENSE`.
+- Documents: `README.md` and everything under `docs/`, including the faculty
+  guide (handout), are licensed under the Creative Commons Attribution 4.0
+  International License (CC BY 4.0). See `docs/LICENSE`.
+
+If you redistribute or build on the software, keep this NOTICE file with it,
+as section 4(d) of the Apache License requires.
+
+If you share or adapt the documents, CC BY 4.0 requires that you name the
+authors, link to the license, and say whether you made changes. Suggested
+credit:
+
+  "WCC Canvas Ready" by Chris Pasquini and Aaron Booker, Whatcom Community
+  College, https://github.com/aaronbooker/wcc-canvas-ready, licensed under
+  CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+If you changed the document, add a note such as "Adapted from the original".
+
+"YuJa" and "Panorama" are trademarks of YuJa Inc. "Canvas" is a trademark of
+Instructure, Inc. This project is not affiliated with or endorsed by either
+company. It is not an official publication of Whatcom Community College.

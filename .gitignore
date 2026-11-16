@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS and Office temporary files
+.DS_Store
+~$*
+.~lock.*
+
+# Local test files and outputs. Colleagues' course files stay out of this public repository.
+/testfiles/
+/out/

@@ -1,6 +1,13 @@
 # Changelog
 
-Versions run v1.00, v1.01, v1.02 and so on. The skill's `name` stays `wcc-canvas-ready` in every version.
+From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
+
+## v1.0.5 (November 16, 2026)
+
+- Version numbers now have three parts. This is the release after v1.04. The update check reads the old two-part numbers as v1.0.0 to v1.0.4. Copies at v1.04 or earlier do not recognize three-part numbers and will not show an update notice, so reinstall them once.
+- The skill is licensed under the Apache License 2.0. The README and the faculty guide are licensed under CC BY 4.0. `LICENSE` and `NOTICE` are now inside the skill folder and the zip.
+- Added `CONTRIBUTING.md` for colleagues who want to add fixes or their own skills.
+- Nothing about how the skill fixes files changed.
 
 ## v1.04 (November 16, 2026)
 
