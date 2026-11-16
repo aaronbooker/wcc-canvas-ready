@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.03
+# WCC Canvas Ready, v1.04
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.03** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.04** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A 29-slide
 volcanoes deck then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
@@ -512,7 +512,7 @@ When WCC's Panorama flags something not covered here, add the exact flag text, i
 type, and the fix that cleared it — tested by re-uploading — to the issue table above.
 
 # Version log
-Versions run v1.00, v1.01, v1.02, v1.03 and so on. The skill's `name:` stays `wcc-canvas-ready` in every version; the number
+Versions run v1.00, v1.01, v1.02, v1.03, v1.04 and so on. The skill's `name:` stays `wcc-canvas-ready` in every version; the number
 lives in the title above and in this log. Bump it for each change that goes out, and say in the report what changed.
 - **v1.00** (Nov 15, 2026): first release. Includes `docx2pdf_ua.py` (table /Summary in one step), the `export_pdf.sh`
   table warning, and the "your own PDFs count too" rule, added after two plain-export PDFs scored 70%.
@@ -524,3 +524,4 @@ lives in the title above and in this log. Bump it for each change that goes out,
   Also new: "No file in the chat?" section, so a new user who hasn't attached anything gets step-by-step help adding the file.
 - **v1.03** (Nov 16, 2026): the update prompt is now written for new users. It says what is new, gives the download link, and
   lists three plain steps (download, don't unzip, replace under Customize then Skills) instead of a bare link. Claude shows all of it.
+- **v1.04** (Nov 16, 2026): test release to check the update flow end to end. Nothing about how the skill works changed.

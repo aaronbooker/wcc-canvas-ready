@@ -2,6 +2,10 @@
 
 Versions run v1.00, v1.01, v1.02 and so on. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.04 (November 16, 2026)
+
+- Test release to check the update flow end to end. Nothing about how the skill works changed.
+
 ## v1.03 (November 16, 2026)
 
 - The update message is written for new users: what is out, the download link, and three plain steps (download, do not unzip, replace the skill under Customize, then Skills).
