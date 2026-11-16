@@ -2,6 +2,12 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.0.6 (November 16, 2026)
+
+- When you ask about the skill itself (which version, whether there is an update, what it does), Claude answers and does not ask you for a file.
+- When you ask Claude to use the skill without attaching a file, it shows the steps for adding one in general terms. It no longer names a document it remembers from earlier chats.
+- Three lines in `pptx_fix.py` and `pdf_tag2html.py` were rewritten so the scripts also run on Python versions older than 3.12. They work the same way.
+
 ## v1.0.5 (November 16, 2026)
 
 - Version numbers now have three parts. This is the release after v1.04. The update check reads the old two-part numbers as v1.0.0 to v1.0.4. Copies at v1.04 or earlier do not recognize three-part numbers and will not show an update notice, so reinstall them once.
