@@ -20,7 +20,7 @@ The audience is faculty, many of them new to Claude and on Free accounts. Anythi
 
 Aaron is the only person using the skill right now. Until he says it has been released to other faculty, changes to the skill, `VERSION` and the zip cannot affect anyone else, so they do not need the caution described below. He will say when that changes.
 
-The plan: review a colleague's PDF and PowerPoint skill and likely merge it into this one, with the work recorded in the changelog under the current 1.0 series. Go-live to all faculty is the next tenth after that. Handout and README updates for faculty can wait for go-live.
+The plan: review a colleague's PDF and PowerPoint skill and likely merge it into this one, with the work recorded in the changelog under the 1.0.x series. Go-live to all faculty is planned for v1.1.0 or v1.2.0. Handout and README updates for faculty can wait for go-live.
 
 Once Aaron says the skill is live, delete this section and follow the rules below in full.
 
@@ -42,7 +42,7 @@ Panorama is not a WCAG audit. Some Panorama checks go beyond WCAG (12 point mini
 
 ## Versions and releases
 
-Versions run v1.00, v1.01, v1.02 and so on; a larger change moves to the next tenth (v1.10). Comparison is numeric for each part. The skill's `name:` stays `wcc-canvas-ready` in every version.
+Versions have three parts, major.minor.patch (switched November 16, 2026, at v1.0.5): a fix moves the last number, a new feature moves the middle number (v1.1.0), a breaking change moves the first. Each part is compared as a number. The first five releases were numbered v1.00 to v1.04, which mean v1.0.0 to v1.0.4; `check_update.py` reads them that way. Copies at v1.04 or earlier compare three-part numbers wrongly and must be reinstalled once. The skill's `name:` stays `wcc-canvas-ready` in every version.
 
 A release changes all of these together:
 
@@ -51,7 +51,7 @@ A release changes all of these together:
 3. `CHANGELOG.md`
 4. `README.md` (the "Current version" line and the "Folder layout" line)
 5. `wcc-canvas-ready.zip`, rebuilt so that `wcc-canvas-ready/` is the single top-level folder, with `LICENSE` and `NOTICE` copied into it
-6. A GitHub release tagged `vX.YY` with the zip attached. Cloud sessions cannot create releases through the API. Aaron publishes them in the browser at `releases/new?tag=vX.YY`.
+6. A GitHub release tagged `vX.Y.Z` with the zip attached, with "Set as the latest release" ticked. Cloud sessions cannot create releases through the API. Aaron publishes them in the browser at `releases/new?tag=vX.Y.Z`.
 
 Before a release, run `python3 -m compileall -q wcc-canvas-ready/scripts` and confirm the zip's `SKILL.md` matches the source.
 

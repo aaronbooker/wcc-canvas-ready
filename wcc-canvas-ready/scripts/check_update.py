@@ -3,7 +3,7 @@
 Usage:
   python3 -I check_update.py              one line of output at most (see below)
   python3 -I check_update.py --verbose    always says what it found, and how
-  python3 -I check_update.py --compare 1.03 [--verbose]
+  python3 -I check_update.py --compare 1.0.6 [--verbose]
         no network: compares the installed version with a version number Claude read
         from the releases page with its own web tool
 
@@ -40,7 +40,7 @@ def installed(text):
 
 
 def released(text, version):
-    """Date of this copy, from its own Version log line: **v1.02** (Nov 16, 2026)"""
+    """Date of this copy, from its own Version log line: **v1.0.5** (Nov 16, 2026)"""
     m = re.search(r'\*\*v%s\*\* \(([A-Z][a-z]{2}) (\d{1,2}), (\d{4})\)' % re.escape(version), text)
     if not m:
         return None
@@ -52,7 +52,13 @@ def released(text, version):
 
 
 def key(v):
-    return tuple(int(x) for x in v.split('.'))
+    """Comparable form of a version. Versions are major.minor.patch from 1.0.5 on. The first five releases
+    were written with two parts and a two-digit second part (1.00 to 1.04); those mean 1.0.0 to 1.0.4."""
+    p = v.split('.')
+    if len(p) == 2 and len(p[1]) == 2:
+        p = [p[0], p[1][0], p[1][1]]
+    p = [int(x) for x in p]
+    return tuple(p + [0] * (3 - len(p)))
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -61,7 +67,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 def from_release_redirect():
-    """github.com only: /releases/latest answers with a redirect to /releases/tag/v1.02."""
+    """github.com only: /releases/latest answers with a redirect to /releases/tag/v1.0.5."""
     opener = urllib.request.build_opener(_NoRedirect)
     try:
         r = opener.open(urllib.request.Request(DOWNLOAD_URL, headers=AGENT, method='HEAD'), timeout=TIMEOUT)
@@ -149,7 +155,7 @@ def main():
         i = args.index('--compare')
         given = args[i + 1].strip().lstrip('vV') if i + 1 < len(args) else ''
         if not re.fullmatch(VER, given):
-            print('Could not compare: "%s" is not a version number like 1.03.' % given)
+            print('Could not compare: "%s" is not a version number like 1.0.6.' % given)
             return
         report(have, given, 'read with the web tool', True)
         return
