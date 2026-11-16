@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.00
+# WCC Canvas Ready, v1.01
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,10 +14,21 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.00** (Nov 15, 2026), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.01** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
+
+## Update check (first step of every chat)
+Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It makes one read-only
+request to GitHub for the current version number and prints **one line only if a newer version exists**. Nothing about the
+instructor, their files or the chat is sent.
+- If it prints an `UPDATE AVAILABLE` line, show that line to the instructor in your first reply, then carry on with their request.
+  Don't stop the work to update.
+- If it prints nothing, errors, or is slow, say nothing about it and carry on. Never retry, never report a failure, never wait on it.
+- If the instructor asks which version they have, or whether an update exists, run it with `--verbose` and report exactly what it
+  prints. You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
+- If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## How Panorama scores (WCC)
 Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at **70–100%**. One Severe flag in a
@@ -468,3 +479,5 @@ Versions run v1.00, v1.01, v1.02 and so on. The skill's `name:` stays `wcc-canva
 lives in the title above and in this log. Bump it for each change that goes out, and say in the report what changed.
 - **v1.00** (Nov 15, 2026): first release. Includes `docx2pdf_ua.py` (table /Summary in one step), the `export_pdf.sh`
   table warning, and the "your own PDFs count too" rule, added after two plain-export PDFs scored 70%.
+- **v1.01** (Nov 16, 2026): update check. `scripts/check_update.py` reads `VERSION` on GitHub and tells the instructor in one line
+  when a newer version exists (notify only; silent if offline or blocked). Added the "Update check" step above.

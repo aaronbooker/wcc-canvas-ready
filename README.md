@@ -2,13 +2,13 @@
 
 A skill for Claude that gets course files ready for Canvas at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what YuJa Panorama flags, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.00** (November 15, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.01** (November 16, 2026). See the [changelog](CHANGELOG.md).
 
 ## Download
 
-[Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/raw/main/wcc-canvas-ready.zip) (version 1.00). Save it and do not unzip it.
+[Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release, version 1.01). Save it and do not unzip it.
 
-A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-15_v4.pdf).
+A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-15_v5.pdf).
 
 ## Install in Claude
 
@@ -22,10 +22,17 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Check your version and update
 
-1. Start a new chat and type: Use the WCC Canvas Ready skill and tell me which version it is. Claude should answer with the number in the skill's title.
-2. If your number is lower than the current version above, download the latest ZIP from this page.
-3. In Customize, then Skills, open WCC Canvas Ready, turn it off, select the three-dot button, choose Delete, and confirm.
-4. Upload the new ZIP as in the install steps, then check the version again.
+**The skill tells you.** From version 1.01 on, at the start of a chat the skill asks GitHub for the current version number and, if a newer version exists, shows you one line with the download link. It cannot install the update for you. If you are offline or the request is blocked, it says nothing. The request is one read-only download of a one-line text file (`VERSION` in this repo). Nothing about you, your files or your chat is sent; GitHub sees it like any web visit. If you installed version 1.00, which has no check, reinstall once to get it.
+
+**Ask it.** Start a new chat and type: Use the WCC Canvas Ready skill and tell me which version it is and whether there is an update. Claude should report the installed version and the latest one.
+
+**Get notified by GitHub.** With a GitHub account, open this repository, choose Watch, then Custom, then Releases. Without one, add the [releases feed](https://github.com/aaronbooker/wcc-canvas-ready/releases.atom) to a feed reader.
+
+**To update:**
+
+1. Download the latest ZIP from the link above.
+2. In Customize, then Skills, open WCC Canvas Ready, turn it off, select the three-dot button, choose Delete, and confirm.
+3. Upload the new ZIP as in the install steps, then check the version again.
 
 ## What it does not do
 
@@ -36,7 +43,8 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Folder layout
 
-- `wcc-canvas-ready.zip`: the installable skill, version 1.00.
+- `wcc-canvas-ready.zip`: the installable skill, version 1.01.
+- `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide.
 - `CHANGELOG.md`: what changed in each version.
