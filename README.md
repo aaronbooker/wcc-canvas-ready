@@ -57,10 +57,12 @@ Built on the work of Chris Pasquini (WCC), whose `canvas-accessible-docx` skill 
 
 ## License
 
-You may use, copy, change and share this skill, including at other colleges, as long as you keep the credit above with it.
+You may use, copy, change and share this work, including at other colleges, as long as you keep the credit above with it. The software and the written documents have separate licenses.
 
-- The skill is licensed under the [Apache License 2.0](LICENSE). Keep the [NOTICE](NOTICE) file with any copy or adaptation.
-- The faculty guide and other documents in `docs/` are licensed under [Creative Commons Attribution 4.0](docs/LICENSE).
+- **The skill (software)** is licensed under the [Apache License 2.0](LICENSE). Keep the [NOTICE](NOTICE) file with any copy or adaptation.
+- **This README and the faculty guide** (everything in `docs/`) are licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](docs/LICENSE). If you share or adapt them, name the authors, link to the license, and say whether you made changes.
+
+Suggested credit for the documents: "WCC Canvas Ready" by Chris Pasquini and Aaron Booker, Whatcom Community College, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). If you changed the document, add "Adapted from the original".
 
 The skill comes with no warranty. This is not an official Whatcom Community College publication.
 

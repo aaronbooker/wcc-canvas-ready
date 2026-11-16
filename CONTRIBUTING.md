@@ -48,9 +48,9 @@ Contributors do not need to bump the version. The maintainer does it at release 
 
 ## Licensing of contributions
 
-The skill is licensed under the [Apache License 2.0](LICENSE). The documentation under `docs/` is licensed under [CC BY 4.0](docs/LICENSE).
+The software and the written documents have separate licenses. The skill is licensed under the [Apache License 2.0](LICENSE). The README and everything under `docs/`, including the faculty guide, are licensed under [CC BY 4.0](docs/LICENSE).
 
-By submitting a contribution you agree that it is licensed under the same terms (Apache License 2.0, section 5), and you confirm that you have the right to contribute it. If you wrote it as part of your job, check that your employer allows you to release it.
+By submitting a contribution you agree that it is licensed under the same terms as the part you changed (Apache License 2.0 for the skill, under section 5 of that license; CC BY 4.0 for the README and `docs/`), and you confirm that you have the right to contribute it. If you wrote it as part of your job, check that your employer allows you to release it.
 
 If you contribute code or text that someone else wrote, say so in the pull request and include its license.
 
