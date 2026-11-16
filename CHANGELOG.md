@@ -7,6 +7,7 @@ Versions run v1.00, v1.01, v1.02 and so on. The skill's `name` stays `wcc-canvas
 - Fixed: the update check did nothing on accounts whose script sandbox has no internet access (found on a Free account in a web browser), and Claude could wrongly say there was no newer version.
 - `check_update.py` now tries four GitHub hosts, reports `UPDATE CHECK BLOCKED` when none answers, and accepts `--compare 1.03` so Claude can read the releases page with its own web tool and still compare versions correctly.
 - New rule in the skill: a check that could not run is never reported as "up to date". A copy more than 30 days old that cannot check says so once.
+- New users: if no file is attached, the skill now explains how to get the file out of Canvas or Google Drive and attach it to the chat, instead of working from pasted text.
 
 ## v1.01 (November 16, 2026)
 

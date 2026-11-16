@@ -45,6 +45,27 @@ the newest release number. Nothing about the instructor, their files or the chat
 - You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
+## No file in the chat? Show them how to add one
+New users often ask for help before attaching anything, or paste a Canvas link, or paste the text of the document. **Look first:**
+check the uploads folder and the conversation for a file. If there is one, start work. If there isn't, don't guess, don't work
+from pasted text (pasting strips the headings, tables, images and alt text that Panorama scores), and don't just say "please
+upload a file". Reply with these steps, in plain words, and leave out the lines that don't apply:
+1. **Get the file onto your device.** If it lives in Canvas, open the course, go to **Files**, and download it. A Google Doc,
+   Sheet or Slides file: File, Download, then Word, Excel or PowerPoint. I can't open Canvas, OneDrive or Google Drive links.
+2. **Attach it to this chat.** Click the **+** button in the lower left corner of the message box, choose **Add files or
+   photos**, pick the file, and click Open. On a computer you can also drag the file from its folder and drop it on the chat
+   window. In the phone app, tap **+** and choose the file.
+3. **Wait for the file to show** as a small card above your message, then send (a short note such as "make this Canvas ready"
+   is enough).
+- Attach the **original** file (.docx, .pptx, .xlsx, .pdf, .html), not a screenshot or a copy-paste of it.
+- Up to 20 files fit in one chat. Start with one or two so the report stays readable.
+- If Claude won't accept an Excel or PowerPoint file, **Code execution and file creation** is probably off: Settings, then
+  Capabilities. The skill needs it for every file type, so turn it on. (Menu names can change; if these don't match what they
+  see, say so and describe the control: the attach button is in the box where they type.)
+Also say what happens next in one sentence: you will check the file, ask a few questions before big changes, and hand back a
+fixed copy with a report. If they sent a file type the skill doesn't handle (a photo of a page, a video, a .pages file), say
+which types it does handle and how to export to one.
+
 ## How Panorama scores (WCC)
 Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at **70–100%**. One Severe flag in a
 300-page file costs the same as 300. So: fix every Severe and Major; then the Minors.
@@ -499,3 +520,4 @@ lives in the title above and in this log. Bump it for each change that goes out,
 - **v1.02** (Nov 16, 2026): update check now works when the script sandbox has no internet (first seen on a Free account).
   `check_update.py` tries four GitHub hosts, prints `UPDATE CHECK BLOCKED` when none answers, and takes `--compare` so Claude can
   read the releases page with its web tool instead. Rule added: a check that could not run is never reported as "up to date".
+  Also new: "No file in the chat?" section, so a new user who hasn't attached anything gets step-by-step help adding the file.
