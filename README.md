@@ -48,10 +48,25 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide.
 - `CHANGELOG.md`: what changed in each version.
+- `LICENSE` and `NOTICE`: the license and the credit that must stay with any copy.
+- `CONTRIBUTING.md`: how to suggest a fix or add your own work.
 
 ## Credit
 
-Built on the work of Chris Pasquini (WCC), whose `canvas-accessible-docx` skill is the starting point. Rebuilt and tested against Panorama by Aaron Booker (WCC, Computer Information Systems), with test files contributed by WCC colleagues.
+Built on the work of Chris Pasquini (WCC), whose `canvas-accessible-docx` skill is the starting point. Rebuilt and tested against Panorama by Aaron Booker (WCC, Computer Information Systems), with test files contributed by WCC colleagues. Developed for Whatcom Community College.
+
+## License
+
+You may use, copy, change and share this skill, including at other colleges, as long as you keep the credit above with it.
+
+- The skill is licensed under the [Apache License 2.0](LICENSE). Keep the [NOTICE](NOTICE) file with any copy or adaptation.
+- The faculty guide and other documents in `docs/` are licensed under [Creative Commons Attribution 4.0](docs/LICENSE).
+
+The skill comes with no warranty. This is not an official Whatcom Community College publication.
+
+## Contributing
+
+Fixes, new rules and other faculty members' skills are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Do not include student information in anything you send.
 
 ## Feedback
 
