@@ -4,6 +4,8 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## v1.0.6 (November 16, 2026)
 
+- Excel: text contrast is now fixed and predicted. A workbook the skill predicted at 100% scored 30% in Panorama ("Insufficient contrast between foreground text and background", Major). Tests in Panorama showed two causes: words formatted differently inside one colored cell (a bold label followed by plain text) are flagged whatever their colors, and colored text on a colored fill can be flagged even when it passes on paper. The skill now makes those cells plain text and turns colored text on colored fills black or white. The same workbook then scored 100%.
+
 - When you ask about the skill itself (which version, whether there is an update, what it does), Claude answers and does not ask you for a file.
 - When you ask Claude to use the skill without attaching a file, it shows the steps for adding one in general terms. It no longer names a document it remembers from earlier chats.
 - Three lines in `pptx_fix.py` and `pdf_tag2html.py` were rewritten so the scripts also run on Python versions older than 3.12. They work the same way.

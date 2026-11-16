@@ -129,6 +129,18 @@ def issues_xlsx(f):
     for x in n:
         if x.startswith('xl/tables/') and 'headerRowCount="0"' in z.read(x).decode():
             I.append(('Table does not have a header', 'Major', 1))
+    try:
+        sys.path.insert(0, HERE); import xlsx_colors
+        a = xlsx_colors.Book({x: z.read(x) for x in n}).audit()
+    except Exception:
+        a = None
+    if a is None:
+        I.append(('Text contrast in this workbook could not be checked; Panorama may flag "Insufficient contrast"', 'Possible', 1))
+    else:
+        k = sum(1 for i in a if i[0] in ('contrast', 'rich'))
+        k and I.append(('Insufficient contrast between foreground text and background', 'Major', k))
+        k = sum(1 for i in a if i[0] == 'colored')
+        k and I.append(('Insufficient contrast (colored text on a colored fill; Panorama flagged this once at 8:1, black is safe)', 'Possible', k))
     for x in n:
         if x.startswith('xl/drawings/drawing') and x.endswith('.xml'):
             k = len(re.findall(r'<xdr:cNvPr\b(?![^>]*descr=)[^>]*>', z.read(x).decode()))
