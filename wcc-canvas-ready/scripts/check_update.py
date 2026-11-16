@@ -8,7 +8,7 @@ Usage:
         from the releases page with its own web tool
 
 Default output, exactly one of:
-  UPDATE AVAILABLE: ...     GitHub lists a newer version. Show this line to the instructor.
+  UPDATE AVAILABLE: ...     GitHub lists a newer version. Prints the line plus three plain steps; show all of it to the instructor.
   (nothing)                 GitHub answered and this copy is current.
   UPDATE CHECK BLOCKED: ... this sandbox could not reach GitHub at all. That is NOT "up to date".
                             SKILL.md says what Claude does next (web fetch fallback).
@@ -125,7 +125,11 @@ def age_note(text, have):
 
 def report(have, new, how, verbose):
     if key(new) > key(have):
-        print('UPDATE AVAILABLE: WCC Canvas Ready v%s is out (you have v%s). Download: %s' % (new, have, DOWNLOAD_URL))
+        print('UPDATE AVAILABLE: WCC Canvas Ready v%s is out (you have v%s). It takes about a minute to update:\n'
+              '1. Open this link and click wcc-canvas-ready.zip under Assets: %s\n'
+              '2. Save the file. Do not unzip it.\n'
+              '3. In Claude, go to Customize, then Skills, and replace WCC Canvas Ready with that file.\n'
+              'Your next new chat will use the new version.' % (new, have, DOWNLOAD_URL))
     elif verbose:
         if key(new) == key(have):
             print('Installed v%s. Latest release is v%s (%s). You are up to date.' % (have, new, how))
