@@ -166,7 +166,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | Panorama says | File | WCC severity | Fix | Label |
 |---|---|---|---|---|
 | The item does not have an alternative description | all | **Severe** | `docx_alt.py` / `pptx_alt.py` / `pdf_tagfix.py` alt | WCAG 1.1.1 |
-| Insufficient contrast between foreground text and background | all | **Severe** (Major in Word) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`) | WCAG 1.4.3 |
+| Insufficient contrast between foreground text and background | all | **Severe** (Major in Word and Excel) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`). **Excel:** `xlsx_fix.py` X7/X8: mixed formatting inside a colored cell is flagged whatever its colors, and colored text on a colored fill can be flagged even at 8:1, so those become plain, black or white text | WCAG 1.4.3 |
 | Check reading order (PDF) | PDF | **Severe** | see F10–F12 | Panorama |
 | The document's heading structure is not properly nested | Word | **Severe** | `postprocess_docx.py` (levels) | Panorama (WCAG best practice) |
 | Check reading order of slide | PowerPoint | Major | `pptx_fix.py`: title first, the rest of a busy slide (3+ other shapes) grouped as one unit; other slides in column-first order. Grouping cleared three slides that stayed flagged in every order tried (Nov 15, 2026). Left over: a person checks the flagged slides and ticks **Verify Reading Order** in Panorama. After the fixer it stayed only on decks with grid-like slides (rows of separate text boxes: exam-prep cards, a Jeopardy board, stat cards) and on two slides with staggered overlapping screenshots; `fix_report.py` predicts it from that | WCAG 1.3.2 |
@@ -366,6 +366,18 @@ re-saves with openpyxl, which drops charts and validation).
 - Charts, merged cells and embedded charts were **not** flagged by WCC's Panorama in Excel or PowerPoint, and
   neither were PowerPoint tables or embedded video (captions are still the instructor's job).
 - X5 Excel tables need a header row. X6 tool names out of author fields.
+- **X7/X8 contrast (Major at WCC).** The fixer does both; don't recolor cells by hand. A real workbook, Nov 16:
+  the skill predicted 100% and Panorama gave 30% (5 instances). Learned by uploading one-change copies:
+  - X7: **mixed formatting inside one cell** (a bold label then plain words) on a colored fill was flagged even
+    as black on light peach. Explicit run colors, no run colors and rewritten fills all still failed; plain text
+    passed (4 of 4). The fixer makes those cells plain text in the cell's font. Report which cells lost their bold.
+  - X8: **colored text on a colored fill** becomes black or white, whichever contrasts more. Panorama flagged dark
+    teal link text on light peach at 7.97:1 in 1 of 11 identical cells; black passed. "Just passing" isn't enough
+    in Excel. Text with no fill under 4.5:1 is darkened just enough, as in Word.
+  - Say in the report when text colors changed (for example colored link text now black), because color can carry
+    meaning. If a cell's color was the only way to tell rows apart, adding a text column is the instructor's call.
+- `fix_report.py` predicts Excel contrast from the same checks (`xlsx_colors.py`); colored text on a fill that it
+  can't rule out is listed as "Possible".
 
 # PDF rules
 **Decide the route first:**
@@ -498,7 +510,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | fix_baseline.py / inline_notes.py | before PDF export: sub/superscripts and footnotes that make WCC's PDF check Severe |
 | pptx_fix.py / pptx_alt.py | slide titles, title-first + grouped busy slides, column-first reading order, contrast, sizes, title / picture alt text |
 | pptx_bg.py | what is really behind a slide's text (background, master art, pictures, fills): used by the fixer and the pre-flight's contrast check (P7) |
-| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks |
+| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks, cell text contrast (X7/X8) |
+| xlsx_colors.py | Excel cell colors as Panorama judges them (theme, tint, indexed); used by xlsx_fix.py and fix_report.py |
 | rtf_post.py | heading outline levels and 12 pt in RTF exported by LibreOffice |
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
 | docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
@@ -541,3 +554,6 @@ lives in the title above and in this log. Bump it for each change that goes out,
   request for a file. When an instructor asks to use the skill without attaching a file, the steps for adding one are generic:
   never a specific document remembered from earlier chats. Three lines in `pptx_fix.py` and `pdf_tag2html.py` rewritten so they
   also run on Python older than 3.12. Also the first release used to test the update notice in claude.ai.
+  **Excel contrast** (X7/X8, new `xlsx_colors.py`): a workbook predicted at 100% scored 30% for text contrast. Mixed
+  formatting inside colored cells becomes plain text; colored text on colored fills becomes black or white; the
+  report now predicts Excel contrast. The same workbook then scored 100%.
