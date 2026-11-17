@@ -82,15 +82,6 @@ def theme_colors(master=None):
                 if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
                     c = el.find(A + 'srgbClr'); s_ = el.find(A + 'sysClr')
                     th[etree.QName(el).localname] = c.get('val') if c is not None else (s_.get('lastClr') if s_ is not None else None)
-    # An "inverted" theme (dk1 light, lt1 dark, as Google Slides writes some dark themes) is drawn with the light and dark
-    # colors swapped by LibreOffice and by WCC's Panorama: black text and white boxes, on a black slide background. Read
-    # literally, a deck's links were darkened "against white" and then failed on black (Nov 17, 2026).
-    def _l(h):
-        try: return lum(h)
-        except Exception: return 0
-    if th.get('dk1') and th.get('lt1') and _l(th['dk1']) > _l(th['lt1']) + 0.2:
-        th['dk1'], th['lt1'] = th['lt1'], th['dk1']
-        if th.get('dk2') and th.get('lt2') and _l(th['dk2']) > _l(th['lt2']): th['dk2'], th['lt2'] = th['lt2'], th['dk2']
     cm = master._element.find(P + 'clrMap')
     mp = dict(cm.attrib) if cm is not None else {'tx1': 'dk1', 'bg1': 'lt1', 'tx2': 'dk2', 'bg2': 'lt2'}
     for k in ('tx1', 'bg1', 'tx2', 'bg2'):
@@ -98,6 +89,34 @@ def theme_colors(master=None):
     return th
 THEMES = {id(m._element): theme_colors(m) for m in prs.slide_masters}
 THEME = dict(THEMES[id(prs.slide_masters[0]._element)])
+def inherited_color(slide, el):
+    """the color text in el gets when its runs set none: the shape's own list style, then the layout and master
+    placeholder of the same type, then the master's title/body/other text style, then the deck default. Assuming the
+    theme's text color (tx1) instead turned a Google Slides deck's black titles white on white: its master styles set
+    000000 while the theme's dark 1 is white (Nov 17, 2026)."""
+    def lvl1(x):
+        if x is None: return None
+        d = x.find('.//' + A + 'lvl1pPr/' + A + 'defRPr/' + A + 'solidFill')
+        return color_of(d) if d is not None else None
+    c = lvl1(el.find('.//' + A + 'lstStyle'))
+    if c: return c
+    ph = el.find('.//' + P + 'nvPr/' + P + 'ph')
+    master = slide.slide_layout.slide_master._element
+    if ph is not None:
+        typ = ph.get('type', 'body')
+        for part in (slide.slide_layout._element, master):
+            for q in part.iter(P + 'sp'):
+                qph = q.find('.//' + P + 'nvPr/' + P + 'ph')
+                if qph is not None and qph.get('type', 'body') == typ:
+                    c = lvl1(q.find('.//' + A + 'lstStyle'))
+                    if c: return c
+        sty = 'titleStyle' if typ in ('title', 'ctrTitle') else 'bodyStyle'
+    else:
+        sty = 'otherStyle'
+    c = lvl1(master.find('.//' + P + sty))
+    if c: return c
+    c = lvl1(prs.part._element.find('.//' + P + 'defaultTextStyle'))
+    return c or (THEME.get('tx1') or '000000').upper()
 def use_theme(slide):
     """switch THEME (in place, so pptx_bg sees it too) to the slide's own master"""
     THEME.clear(); THEME.update(THEMES.get(id(slide.slide_layout.slide_master._element), {}))
@@ -196,6 +215,7 @@ for i, s in enumerate(prs.slides, 1):
             el = best._element
             nvpr = el.find('.//' + P + 'nvPr')
             if el.tag == P + 'sp' and nvpr is not None:
+                inh_before = inherited_color(s, el)   # what the text looked like before it became the title
                 cnvsp = el.find('.//' + P + 'cNvSpPr')
                 if cnvsp is not None and cnvsp.get('txBox'): del cnvsp.attrib['txBox']
                 for old in nvpr.findall(P + 'ph'): nvpr.remove(old)
@@ -233,12 +253,18 @@ for i, s in enumerate(prs.slides, 1):
                         if 'spcBef' not in have:
                             sb = etree.Element(A + 'spcBef'); etree.SubElement(sb, A + 'spcPts', val='0')
                             ppr.find(A + 'lnSpc').addnext(sb)
+                inh = inh_before
                 for rp in list(el.iter(A + 'rPr')) + list(el.iter(A + 'endParaRPr')):
                     if not rp.get('b') and not lst_b: rp.set('b', '0')
                     if not rp.get('cap'): rp.set('cap', 'none')
                     if not rp.get('sz'): rp.set('sz', '1800')
                     if rp.find(A + 'solidFill') is None and rp.find(A + 'gradFill') is None:
-                        sf = etree.Element(A + 'solidFill'); etree.SubElement(sf, A + 'schemeClr', val='tx1')
+                        sf = etree.Element(A + 'solidFill')
+                        # keep the theme link when the inherited color is the theme's text color (most decks);
+                        # write the literal color only when they differ (a Google Slides master whose text styles
+                        # say 000000 while its theme's tx1 is white: promoted titles went white on white, Nov 17, 2026)
+                        if (inh or '').upper() == (THEME.get('tx1') or '').upper(): etree.SubElement(sf, A + 'schemeClr', val='tx1')
+                        else: etree.SubElement(sf, A + 'srgbClr', val=inh)
                         kids = [k for k in rp if etree.QName(k).localname in ('ln',)]
                         (kids[-1].addnext(sf) if kids else rp.insert(0, sf))
                     if rp.find(A + 'latin') is None:
@@ -417,27 +443,51 @@ for i, s in enumerate(prs.slides, 1):
             if not A_ or not B_ or not ov(a, b): return False
             w = min(A_[2], B_[2]) - max(A_[0], B_[0]); h = min(A_[3], B_[3]) - max(A_[1], B_[1])
             small = min((A_[2] - A_[0]) * (A_[3] - A_[1]), (B_[2] - B_[0]) * (B_[3] - B_[1])) or 1
+            # a strip along the title box's top or bottom edge (a photo whose bottom edge runs 0.2 in into the title
+            # box) is not a real overlap either: title first + the rest grouped took such a slide from 30% to 100%,
+            # Nov 17, 2026, and the title text, centred in its box, stays clear of the photo
+            if a is t_el and h <= 0.3 * (A_[3] - A_[1]) and (B_[1] <= A_[1] or B_[3] >= A_[3]): return False
             return w * h > 0.25 * small
         if t_el is not None and any(ov_real(t_el, k) for k in rest): return False
         return all(geo.get(k) for k in rest)
-    grouped = None
-    if grp_ok():
-        bs = [geo[k] for k in rest]
+    def make_group(members):
+        bs = [geo[k] for k in members]
         x0, y0, x1, y1 = min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)
         nid = max(int(e.get('id')) for e in tree.iter(P + 'cNvPr') if (e.get('id') or '').isdigit()) + 1
-        grouped = parse_xml(
+        g = parse_xml(
             f'<p:grpSp xmlns:p="{NS["p"]}" xmlns:a="{NS["a"]}"><p:nvGrpSpPr><p:cNvPr id="{nid}" name="Slide content"/>'
             f'<p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="{x0}" y="{y0}"/><a:ext cx="{x1 - x0}" cy="{y1 - y0}"/>'
             f'<a:chOff x="{x0}" y="{y0}"/><a:chExt cx="{x1 - x0}" cy="{y1 - y0}"/></a:xfrm></p:grpSpPr></p:grpSp>')
-        for k in rest: grouped.append(k)        # (moved out of kids below)
+        for k in members: g.append(k)          # (moved out of kids below)
+        return g
+    grouped = None; part_grouped = 0
+    if grp_ok():
+        grouped = make_group(rest)
         final = ([t_el] if t_el is not None else []) + [grouped]
-    if not keep and (grouped is not None or back + final != kids):
+    elif not (NO_GROUP or keep or i in ORDER_FILE):
+        # P6c placeholders can't go in a group, but the shapes read after them can. Tested at WCC (Nov 17, 2026) on a
+        # slide with title, body placeholder, picture and a citation text box: 30% in visual order, 100% with the
+        # picture and the citation grouped after the placeholders (and 100% with the citation removed).
+        is_ph = lambda k: k.find('.//' + P + 'nvPr/' + P + 'ph') is not None
+        phs = [k for k in final if is_ph(k)]
+        if any(k is not t_el for k in phs):     # a body/content placeholder besides the title is what blocks grouping
+            last = max(final.index(k) for k in phs)
+            tail = final[last + 1:]
+            stray = [k for k in final[:last + 1] if not is_ph(k) and not is_dec(k)]
+            tail_content = [k for k in tail if not is_dec(k)]
+            if (not stray and len(tail_content) >= 2 and all(geo.get(k) for k in tail)
+                    and not any(is_ph(k) or k.find('.//' + A + 'tbl') is not None
+                                or re.search(r'videoFile|audioFile|p14:media', etree.tostring(k).decode()) for k in tail)):
+                final = final[:last + 1] + [make_group(tail)]; part_grouped = len(tail_content)
+    if not keep and (grouped is not None or part_grouped or back + final != kids):
         for k in kids:
             if k.getparent() is tree: tree.remove(k)
         for k in reversed(back + final):
             anchor.addnext(k)
         if grouped is not None:
             log.append(f'slide {i}: title first, then the other {len(content_rest)} content shapes grouped as one unit, in visual order (looks the same)')
+        elif part_grouped:
+            log.append(f'slide {i}: placeholders first, then the other {part_grouped} content shapes grouped as one unit, in visual order (looks the same)')
         else:
             log.append(f'slide {i}: reading order set to visual order ({len(ordered)} content shapes)')
     # ---- P11: tables get a header row (Panorama "Table does not have a header", Major; seen at WCC on a deck
@@ -503,7 +553,7 @@ for i, s in enumerate(prs.slides, 1):
                     rpr = r._r.find(A + 'rPr')
                     fg = color_of(rpr.find(A + 'solidFill')) if rpr is not None else None
                     if not fg:
-                        if worst(THEME.get('tx1') or '000000') < 4.5:
+                        if worst(inherited_color(s, sh._element)) < 4.5:
                             log.append(f'slide {i}: "{label}" (inherited color) sits on a picture: check its contrast by eye')
                         continue
                     if worst(fg) >= 4.5: continue
@@ -533,7 +583,7 @@ for i, s in enumerate(prs.slides, 1):
                         if not r.text.strip(): continue
                         rpr = r._r.get_or_add_rPr()
                         sf = rpr.find(A + 'solidFill')
-                        fg = color_of(sf) or (THEME.get('tx1') or '000000')
+                        fg = color_of(sf) or inherited_color(s, sh._element)
                         if ratio(fg, fill) >= 4.5: continue
                         new = fix_color(fg, fill, 4.5)
                         if sf is None:

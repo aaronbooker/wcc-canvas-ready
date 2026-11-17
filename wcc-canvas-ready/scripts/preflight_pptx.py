@@ -17,6 +17,7 @@ _co, _bg = deck_colors(prs)
 BD = Backdrop(prs, _co, _bg)
 titles=[]
 for i,s in enumerate(prs.slides,1):
+    _bg(s)   # switch to this slide's master theme
     t=s.shapes.title
     if t is None or not t.text_frame.text.strip(): print(f'P2 slide {i}: no title placeholder text')
     else: titles.append(t.text_frame.text.strip())

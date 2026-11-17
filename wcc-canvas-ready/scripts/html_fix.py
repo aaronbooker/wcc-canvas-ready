@@ -7,6 +7,8 @@ Needs Playwright + Chrome (python -m playwright install chromium if no Chrome is
 [WCC Panorama] "The font size is smaller than 11 points" (Minor): every text size raised to >= 16px (12pt).
 Fixes change values in the page's own CSS (<style> blocks and style="" attributes), so scripts keep working.
 A color used on several backgrounds is darkened/lightened until it passes on all of them.
+Hidden content (other slides, closed tabs, speaker notes) is shown while measuring: Panorama checks all of it.
+Text that a p/h3/li rule colors dark inside a box that sets color: white gets `color: inherit` for that box.
 """
 import sys, re, os, json, shutil
 from playwright.sync_api import sync_playwright
@@ -19,18 +21,43 @@ CHROME = next((p for p in ('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/
 JS = r"""
 () => {
   const out = [];
+  // Panorama checks every slide/tab/panel in the file, not only the one on screen: show hidden content first
+  // (a slideshow page's hidden slides held dark-on-purple text that only Panorama saw, Nov 17, 2026)
+  const SKIP = /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|HEAD|META|LINK|TITLE|BR)$/;
+  for (const el of document.body.querySelectorAll('*')) {
+    if (SKIP.test(el.tagName) || el.hidden && el.getAttribute('aria-hidden') === 'true') continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none') el.style.setProperty('display', 'block', 'important');
+    if (cs.visibility === 'hidden') el.style.setProperty('visibility', 'visible', 'important');
+    if (cs.position === 'fixed') el.style.setProperty('position', 'static', 'important');
+  }
   const parse = c => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return null;
     const p = m[1].split(',').map(x => parseFloat(x)); return {r:p[0], g:p[1], b:p[2], a: p.length > 3 ? p[3] : 1}; };
-  const bgOf = el => { let e = el; const layers = [];
+  const boxOf = el => { let e = el.parentElement;
+    while (e && e.nodeType === 1 && e !== document.body) { const cs = getComputedStyle(e); const c = parse(cs.backgroundColor);
+      if ((c && c.a >= 1) || /gradient/.test(cs.backgroundImage)) {
+        const cls = [...e.classList].find(x => /^[\w-]+$/.test(x));
+        const pc = e.parentElement ? getComputedStyle(e.parentElement).color : '';
+        // only a box that sets its own text color (color: white on a purple card), not a plain white slide
+        return cls && cs.color !== pc ? {sel: '.' + cls, color: parse(cs.color)} : null; }
+      e = e.parentElement; }
+    return null; };
+  // Every stop of a gradient counts: Panorama measures text on a gradient against its worst stop (dark text on a
+  // light-to-dark blue card was measured against the dark end, Nov 17, 2026). Returns one background per stop.
+  const bgsOf = el => { let e = el; const layers = [];
     while (e && e.nodeType === 1) { const cs = getComputedStyle(e); const c = parse(cs.backgroundColor);
       if (cs.backgroundImage && cs.backgroundImage !== 'none' && /gradient/.test(cs.backgroundImage)) {
-        const m = cs.backgroundImage.match(/rgba?\([^)]+\)/g); if (m) { const g = parse(m[0]); if (g && g.a > 0) layers.push(g); if (g && g.a >= 1) break; } }
-      if (c && c.a > 0) { layers.push(c); if (c.a >= 1) break; }
+        const m = cs.backgroundImage.match(/rgba?\([^)]+\)/g);
+        if (m) { const st = m.map(parse).filter(g => g && g.a > 0);
+          if (st.length) { layers.push(st); if (st.every(g => g.a >= 1)) break; } } }
+      if (c && c.a > 0) { layers.push([c]); if (c.a >= 1) break; }
       e = e.parentElement; }
-    let base = {r:255, g:255, b:255};
-    for (let i = layers.length - 1; i >= 0; i--) { const l = layers[i];
-      base = {r: l.r*l.a + base.r*(1-l.a), g: l.g*l.a + base.g*(1-l.a), b: l.b*l.a + base.b*(1-l.a)}; }
-    return base; };
+    let bases = [{r:255, g:255, b:255}];
+    for (let i = layers.length - 1; i >= 0; i--) { const nb = [];
+      for (const base of bases) for (const l of layers[i])
+        nb.push({r: l.r*l.a + base.r*(1-l.a), g: l.g*l.a + base.g*(1-l.a), b: l.b*l.a + base.b*(1-l.a)});
+      bases = nb.slice(0, 16); }
+    return bases; };
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const seen = new Set();
   while (walker.nextNode()) {
@@ -41,8 +68,8 @@ JS = r"""
     const r = el.getBoundingClientRect(); if (r.width === 0 && r.height === 0) continue;
     const fg = parse(cs.color); if (!fg) continue;
     out.push({tag: el.tagName.toLowerCase(), cls: el.className && el.className.baseVal === undefined ? el.className : '',
-      id: el.id, text: t.textContent.trim().slice(0, 40), fg, bg: bgOf(el), size: parseFloat(cs.fontSize),
-      weight: parseInt(cs.fontWeight) || 400, opacity: parseFloat(cs.opacity)});
+      id: el.id, text: t.textContent.trim().slice(0, 40), fg, bgs: bgsOf(el), size: parseFloat(cs.fontSize),
+      weight: parseInt(cs.fontWeight) || 400, opacity: parseFloat(cs.opacity), box: boxOf(el)});
   }
   return out;
 }"""
@@ -61,6 +88,7 @@ def audit(path):
         pg = b.new_page(viewport={'width': 1280, 'height': 900})
         pg.goto('file://' + path); pg.wait_for_timeout(400)
         els = pg.evaluate(JS); b.close()
+    for e in els: e['bg'] = min(e['bgs'], key=lambda c: ratio(e['fg'], c))   # the worst stop
     bad_c = [e for e in els if ratio(e['fg'], e['bg']) < need(e)]
     bad_s = [e for e in els if e['size'] < 15.99]
     return els, bad_c, bad_s
@@ -124,6 +152,27 @@ for rnd in range(4 if FIX else 1):
     if rnd == 0:
         s, ng = solid_behind_gradients(s)
         if ng: print(f'   solid background-color added under {ng} gradient backgrounds')
+    # A colored box (purple step, blue resource card) sets color: white, but p/h3/li rules give its text a dark
+    # color of their own, so the text is dark on the box. Let that text take the box's color instead.
+    inherit_rules = []
+    for e in bad_c:
+        bx = e.get('box')
+        if not bx or not bx.get('color') or e['tag'] not in ('p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'strong', 'em', 'a', 'td', 'th', 'dt', 'dd', 'label'): continue
+        if ratio(bx['color'], e['bg']) > ratio(e['fg'], e['bg']):
+            r = f"{bx['sel']} {e['tag']}"
+            inherit_rules.append((r, hexc(bx["color"])))
+    inherit_rules = list(dict.fromkeys(inherit_rules))
+    if inherit_rules:
+        css = '\n        /* text inside colored boxes takes the box\'s own text color (contrast) */\n' + \
+              ''.join(f'        {r} {{ color: {c}; }}\n' for r, c in inherit_rules) + '    '
+        k = s.rfind('</style>')
+        s = s[:k] + css + s[k:] if k >= 0 else s.replace('</head>', '<style>' + css + '</style></head>', 1)
+        print(f'   {len(inherit_rules)} element types inside colored boxes now take the box\'s text color: ' + ', '.join(r for r, c in inherit_rules[:6]))
+        inherit_rules = [r for r, c in inherit_rules]
+        for e in els:   # the text now has the box's color; what still fails goes on to the background fix below
+            if e.get('box') and e['box'].get('color') and f"{e['box']['sel']} {e['tag']}" in inherit_rules:
+                e['fg'] = e['box']['color']; e['bg'] = min(e['bgs'], key=lambda c: ratio(e['fg'], c))
+        bad_c = [e for e in bad_c if ratio(e['fg'], e['bg']) < need(e)]
     for e in bad_c:
         if e['fg'].get('a', 1) == 0 or e.get('transparent'):
             print(f'   hidden-until-active text <{e["tag"]} class="{e["cls"]}"> {e["text"]!r}: color is transparent;'
@@ -133,20 +182,27 @@ for rnd in range(4 if FIX else 1):
     groups = {}
     for e in els:
         groups.setdefault(hexc(e['fg']), []).append(e)
+    done_h = set()
     for e in bad_c:
-        h = hexc(e['fg']); members = groups[h]
-        new = passing(e['fg'], [m['bg'] for m in members], [need(m) for m in members])
+        h = hexc(e['fg'])
+        if h in done_h or ratio(e['fg'], e['bg']) >= need(e): continue   # its color group was handled already
+        done_h.add(h); members = groups[h]
+        new = passing(e['fg'], [c for m in members for c in m['bgs']], [need(m) for m in members for c in m['bgs']])
         if not new:
             # light text (white on colored buttons) can't get lighter and is used on many backgrounds: darken the
             # failing elements' own background colors instead (a slide-viewer page's three buttons, Nov 17, 2026)
             done_bg = 0
+            seen_bg = set()
             for m in [x for x in bad_c if hexc(x['fg']) == h]:
                 bh = hexc(m['bg']); k = 0.0; nb = m['bg']
-                while ratio(m['fg'], nb) < need(m) + 0.3 and k < 1: k += 0.02; nb = mix(m['bg'], {'r': 0, 'g': 0, 'b': 0}, k)
+                if bh in seen_bg: continue
+                seen_bg.add(bh)
+                tgt = {'r': 0, 'g': 0, 'b': 0} if lum(m['fg']) > 0.4 else {'r': 255, 'g': 255, 'b': 255}   # dark text: lighten
+                while ratio(m['fg'], nb) < need(m) + 0.3 and k < 1: k += 0.02; nb = mix(m['bg'], tgt, k)
                 nbh = hexc(nb)
                 for v in color_variants(bh):
                     s, c_ = re.subn(r'((?<![-\w])background(?:-color)?\s*:\s*(?:[^;{}"]*?\s)?)' + re.escape(v) + r'(?![0-9a-fA-F])', r'\g<1>' + nbh, s); done_bg += c_
-                print(f'   {h} text on {bh}: background darkened to {nbh} ({ratio(m["fg"], nb):.2f}:1)')
+                print(f'   {h} text on {bh}: background changed to {nbh} ({ratio(m["fg"], nb):.2f}:1)')
             if not done_bg: print('   no single color passes for', h)
             continue
         nh = hexc(new); hit = 0

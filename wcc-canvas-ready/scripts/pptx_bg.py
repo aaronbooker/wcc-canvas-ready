@@ -200,15 +200,23 @@ class Backdrop:
 def deck_colors(prs):
     """(color_of, bg_color) for decks checked outside pptx_fix.py (pre-flight): theme-aware color resolver and the
     slide's flat background color (None for a picture or gradient background)."""
-    th = {}
-    for rel in prs.slide_masters[0].part.rels.values():
-        if rel.reltype.endswith('/theme'):
-            x = etree.fromstring(rel.target_part.blob)
-            for el in x.iter():
-                if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
-                    c = el.find(A + 'srgbClr'); s = el.find(A + 'sysClr')
-                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s.get('lastClr') if s is not None else None)
-    th.update({'tx1': th.get('dk1'), 'bg1': th.get('lt1'), 'tx2': th.get('dk2'), 'bg2': th.get('lt2')})
+    def theme_of(master):
+        t = {}
+        for rel in master.part.rels.values():
+            if rel.reltype.endswith('/theme'):
+                x = etree.fromstring(rel.target_part.blob)
+                for el in x.iter():
+                    if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
+                        c = el.find(A + 'srgbClr'); s_ = el.find(A + 'sysClr')
+                        t[etree.QName(el).localname] = c.get('val') if c is not None else (s_.get('lastClr') if s_ is not None else None)
+        cm = master._element.find(P + 'clrMap')
+        mp = dict(cm.attrib) if cm is not None else {}
+        for k, d in (('tx1', 'dk1'), ('bg1', 'lt1'), ('tx2', 'dk2'), ('bg2', 'lt2')): t[k] = t.get(mp.get(k, d))
+        return t
+    # one theme per slide master (a Google Slides deck had two with opposite light/dark colors, Nov 17, 2026);
+    # bg_color(slide) switches to the slide's own master, so call it first for each slide
+    themes = {id(m._element): theme_of(m) for m in prs.slide_masters}
+    th = dict(themes[id(prs.slide_masters[0]._element)])
 
     def color_of(el):
         if el is None: return None
@@ -219,6 +227,7 @@ def deck_colors(prs):
         return None
 
     def bg_color(slide):
+        th.clear(); th.update(themes.get(id(slide.slide_layout.slide_master._element), {}))
         for part in (slide, slide.slide_layout, slide.slide_layout.slide_master):
             bg = part._element.find('.//' + P + 'bg')
             if bg is None: continue

@@ -562,7 +562,16 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
   grouping. Confirmed: 30% → 100%.
 - Slides that are a **single picture of a slide** get a title from `--titles titles.json` (**YOU** write it; it sits
   just above the slide). Text on **gradient-filled boxes** (Google Slides) is now measured against the box, not the
-  photo under it. Not yet confirmed.
+  photo under it.
+- **Google Slides decks** often have several slide masters, each with its own theme, and master text styles that set
+  black text while the theme's text color is white. The fixer now reads each slide's own master and gives a promoted
+  title the color its text really had (it had written the theme's white: white on white). Confirmed: contrast flags
+  0% → 30%, all cleared.
+- A slide with a **body placeholder plus a picture and a small text box** (a citation strip along the bottom) is
+  flagged "Check reading order of slide" in visual order. Placeholders can't be grouped, so the fixer now keeps the
+  placeholders first and groups the shapes after them. Confirmed on a test slide: 30% → 100%.
+- A photo whose bottom edge runs a little into the **title box** no longer blocks title-first grouping. Confirmed on
+  a test slide: 30% → 100% (reading the two card columns in order instead still scored 30%).
 
 **PDF**
 - **Headings that skip a level** (H1 then H3) = "The document's heading structure is not properly nested" (Severe,
@@ -589,6 +598,11 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
 - A `.html` that is really **RTF** (saved through TextEdit) shows RTF codes in Panorama: extract the HTML first
   (`textutil -convert txt`).
 - White text on colored **buttons**: `html_fix.py` darkens the button background when no text color can pass.
+- **Slideshow pages and tabbed pages**: Panorama checks the hidden slides too. `html_fix.py` now shows hidden content
+  while it measures. On one slideshow, `p`/`h3`/`li` rules made the text dark inside purple, blue and red boxes that
+  set `color: white` (49 Severe, only on hidden slides); text in such a box now takes the box's own color.
+- Text on a **CSS gradient** is measured against each of its colors, and the worst one counts (dark text on a
+  light-to-dark blue card failed at the dark end). `html_fix.py` checks every stop and changes the one that fails.
 - An interactive page whose script holds a lot of text (a quiz game's questions) is "longer than 3000 words" (Minor,
   70%); it can't be split. Tell the instructor.
 
