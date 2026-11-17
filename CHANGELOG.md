@@ -2,6 +2,11 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.0.8 (November 17, 2026)
+
+- The update steps now match claude.ai: go to Customize, then Skills, select **+ Add**, then **Upload skill**, and choose the file. The old steps named a menu path that no longer exists, and following them led to "Create a skill" instead. Fixed in the update message, in the skill's own instructions and in the README.
+- The update check no longer misses an update when Claude's web tool reads an old copy of the releases page. On Nov 17 that page was read as v1.01 while the latest was v1.0.6, and the check then said this copy was "newer than the latest release" and stayed quiet. Now Claude first reads the one-line `VERSION` file, which has nothing to misread, and uses the releases page only if that fails. If the number it reads is older than the installed copy, the check says it couldn't be confirmed instead of treating it as a result. The script's own check also skips a source that answers with an older number and tries the next one.
+
 ## v1.0.7 (November 17, 2026)
 
 - Fillable PDF forms (made in InDesign or Acrobat, with boxes to type in) now have their own steps. These forms usually have no accessibility tags, so Panorama scores them 0%, and the tags can't be added to the form as it is. The skill rebuilds the form as a printable PDF with real headings, write-in lines, check boxes and tables for the rating grids. Because the rebuilt PDF has no boxes to type in, the skill asks first whether you want Word, PDF or both. A seven-page bilingual student information form went from 0% to 100% in Panorama.

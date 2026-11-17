@@ -2,7 +2,7 @@
 
 A skill for Claude that gets course files ready for Canvas at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what YuJa Panorama flags, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.0.7** (November 17, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.0.8** (November 17, 2026). See the [changelog](CHANGELOG.md).
 
 ## Download
 
@@ -16,13 +16,13 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 1. In Claude, open Settings, then Capabilities, and make sure "Create and edit files" is on.
 2. Go to Customize, then Skills.
-3. Select +, then Create skill, then Upload a skill, and choose the ZIP.
+3. Select + Add, then Upload skill, and choose the ZIP. Do not unzip it.
 4. If you installed Chris Pasquini's earlier `canvas-accessible-docx`, delete it first so Claude does not choose between two similar skills.
 5. Start a new chat, attach a file, and say you want it ready for Canvas.
 
 ## Check your version and update
 
-**The skill tells you.** From version 1.01 on, at the start of a chat the skill asks GitHub for the current version number and, if a newer version exists, shows you a short message with the download link and three steps to install it. It cannot install the update for you. If the script can't reach GitHub (many accounts run scripts with no internet), it says so and Claude reads the releases page with its web tool instead. It never reports "up to date" for a check that could not run. The request is one read-only download of a one-line text file (`VERSION` in this repo). Nothing about you, your files or your chat is sent; GitHub sees it like any web visit. If you installed version 1.00, which has no check, reinstall once to get it. Versions before 1.0.5 used two-part numbers (1.00 to 1.04) and do not recognize the new three-part numbers, so reinstall those once as well.
+**The skill tells you.** From version 1.01 on, at the start of a chat the skill asks GitHub for the current version number and, if a newer version exists, shows you a short message with the download link and three steps to install it. It cannot install the update for you. If the script can't reach GitHub (many accounts run scripts with no internet), it says so and Claude reads the version number with its web tool instead (the one-line `VERSION` file first, the releases page only if that fails). It never reports "up to date" for a check that could not run. The request is one read-only download of a one-line text file (`VERSION` in this repo). Nothing about you, your files or your chat is sent; GitHub sees it like any web visit. If you installed version 1.00, which has no check, reinstall once to get it. Versions before 1.0.5 used two-part numbers (1.00 to 1.04) and do not recognize the new three-part numbers, so reinstall those once as well.
 
 **Ask it.** Start a new chat and type: Use the WCC Canvas Ready skill and tell me which version it is and whether there is an update. Claude should report the installed version and the latest one.
 
@@ -31,7 +31,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 **To update:**
 
 1. Download the latest ZIP from the link above. Do not unzip it.
-2. Upload it as in the install steps (Customize, then Skills, then +, Create skill, Upload a skill). You do not need to delete the old version first.
+2. Upload it as in the install steps (Customize, then Skills, then + Add, then Upload skill). You do not need to delete the old version first.
 3. When Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
 4. Start a new chat and check the version again.
 
@@ -44,7 +44,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Folder layout
 
-- `wcc-canvas-ready.zip`: the installable skill, version 1.0.7.
+- `wcc-canvas-ready.zip`: the installable skill, version 1.0.8.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide.

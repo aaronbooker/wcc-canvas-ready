@@ -4,14 +4,18 @@ Usage:
   python3 -I check_update.py              one line of output at most (see below)
   python3 -I check_update.py --verbose    always says what it found, and how
   python3 -I check_update.py --compare 1.0.6 [--verbose]
-        no network: compares the installed version with a version number Claude read
-        from the releases page with its own web tool
+        no network: compares the installed version with a version number Claude read with its
+        own web tool (the raw VERSION file first, the releases page only if that fails)
 
 Default output, exactly one of:
   UPDATE AVAILABLE: ...     GitHub lists a newer version. Prints the line plus three plain steps; show all of it to the instructor.
   (nothing)                 GitHub answered and this copy is current.
-  UPDATE CHECK BLOCKED: ... this sandbox could not reach GitHub at all. That is NOT "up to date".
+  UPDATE CHECK BLOCKED: ... this sandbox could not reach GitHub at all, or every answer was OLDER
+                            than this copy (a cached page). That is NOT "up to date".
                             SKILL.md says what Claude does next (web fetch fallback).
+A version older than this copy is never reported as a result: a releases page fetched by a web
+tool was read as v1.01 when the real latest was v1.0.6 (a cached copy, Nov 17, 2026), and
+"this copy is newer" hid that the check had failed.
 
 Many Claude accounts run scripts in a sandbox with no internet, or with a short allowlist, so the
 script tries several GitHub hosts and gives up within a few seconds. Always exits 0.
@@ -104,8 +108,9 @@ SOURCES = [
 ]
 
 
-def latest():
-    """Returns (version or None, source name or None, [why each failed])."""
+def latest(have):
+    """Returns (version or None, source name or None, [why each failed]). An answer older than the installed
+    copy is a cached or out-of-date source: noted, and the next source is tried."""
     start, why = time.time(), []
     for name, fn in SOURCES:
         if time.time() - start > BUDGET:
@@ -113,6 +118,9 @@ def latest():
             continue
         try:
             v = fn()
+            if v and key(v) < key(have):
+                why.append('%s: said v%s, older than this copy (out of date?)' % (name, v))
+                continue
             if v:
                 return v, name, why
             why.append('%s: unexpected reply' % name)
@@ -134,14 +142,18 @@ def report(have, new, how, verbose):
         print('UPDATE AVAILABLE: WCC Canvas Ready v%s is out (you have v%s). It takes about a minute to update:\n'
               '1. Open this link and click wcc-canvas-ready.zip under Assets: %s\n'
               '2. Save the file. Do not unzip it.\n'
-              '3. In Claude, go to Customize, then Skills. Select +, then Create skill, then Upload a skill, and choose\n'
-              '   that file. When Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
+              '3. In Claude, go to Customize, then Skills. Select + Add, then Upload skill, and choose that file.\n'
+              '   When Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
               'Your next new chat will use the new version.' % (new, have, DOWNLOAD_URL))
     elif verbose:
-        if key(new) == key(have):
-            print('Installed v%s. Latest release is v%s (%s). You are up to date.' % (have, new, how))
-        else:
-            print('Installed v%s. Latest release is v%s (%s). This copy is newer than the latest release.' % (have, new, how))
+        print('Installed v%s. Latest release is v%s (%s). You are up to date.' % (have, new, how))
+
+
+def blocked(text, have, why_line, next_step='Do the web fallback in SKILL.md.'):
+    note, days = age_note(text, have)
+    stale = ' STALE.' if days is not None and days >= STALE_DAYS else ''
+    print('UPDATE CHECK BLOCKED: installed v%s%s.%s %s. This is NOT a "no update" result. %s Releases: %s'
+          % (have, note, stale, why_line, next_step, DOWNLOAD_URL))
 
 
 def main():
@@ -158,16 +170,21 @@ def main():
         if not re.fullmatch(VER, given):
             print('Could not compare: "%s" is not a version number like 1.0.6.' % given)
             return
-        report(have, given, 'read with the web tool', True)
+        if key(given) < key(have):
+            # what was read is older than this copy: a stale page, not a result
+            blocked(text, have, 'The version read (v%s) is older than this copy, so the page read was probably out of '
+                    'date and the check could not be confirmed' % given,
+                    'Go to step 3 of the web fallback in SKILL.md.')
+            return
+        report(have, given, 'read with the web tool', verbose)
         return
-    new, how, why = latest()
+    new, how, why = latest(have)
     if new:
         report(have, new, how, verbose)
         return
-    note, days = age_note(text, have)
-    stale = ' STALE.' if days is not None and days >= STALE_DAYS else ''
-    print('UPDATE CHECK BLOCKED: installed v%s%s.%s This sandbox could not reach GitHub, so this is NOT a '
-          '"no update" result. Do the web fallback in SKILL.md. Releases: %s' % (have, note, stale, DOWNLOAD_URL))
+    older = any('older than this copy' in w for w in why)
+    blocked(text, have, 'GitHub answered only with a version older than this copy (an out-of-date copy)' if older
+            else 'This sandbox could not reach GitHub')
     if verbose:
         print('Tried: ' + '; '.join(why))
 
