@@ -2,6 +2,14 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.0.7 (November 16, 2026)
+
+- Fillable PDF forms (made in InDesign or Acrobat, with boxes to type in) now have their own steps. These forms usually have no accessibility tags, so Panorama scores them 0%, and the tags can't be added to the form as it is. The skill rebuilds the form as a printable PDF with real headings, write-in lines, check boxes and tables for the rating grids. Because the rebuilt PDF has no boxes to type in, the skill asks first whether you want Word, PDF or both. A seven-page bilingual student information form went from 0% to 100% in Panorama.
+- An asterisk inside a word (the German gender star, as in "Schüler*innen") is no longer dropped when a PDF is rebuilt.
+- Tables in rebuilt PDFs get column widths that fit their words. Before, every column was the same width, and long words were split in the middle ("Sportveranstaltung" on one line, "en" on the next), which changes what a screen reader reads.
+- The report lists a missing PDF title once instead of twice.
+- PDF rebuilds work on a Mac without extra setup.
+
 ## v1.0.6 (November 16, 2026)
 
 - Excel: text contrast is now fixed and predicted. A workbook the skill predicted at 100% scored 30% in Panorama ("Insufficient contrast between foreground text and background", Major). Tests in Panorama showed two causes: words formatted differently inside one colored cell (a bold label followed by plain text) are flagged whatever their colors, and colored text on a colored fill can be flagged even when it passes on paper. The skill now makes those cells plain text and turns colored text on colored fills black or white. The same workbook then scored 100%.

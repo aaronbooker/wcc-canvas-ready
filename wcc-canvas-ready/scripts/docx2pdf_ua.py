@@ -21,7 +21,7 @@ shutil.copy(src, os.path.join(tmp, 'in.docx'))
 subprocess.run(['soffice', '--headless', '--convert-to', OPTS, 'in.docx', '--outdir', tmp], cwd=tmp, check=True,
                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 json.dump(tables, open(os.path.join(tmp, 'tables.json'), 'w'))
-subprocess.run(['python3', '-I', os.path.join(SKILL, 'postprocess_pdf.py'), os.path.join(tmp, 'in.pdf'), dst,
+subprocess.run([sys.executable, '-I', os.path.join(SKILL, 'postprocess_pdf.py'), os.path.join(tmp, 'in.pdf'), dst,
                 os.path.join(tmp, 'tables.json')], check=True)
 shutil.rmtree(tmp)
 print('wrote', dst, '| table summaries from docx:', len(tables))

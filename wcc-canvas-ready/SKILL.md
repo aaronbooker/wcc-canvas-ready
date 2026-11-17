@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.6
+# WCC Canvas Ready, v1.0.7
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.6** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.7** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
@@ -124,6 +124,9 @@ Ask the up-front questions together, before fixing:
   will flag the length), or split it at section headings into N parts?" Never split without a yes.
   *Default: keep one page.*
 - **Author** when it's empty or a tool name: "Whose name goes in Author?" *Default: leave it empty.*
+- **A fillable PDF form** (fill-in boxes, check boxes, signature fields): "The rebuilt form passes Panorama but has
+  no fill-in boxes: students print it or type into a Word copy. Word, PDF or both? Or keep the fillable original
+  (it stays at 0%)?" *Default: both, and say the boxes are gone.*
 - **Changing the file type** (.doc → .docx, .ppt → .pptx): "Keep the old format, or deliver the modern one?"
   Say why: a .doc saved by the tools loses its table-header marks (held at 30% in testing), and a .ppt saved
   by them loses its alt text, title and reading order (30%, 75 issues). *Default: deliver the modern file only
@@ -151,6 +154,7 @@ Ask during the fix, showing what you'd change:
 | PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
 | PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
+| **Fillable** PDF form (InDesign/Acrobat, untagged; `widgets` on the pages) | `preflight_pdf.py` (F3 fails) | **ask first**: the rebuild drops the fill-in boxes. Then write the Markdown by hand → `md2docx.js` → `postprocess_docx.py` → `docx2pdf_ua.py` | answer lines, check-box grids as tables, alt for logos |
 | Tagged PDF printed from a browser, Google Docs or Forms | `preflight_pdf.py` | fix in place: `pdf_tagfix.py` (lists, table summaries, heading text); small print → rebuild at 12 pt: `pdf_tag2html.py` → Chrome print → `pdf_tagfix.py`; Forms summary: `pdf_tag2html.py --cards` first | table summaries |
 | **Scanned** PDF (no text) | `pdftotext` gives nothing | `scan2md.py` (OCR) → `md2docx.js` → … as above | **proofread OCR**, figures |
 | Designed one-pager (InDesign flyer, poster) | `preflight_pdf.py` | fix in place: `pdf_tagfix.py --list`, then a JSON of fixes | headings, alt, colors |
@@ -428,6 +432,20 @@ Google Forms "print summary": every legend entry is a <Figure> made of letter ou
 missing (0%). `pdf_ocr_alt.py` reads each one with OCR and uses the words as its alt; proofread them.
 **Untagged** browser prints score 0%: rebuild with `pdf_flow2md.py` (one-column text → Markdown → Word → tagged
 PDF); a long essay went 0% → 100%. Put a blank line between list items in the Markdown for `md2docx.js`.
+**Fillable PDF forms** (fill-in boxes, radio buttons, signature fields; list them with PyMuPDF `page.widgets()`):
+an untagged InDesign form scores 0% and can't be tagged in place. **Ask the instructor** before rebuilding: the rebuilt
+PDF has no fill-in boxes (students print it, or type into the Word version). Offer Word, PDF or both; if they need a
+fillable PDF, the real fix is the form's source (InDesign/Acrobat) or an online form. Rebuild (a 7-page bilingual
+student information form, 0% → 100%, Nov 16, 2026): write the Markdown yourself from the page text and images, in the
+form's own question order (A1, A2 …, not the visual columns); a write-in line of underscores after each question; ☐
+for each choice ("☐ yes *ja*    ☐ no *nein*"); a grid of check boxes (rate 1 to 5, often/sometimes/never) as a table
+with a visible caption, a header row naming the scale and a summary saying how to fill it in (a ☐ in each cell, so no
+cell is empty); logos cut from a 110 dpi render as JPG with alt text; the logo header and the address footer once,
+not on every page. A choice that was **already selected** in the form starts empty: say so in `removed`. Copy the
+form's typos as they are and list them for the owner. Write a literal asterisk as `\*` (`Schüler\*innen`, the
+German gender star): an unescaped `*` is read as italic markup and dropped. `md2docx.js` sizes table columns from
+their longest word, so long words ("Sportveranstaltungen", "unternehmungslustig") don't break mid-word; check
+`content_check.py` for split words anyway.
 
 **PDF checks** (`preflight_pdf.py`): F1 title + DisplayDocTitle; F2 language; F3 tagged; F4 headings from H1;
 F5 figure alt; F6 table /Summary; F7 header cells; F8 no untagged text; F9 nothing under 12 pt;
@@ -569,3 +587,8 @@ lives in the title above and in this log. Bump it for each change that goes out,
   report now predicts Excel contrast. The same workbook then scored 100%. **Excel links** (X9): linked cells that show
   only their web address are listed and renamed with `--link`, and predicted (Major). **Excel font sizes**: sizes written
   as `<sz val="11" />` (with a space, as some programs save them) were skipped while the log said they were raised.
+- **v1.0.7** (Nov 16, 2026): **fillable PDF forms** get their own route (ask first: the rebuild drops the fill-in boxes);
+  a bilingual InDesign form went 0% → 100% in Panorama. `md2docx.js`: `\*` keeps a literal asterisk (it was dropped
+  as italic markup), and table columns are sized from their content (equal widths split long words mid-word).
+  `fix_report.py` lists a missing PDF title once, not twice. `docx2pdf_ua.py` runs `postprocess_pdf.py` with the same
+  Python it runs on; `export_pdf.sh` works on a Mac, which has no `timeout` command.

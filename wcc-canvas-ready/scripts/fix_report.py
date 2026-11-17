@@ -102,6 +102,7 @@ def issues_pdf(t):
     for m in re.finditer(r'^FAIL\s+(F\d+)\s+(.*)$', t, re.M):
         name, sev = PDF_MAP.get(m.group(1), (m.group(2)[:70], 'Minor'))
         if m.group(1) == 'F8': continue                       # untagged drawing: not a Panorama issue by itself
+        if any(x[0] == name for x in I): continue             # F1 title and F1 DisplayDocTitle are one Panorama flag
         I.append((name, sev, 1))
     return I
 
