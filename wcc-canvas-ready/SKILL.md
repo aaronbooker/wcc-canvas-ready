@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.7
+# WCC Canvas Ready, v1.0.8
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.7** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.8** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -28,28 +28,34 @@ the newest release number. Nothing about the instructor, their files or the chat
   your first reply, in plain words with no extra jargon, then carry on with their request. Don't stop the work to update. If they
   ask how to update, those three steps are the answer; if they get stuck, walk them through one step at a time.
 - **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
-- **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub. This is normal on many accounts
-  (Free plans, and any account with code-execution network access off) and it does **not** mean the skill is current. Do the
-  web fallback once, quietly:
-  1. If you have a web fetch tool, fetch `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest`. Your web tools run
-     outside the sandbox, so this can work when the script can't. The page names the newest release, such as "v1.0.6".
-  2. Run `python3 -I scripts/check_update.py --compare 1.0.6` with the number you read. It needs no network and compares
-     correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`, show the whole message; otherwise say nothing.
-  3. If you have no web fetch tool, or the fetch is refused or shows no version: say nothing, **unless** the BLOCKED line says
-     `STALE` (this copy is over 30 days old). Then add one line to your first reply: "I couldn't check for a newer version of
-     this skill from here. Yours is vX.Y.Z from <date>; the newest is always at
+- **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub, or GitHub only gave an out-of-date
+  answer. This is normal on many accounts (Free plans, and any account with code-execution network access off) and it does
+  **not** mean the skill is current. Do the web fallback once, quietly:
+  1. If you have a web fetch tool, fetch `https://raw.githubusercontent.com/aaronbooker/wcc-canvas-ready/main/VERSION`. Your web
+     tools run outside the sandbox, so this can work when the script can't. It is one line with the newest version number,
+     such as `1.0.8`. Only if that fetch fails or doesn't show a version, fetch
+     `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest` instead and read the release number from the page.
+     (A web tool can return a cached copy of the releases page: on Nov 17, 2026 it read v1.01 when the latest was v1.0.6.)
+  2. Run `python3 -I scripts/check_update.py --compare 1.0.8` with the number you read. It needs no network and compares
+     correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`,
+     show the whole message. If it prints nothing, this copy is current: say nothing. If it prints `UPDATE CHECK BLOCKED`, the
+     number you read is older than this copy, so the page was out of date and the check is not confirmed: go to step 3.
+  3. If you have no web fetch tool, or the fetches are refused or show no version, or `--compare` said BLOCKED: say nothing,
+     **unless** a BLOCKED line says `STALE` (this copy is over 30 days old). Then add one line to your first reply: "I couldn't
+     check for a newer version of this skill from here. Yours is vX.Y.Z from <date>; the newest is always at
      https://github.com/aaronbooker/wcc-canvas-ready/releases/latest".
   Never retry, and never hold up the instructor's work for any of this.
-- **Never say or imply the skill is up to date unless** the script printed nothing, or `--compare` or `--verbose` said so. "The
-  check couldn't run" and "no update" are different facts. A recent date on this copy is not evidence either.
+- **Never say or imply the skill is up to date unless** the script printed nothing, or `--verbose` said "You are up to date".
+  A BLOCKED line means the check couldn't be confirmed, even after a web fetch. "The check couldn't run" and "no update" are
+  different facts. A recent date on this copy is not evidence either.
 - **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
   says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
   give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
 - **A question about the skill itself is not a request to fix a file.** When the instructor only asks about the skill (which
   version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
   file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
-- You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, Skills, +,
-  Create skill, Upload a skill). Claude asks whether to replace the installed copy and they say yes. Don't tell them to
+- You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, then Skills,
+  then + Add, then Upload skill). Claude asks whether to replace the installed copy and they say yes. Don't tell them to
   delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
@@ -727,3 +733,8 @@ lives in the title above and in this log. Bump it for each change that goes out,
   footnote links as `<Reference>`). **PDF tag order** (F20, `pdf_order.py`): content numbers renumbered to follow the
   tags; 0% → 100%. **Student records**: Claude stops and asks for a copy without them. **50-file round** (Nov 17): 48
   of 50 course files at 100% in Panorama; the rules it taught are under "Learned from 50 course files".
+- **v1.0.8** (Nov 17, 2026): the update steps match claude.ai again: Customize, then Skills, then + Add, then Upload skill
+  (the old steps named a menu path that is gone). The update check no longer misses an update when a web tool reads
+  an out-of-date copy of the releases page: Claude reads the one-line `VERSION` file first, and `check_update.py --compare`
+  says BLOCKED (not "newer than the latest release") when the number it is given is older than this copy. The script's own
+  check skips a source that answers with an older number and tries the next one.
