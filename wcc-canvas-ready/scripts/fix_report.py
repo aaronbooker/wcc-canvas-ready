@@ -108,6 +108,7 @@ def issues_pdf(t):
     for m in re.finditer(r'^(?:FAIL|CHECK)\s+(F\d+b?)\s+(.*)$', t, re.M):
         name, sev = PDF_MAP.get(m.group(1), (m.group(2)[:70], 'Minor'))
         if m.group(1) == 'F8': continue                       # untagged drawing: not a Panorama issue by itself
+        if any(x[0] == name for x in I): continue             # F1 title and F1 DisplayDocTitle are one Panorama flag
         if m.group(1) == 'F17':                               # broken tag wiring: screen readers, and Panorama
             if 'not on the page' in m.group(2):               # a tag naming a missing MCID = "The tag is empty" (WCC, Nov 16)
                 I.append(('The tag is empty and contains no content (tags that point at content missing from the page)', 'Minor', 1))
