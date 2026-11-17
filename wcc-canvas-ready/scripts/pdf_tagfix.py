@@ -2,6 +2,7 @@
 Use when the layout must stay exactly as designed (flyers, posters, one-pagers).
 Usage:
   python3 pdf_tagfix.py in.pdf --list            # numbered list of paragraph-level tags and figures with their text
+  python3 pdf_tagfix.py in.pdf --list --crops d/ # ...and each figure saved as d/fig<n>.png, to look at before writing alt
   python3 pdf_tagfix.py in.pdf out.pdf fix.json  # apply
 fix.json keys (all optional):
   "title": "..."                         F1 [WCAG+Panorama 2.4.2] dc:title + Info /Title + DisplayDocTitle
@@ -13,6 +14,7 @@ fix.json keys (all optional):
   "actualtext": {"<n>": "text"}        spoken text for an element whose spaces were made Artifacts
   "fix_lists": true (default)            F13 [WCC Panorama "List item structure is missing" (Major)]: <LI> with
                                              no <LBody> (Chrome, Google Docs and Skia print-to-PDF) gets one
+  "header_row": true | [table #, ...]   [Panorama "Table does not have a header" (Major)] first row's cells -> <TH>
   "summary": {"<table #>": "text"}      F14 [Panorama "Table does not have a summary" (Minor)] /Summary on the
                                              nth <Table> (0-based, document order)
   "text_figures": true (default)         F15 a <Figure> whose content is only text becomes <P>
@@ -31,6 +33,8 @@ fix.json keys (all optional):
   "tag_order": true                      F21 [WCAG 1.3.2; not checked by Panorama]: puts child tags in page order
                                              (top to bottom in a column, left to right on a line) where
                                              preflight_pdf.py F21 failed; only tags clearly out of order move
+  "artifacts": [n, ...]                  decorative figures (numbers from --list): shape backgrounds behind text that
+                                             is tagged separately, divider lines. Their content becomes /Artifact
   "drop_empty": true                     F6 [Panorama] "The tag is empty and contains no content" (Minor):
                                              removes tags with no content and turns marked content that is only
                                              spaces into /Artifact; text drawn twice in the same spot (outline +
@@ -98,7 +102,7 @@ def as_caption(c):
     return found[0] if len(found) == 1 and role(found[0]) == '/Caption' else None
 boxes = defaultdict(dict)                          # page index -> mcid -> [x0, top, x1, bottom]
 for pi, pg in enumerate(pl.pages):
-    for o in pg.chars + pg.images:
+    for o in pg.chars + pg.images + pg.rects + pg.curves + pg.lines:   # drawn shapes too (icons, diagrams)
         m = o.get('mcid')
         if m is None: continue
         b = boxes[pi].setdefault(m, [o['x0'], o['top'], o['x1'], o['bottom']])
@@ -196,6 +200,18 @@ if '--list' in sys.argv:
     for c in kids(pdf.Root.StructTreeRoot): ft(c)
     for i, t in enumerate(tables):    # header text of each table, for writing its summary
         print(f'table {i}:', repr(desc(t)[:110]))
+    if '--crops' in sys.argv:         # --crops DIR: each figure cut out of its page as fig<n>.png, to look at before writing alt
+        import os
+        out_dir = sys.argv[sys.argv.index('--crops') + 1]; os.makedirs(out_dir, exist_ok=True)
+        for i, (e, _) in enumerate(items):
+            if role(e) != '/Figure': continue
+            bb = bbox(e)
+            if not bb: continue
+            pg_, (x0, t0, x1, b1) = bb; page = pl.pages[pg_]
+            box_ = (max(0, x0 - 4), max(0, t0 - 4), min(page.width, x1 + 4), min(page.height, b1 + 4))
+            try: page.crop(box_).to_image(resolution=110).save(os.path.join(out_dir, f'fig{i}.png'))
+            except Exception as ex: print(f'figure {i}: could not crop ({ex})')
+        print('figure crops in', out_dir)
     sys.exit()
 
 dst, cfg = sys.argv[2], json.load(open(sys.argv[3]))
@@ -334,7 +350,7 @@ if cfg.get('hoist_text', True):
                 only = pgs.pop()
                 if '/Pg' not in e or pages.get(e.Pg.objgen) == only:
                     e.Pg = pdf.pages[only].obj
-                    new = [pikepdf.Integer(int(x.MCID)) if isinstance(x, pikepdf.Dictionary) and x.get('/Type') == '/MCR' else x for x in new]
+                    new = [int(x.MCID) if isinstance(x, pikepdf.Dictionary) and x.get('/Type') == '/MCR' else x for x in new]
             e.K = pikepdf.Array(new) if len(new) != 1 else new[0]; hoisted.append(1)
     for c in kids(pdf.Root.StructTreeRoot):
         if isinstance(c, pikepdf.Dictionary) and '/S' in c: hoist(c)
@@ -384,6 +400,35 @@ if cfg.get('tag_order'):
                    + ' moved earlier')
     reorder(pdf.Root.StructTreeRoot)
     if not n_ord: log.append('tag order: nothing to do')
+if cfg.get('header_row'):
+    # "header_row": true | [table #, ...]: the first row's cells become <TH Scope=Column> [Panorama "Table does not have
+    # a header" (Major); PowerPoint exports tag every cell <TD>: a 65-page deck had 4 tables and no header cell, Nov 17, 2026]
+    hts = []
+    def fh(e):
+        if not isinstance(e, pikepdf.Dictionary) or '/S' not in e: return
+        if role(e) == '/Table': hts.append(e)
+        for c in kids(e): fh(c)
+    for c in kids(pdf.Root.StructTreeRoot): fh(c)
+    want = range(len(hts)) if cfg['header_row'] is True else [int(x) for x in cfg['header_row']]
+    def rows(e):
+        out = []
+        for c in kids(e):
+            if not is_struct(c): continue
+            if role(c) == '/TR': out.append(c)
+            elif role(c) in ('/THead', '/TBody', '/TFoot'): out += rows(c)
+        return out
+    for n in want:
+        rs = rows(hts[n])
+        if not rs: continue
+        k_ = 0
+        for c in kids(rs[0]):
+            if is_struct(c) and role(c) in ('/TD', '/TH'):
+                c.S = pikepdf.Name('/TH'); k_ += 1
+                a = c.get('/A'); attr = pikepdf.Dictionary(O=pikepdf.Name('/Table'), Scope=pikepdf.Name('/Column'))
+                if a is None: c.A = attr
+                elif isinstance(a, pikepdf.Array): a.append(attr)
+                else: c.A = pikepdf.Array([a, attr])
+        log.append(f'table {n}: first row -> {k_} header cells (TH, column scope)')
 if cfg.get('summary'):
     tables = []
     def ft(e):
@@ -400,12 +445,26 @@ if cfg.get('summary'):
         else: e.A = pikepdf.Array([a, attr])
     log.append(f'table summaries: {len(cfg["summary"])} of {len(tables)} tables')
 BLANK = {}
-if cfg.get('colors') or cfg.get('drop_empty'):
+# "artifacts": [n, ...] figures (numbers from --list) that are decoration: the colored box or line behind text that is
+# tagged on its own. PowerPoint exports every undecorated shape as a <Figure> with empty alt text (a 65-page deck: 37 of
+# 44 figures were text-box backgrounds, Nov 17, 2026). Their content becomes /Artifact and the tag is removed.
+ART_EL = [items[int(n)][0] for n in cfg.get('artifacts', [])]
+ART = {pm for e in ART_EL for pm in mcids(e)}
+if cfg.get('colors') or cfg.get('drop_empty') or ART:
     for pi, page in enumerate(pdf.pages):
         data = page.Contents.read_bytes() if not isinstance(page.Contents, pikepdf.Array) else b'\n'.join(x.read_bytes() for x in page.Contents)
-        for old, new in cfg.get('colors', []):
-            data, k = re.subn(rb'(?<![\d.])' + re.escape(old.encode()) + rb'(?=\s)', new.encode(), data)
-            log.append(f'page {pi + 1}: {old} -> {new} x{k}')
+        for entry in cfg.get('colors', []):
+            # ["old", "new"] everywhere, or ["old", "new", {"pages": [12], "skip": 2}]: only on those pages and after the
+            # first `skip` matches there, for an operator that colors several things (white text on a green picture
+            # and the white heading above it share "1 g" on a slide, Nov 17, 2026)
+            old, new = entry[0], entry[1]; opt = entry[2] if len(entry) > 2 else {}
+            if opt.get('pages') and pi + 1 not in opt['pages']: continue
+            seen_ = [0]
+            def _sub(m_):
+                seen_[0] += 1
+                return m_.group(0) if seen_[0] <= opt.get('skip', 0) else new.encode()
+            data, k = re.subn(rb'(?<![\d.])' + re.escape(old.encode()) + rb'(?=\s)', _sub, data)
+            if k: log.append(f'page {pi + 1}: {old} -> {new} x{max(0, k - opt.get("skip", 0))}')
         if cfg.get('drop_empty'):
             blank = {m for m, t in text[pi].items() if not t.strip()}
             # F6b: the same text drawn twice in the same place (an outline/shadow layer under the fill) is read twice
@@ -419,7 +478,16 @@ if cfg.get('colors') or cfg.get('drop_empty'):
                 data, k = re.subn(rb'/\w+\s*<<[^<>]*?/MCID ' + str(m).encode() + rb'\b[^<>]*>>\s*BDC', b'/Artifact BMC', data)
             if blank: log.append(f'page {pi + 1}: space-only content -> Artifact: MCIDs {sorted(blank)}')
             BLANK[pi] = blank
+        for m in sorted(m for p_, m in ART if p_ == pi):
+            data, k = re.subn(rb'/\w+\s*<<[^<>]*?/MCID ' + str(m).encode() + rb'\b[^<>]*>>\s*BDC', b'/Artifact BMC', data)
+            if not k: log.append(f'page {pi + 1}: MCID {m} of a decorative figure not found in the page stream')
         page.Contents = pdf.make_stream(data)
+for e in ART_EL:
+    par = e.get('/P')
+    if isinstance(par, pikepdf.Dictionary):
+        ks = [c for c in kids(par) if not (isinstance(c, pikepdf.Dictionary) and same(c, e))]
+        par.K = pikepdf.Array(ks) if len(ks) != 1 else ks[0]
+if ART_EL: log.append(f'decorative figures -> Artifact: {len(ART_EL)} ({len(ART)} pieces of content)')
 if cfg.get('drop_empty'):
     blanks = {(i, m) for i, bs in BLANK.items() for m in bs}
     def prune(e, pg=None):

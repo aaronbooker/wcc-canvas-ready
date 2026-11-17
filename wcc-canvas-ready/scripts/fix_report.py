@@ -74,7 +74,8 @@ def issues_docx(t):
         try: n = sum(eval(m.group(1)).values())
         except Exception: n = 1
         n and I.append(('The font size is smaller than 11 points (this skill uses 12 pt)', 'Minor', n))
-    n = num(r'Known failing colors: (\d+)', t);  n and I.append(('Insufficient contrast between foreground text and background', 'Major', n))
+    n = (num(r'Known failing colors: (\d+)', t) or 0) + (num(r'D9b text under 4.5:1 on its shading: (\d+)', t) or 0)
+    n and I.append(('Insufficient contrast between foreground text and background', 'Major', n))
     n = num(r'D20 justified: (\d+)', t);  n and I.append(('Justified text', 'Minor', n))
     return I
 
@@ -97,6 +98,7 @@ PDF_MAP = {'F1': ('The title is missing from the document\'s properties', 'Major
            'F7': ('Table does not have a header', 'Major'), 'F9': ('The font size is smaller than 11 points', 'Minor'),
            'F10': ('Check reading order (text off the baseline: sub/superscripts)', 'Severe'),
            'F11': ('Check reading order (footnote tags)', 'Severe'), 'F13': ('List item structure is missing', 'Major'),
+           'F4b': ("The document's heading structure is not properly nested", 'Severe'),
            'F20': ('Check reading order (tags out of numbered order)', 'Severe'),
            'F21': ('Reading order may not follow the page (Panorama does not check this; a person checks it with a screen reader)', 'Possible'),
            'F18': ('Insufficient contrast between foreground text and background', 'Severe'),

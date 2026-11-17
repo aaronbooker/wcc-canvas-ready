@@ -24,16 +24,20 @@ def walk(el):
         s = str(el.get('/S', ''))
         rm = root.StructTreeRoot.get('/RoleMap', {})
         tags[s] += 1
+        if re.fullmatch(r'/H[1-6]', s): hseq.append(int(s[2]))
         if s == '/Figure': figs.append(el)
         if s == '/Table': tables.append(el)
         k = el.get('/K')
         if k is None: return
         for it in (list(k) if isinstance(k, pikepdf.Array) else [k]):
             if isinstance(it, pikepdf.Dictionary): walk(it)
+hseq = []
 walk(root.StructTreeRoot)
 heads = [t for t in tags if re.fullmatch(r'/H\d', t)]
 print(ok(bool(heads)), 'F4 headings tagged:', {h: tags[h] for h in sorted(heads)})
 print(ok('/H1' in tags), 'F4 has an H1')
+_skips = [(a, b) for a, b in zip(hseq, hseq[1:]) if b > a + 1]
+print(ok(not _skips), 'F4b heading levels nested, no skips (Panorama "heading structure is not properly nested", Severe):', _skips[:6] or 'yes')
 noalt = [f for f in figs if not str(f.get('/Alt', '')).strip() and not str(f.get('/ActualText', '')).strip()]
 print(ok(not noalt), f'F5 figures with alt text: {len(figs) - len(noalt)}/{len(figs)}')
 def has_summary(t):
@@ -146,6 +150,7 @@ print(ok(wire_ok), 'F17 tags point at real page content (a tag naming missing co
 # character was drawn in, so gray, RGB and CMYK (k/K, what InDesign uses) are all read. WCC flagged 30 pt text at
 # 3.5:1, so the target is 4.5:1 for every size. Text on a picture is listed for a check by eye.
 def to_rgb(v, cs):
+    if isinstance(v, (int, float)): v = (v,)        # pdfplumber gives a gray as a bare number on some pages
     v = tuple(float(x) for x in (v or ()) if isinstance(x, (int, float)))
     cs = str(cs or '')
     if any(s in cs for s in ('Separation', 'DeviceN', 'Indexed', 'Pattern')): return None   # spot inks: tint, not gray

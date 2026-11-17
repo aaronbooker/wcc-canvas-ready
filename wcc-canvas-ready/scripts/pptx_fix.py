@@ -38,6 +38,11 @@ TITLE = args[args.index('--title') + 1] if '--title' in args else None
 KEEP = {int(x) for x in args[args.index('--keep-order') + 1].split(',') if x.strip()} if '--keep-order' in args else set()
 import json as _json
 ORDER_FILE = {int(k): v for k, v in _json.load(open(args[args.index('--order-file') + 1])).items()} if '--order-file' in args else {}
+# --titles titles.json: {"5": "Slide title", ...} for slides with no heading-like text (YOU write them, the instructor
+# agrees). The title is added as a real title placeholder just above the slide's top edge: screen readers and Panorama
+# read it, the slide looks the same. Used for slides that are one picture of text (a deck of pasted slide images,
+# Nov 17, 2026: five such slides stayed "The document does not have slide titles", Major).
+TITLES = {int(k): v for k, v in _json.load(open(args[args.index('--titles') + 1])).items()} if '--titles' in args else {}
 prs = Presentation(src)
 SW, SH = prs.slide_width, prs.slide_height
 log = []
@@ -223,6 +228,20 @@ for i, s in enumerate(prs.slides, 1):
                 shown = best.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:50]
                 log.append(f'slide {i}: title placeholder from "{shown}"')
                 t = best
+        elif i in TITLES:
+            ids = [int(x) for x in s._element.xpath('.//p:cNvPr/@id')] or [1]
+            from pptx.oxml import parse_xml   # python-pptx's own element classes, so s.shapes can read it
+            new = parse_xml(
+                f'<p:sp xmlns:p="{NS["p"]}" xmlns:a="{NS["a"]}"><p:nvSpPr><p:cNvPr id="{max(ids) + 1}" name="Title (added)"/>'
+                '<p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr>'
+                f'<p:spPr><a:xfrm><a:off x="0" y="-{int(SH * 0.12)}"/><a:ext cx="{SW}" cy="{int(SH * 0.1)}"/></a:xfrm></p:spPr>'
+                '<p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="2800"/><a:t></a:t></a:r></a:p></p:txBody></p:sp>')
+            new.find('.//' + A + 't').text = TITLES[i]
+            tree_ = s.shapes._spTree
+            first = [k for k in tree_ if etree.QName(k).localname not in ('nvGrpSpPr', 'grpSpPr')]
+            (first[0].addprevious(new) if first else tree_.append(new))
+            t = [sh for sh in s.shapes if sh._element is new][0]
+            log.append(f'slide {i}: title added just above the slide (not visible): "{TITLES[i][:50]}"')
         else:
             log.append(f'slide {i}: NO heading-like text; needs a title written by the instructor')
     if t is not None:
@@ -477,6 +496,25 @@ for i, s in enumerate(prs.slides, 1):
                         (geom[-1].addnext(nf) if geom else spPr.insert(0, nf))
                         backed = True
                         log.append(f'slide {i}: "{label}" on a busy picture: added a {fill} box behind the text ({ratio(fg, fill):.2f}:1); CHECK the look')
+            if backed:
+                # the box is now the background for EVERY run in the shape, not just the one it was chosen for: runs
+                # that passed on the picture, or were skipped once the box existed, can fail on it (a title slide's
+                # "By" line and two purple words stayed Severe, Nov 17, 2026). Recheck each run against the box.
+                for p_ in sh.text_frame.paragraphs:
+                    for r in p_.runs:
+                        if not r.text.strip(): continue
+                        rpr = r._r.get_or_add_rPr()
+                        sf = rpr.find(A + 'solidFill')
+                        fg = color_of(sf) or (THEME.get('tx1') or '000000')
+                        if ratio(fg, fill) >= 4.5: continue
+                        new = fix_color(fg, fill, 4.5)
+                        if sf is None:
+                            sf = etree.Element(A + 'solidFill')
+                            after = [k for k in rpr if etree.QName(k).localname in ('ln',)]
+                            (after[-1].addnext(sf) if after else rpr.insert(0, sf))
+                        for c in list(sf): sf.remove(c)
+                        etree.SubElement(sf, A + 'srgbClr', val=new)
+                        log.append(f'slide {i}: "{r.text.strip()[:30]}" {fg} on the new {fill} box = {ratio(fg, fill):.2f}:1 -> {new} ({ratio(new, fill):.2f}:1)')
             continue
         for p in sh.text_frame.paragraphs:
             for r in p.runs:

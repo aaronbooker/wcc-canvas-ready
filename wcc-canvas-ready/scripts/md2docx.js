@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell,
-  WidthType, BorderStyle, ShadingType, AlignmentType, LevelFormat,
+  WidthType, BorderStyle, ShadingType, AlignmentType, LevelFormat, ExternalHyperlink,
 } = require('docx');
 
 const [, , inPath, outPath, title, description, baseDir = path.dirname(inPath)] = process.argv;
@@ -25,11 +25,14 @@ const lit = s => s.replace(new RegExp(STAR, 'g'), '*');
 function runs(text, base = {}) {
   text = text.replace(/\\\*/g, STAR);
   const out = [];
-  const re = /(\*\*\*[^*]+?\*\*\*|\*\*[^*]+?\*\*|\*[^*]+?\*|\^[^^\s]+\^|~[^~\s]+~)/g;
+  // [text](url): a real link. A rebuild that drops links loses content (a 6-page chart lost about 40, Nov 17, 2026).
+  const re = /(\[[^\]]+\]\([^)\s]+\)|\*\*\*[^*]+?\*\*\*|\*\*[^*]+?\*\*|\*[^*]+?\*|\^[^^\s]+\^|~[^~\s]+~)/g;
   let last = 0, m;
   while ((m = re.exec(text))) {
     if (m.index > last) out.push(new TextRun({ text: lit(text.slice(last, m.index)), ...base }));
     const t = m[0];
+    const lk = t.startsWith('[') && t.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+    if (lk) { out.push(new ExternalHyperlink({ link: lk[2], children: runs(lk[1], { ...base, color: '0563C1', underline: {} }) })); last = m.index + t.length; continue; }
     if (t.startsWith('***')) out.push(...runs(t.slice(3, -3), { ...base, bold: true, italics: true }));
     else if (t.startsWith('**')) out.push(...runs(t.slice(2, -2), { ...base, bold: true }));
     // Panorama-safe: Unicode sub/superscript characters at full size, never vertAlign
@@ -78,10 +81,11 @@ for (let i = 0; i < md.length; i++) {
   } else if ((m = b.match(/^!img (\S+) \| (.*)$/))) {
     const file = path.join(baseDir, m[1]);
     const buf = fs.readFileSync(file);
-    const { w, h } = jpegSize(buf);
+    const png = buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));   // PNG too (crops, screenshots)
+    const { w, h } = png ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : jpegSize(buf);
     const maxW = 576; // 6 in at 96 px/in
     const width = Math.min(maxW, w), height = Math.round(h * width / w);
-    children.push(new Paragraph({ children: [new ImageRun({ type: 'jpg', data: buf, transformation: { width, height },
+    children.push(new Paragraph({ children: [new ImageRun({ type: png ? 'png' : 'jpg', data: buf, transformation: { width, height },
       altText: { title: '', description: m[2], name: path.basename(m[1]) } })] }));
   } else if ((m = b.match(/^!caption (.*)$/))) {
     if (/^Table/.test(m[1])) pendingCaption = m[1];

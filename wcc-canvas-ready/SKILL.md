@@ -88,6 +88,9 @@ roster, grades or scores next to names, student ID numbers, student emails, acco
 yet. Tell the instructor plainly that student records are protected (FERPA) and don't belong in a course file or in a chat,
 and ask them to send a copy without the student information. Carry on only if they say the file has no real student
 records (for example, the names are made up). Names of authors, guest speakers or the instructor are fine.
+A **student's submitted work** is a student record too, and it looks like ordinary course material: a lab write-up or
+assignment whose first lines are a person's name, a date and a course code, and whose author (`D24` in the pre-flight)
+is not the instructor. Two such files were found among an instructor's "lab" downloads (Nov 17, 2026); ask before going on.
 
 1. **Copy first.** Never edit the original. Work on a copy in the working folder; name outputs `*_Accessible.*`.
    Start a `notes.json` for the report (see step 6) and save every script's output with `| tee -a fixlog.txt`.
@@ -155,12 +158,14 @@ Ask during the fix, showing what you'd change:
 |---|---|---|---|
 | .docx | `preflight_docx.py` | `docx_lists.py` → `docx_headings.py` → `docx_unbox.py` → `docx_alt.py` → `docx_inline.py` → `docx_captions.py` → `docx_links.py` → `postprocess_docx.py --title` | alt text, table captions, link text, title, headings to check |
 | .doc, .rtf, .odt | convert to .docx (LibreOffice), then as .docx | then convert back: `.rtf` → `rtf_post.py`; `.odt` → `odf_colors.py`; `.doc` → **deliver .docx** (see L1) | same as .docx |
+| Word or RTF whose text is HTML/XML/CSS **source code** | `preflight_docx.py` D25 | **ask**: render it (text saved as .html → LibreOffice → .docx → as .docx; two syllabi pasted as HTML became real documents) or keep the code and add a title heading | which one |
 | .pptx | `preflight_pptx.py` | `pptx_alt.py` → `pptx_links.py` → `pptx_fix.py` (run the fixer **last**, so pictures marked decorative move behind the content) | alt text, link text, slides with no heading |
 | .ppt, .odp | convert to .pptx, fix; `.ppt` → **deliver .pptx** (L1); `.odp` → convert back, then `odf_colors.py` | | |
 | .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text" --link "URL::Name (domain)"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1, link text |
 | PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
 | PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
+| **Slide deck** saved as an untagged PDF (Keynote or PowerPoint "Save as PDF"; one slide per page) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_slides2md.py in.pdf out.md "Title" imgs.json` (one section per slide, largest text = its heading) → `md2docx.js` → as above. Leave out template art repeated on most slides | slide titles it got wrong, which pictures to keep, alt |
 | **Fillable** PDF form (InDesign/Acrobat, untagged; `widgets` on the pages) | `preflight_pdf.py` (F3 fails) | **ask first**: the rebuild drops the fill-in boxes. Then write the Markdown by hand → `md2docx.js` → `postprocess_docx.py` → `docx2pdf_ua.py` | answer lines, check-box grids as tables, alt for logos |
 | Tagged PDF printed from a browser, Google Docs or Forms | `preflight_pdf.py` | fix in place: `pdf_tagfix.py` (lists, table summaries, heading text); small print → rebuild at 12 pt: `pdf_tag2html.py` → Chrome print → `pdf_tagfix.py`; Forms summary: `pdf_tag2html.py --cards` first | table summaries |
 | **Scanned** PDF (no text) | `pdftotext` gives nothing | `scan2md.py` (OCR) → `md2docx.js` → … as above | **proofread OCR**, figures |

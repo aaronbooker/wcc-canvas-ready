@@ -37,7 +37,9 @@ _tb = [(m.start(), m.end()) for m in re.finditer(r'<w:tbl>.*?</w:tbl>', doc, re.
 _intb = lambda p: any(a <= doc.find(p) < b for a, b in _tb)
 print('D17 typed bullets:', [txt(p)[:40] for p in paras if re.match(r'\s*(?:[-–•*·]|\d+[.)]|[A-Za-z][.)])\s',txt(p)) and '<w:numPr>' not in p and not re.search(r'w:pStyle w:val="(Heading|Title)',p) and not _intb(p)][:10])
 links=re.findall(r'<w:hyperlink\b[^>]*>.*?</w:hyperlink>',doc,re.S)
-print('D18 weak link text:', [txt(l) for l in links if re.match(r'\s*(click here|here|link|read more|more|https?://|www\.)',txt(l),re.I)])
+_rel = dict(re.findall(r'Id="([^"]+)"[^>]*Target="([^"]+)"', R('word/_rels/document.xml.rels')))
+_same = [txt(l) for l in links if re.search(r'r:id="([^"]+)"', l) and _rel.get(re.search(r'r:id="([^"]+)"', l).group(1), '').strip() == txt(l).strip()]
+print('D18 weak link text:', [txt(l) for l in links if re.match(r'\s*(click here|here|link|read more|more|https?://|www\.)',txt(l),re.I)] + _same)
 print('D19 links w/o ScreenTip:', sum('w:tooltip' not in l.split('>',1)[0] for l in links))
 print('D20 justified:', len(re.findall(r'<w:jc w:val="(?:both|distribute)"',doc+sty)))
 print('D21 sizes <12pt by part:', {n:c for n in parts if (c:=sum(int(v)<24 for v in re.findall(r'<w:(?:sz|szCs) w:val="(\d+)"',R(n))))})
@@ -48,6 +50,32 @@ empty=[p for p in paras if not txt(p).strip() and not re.search(r'<w:drawing|<w:
 print('D22 empty spacer paragraphs:', len(empty))
 print('D23 placeholders:', sorted(set(re.findall(r'\[[^\]\n]{2,40}\]',txt(doc))))[:15])
 print('D24 author:', re.findall(r'<dc:creator>([^<]*)',core), re.findall(r'<cp:lastModifiedBy>([^<]*)',core))
+# D25: the text is HTML or XML source code, not a document (an .rtf and a .doc holding a syllabus's HTML, an .rtf holding
+# a quiz's XML; Nov 17, 2026). Ask the instructor: render it as the page it describes, or keep the code.
+_paras = [__import__('html').unescape(txt(p_)).strip() for p_ in re.findall(r'<w:p[ >].*?</w:p>', doc, re.S)]
+_paras = [p_ for p_ in _paras if p_]
+_code = sum(1 for p_ in _paras if re.match(r'</?[a-zA-Z!?][\w:-]*[\s>/]|[.#]?[\w-]+\s*\{|[\w-]+:\s*[^;]+;$', p_))
+print('D25 text that is HTML/XML/CSS source:', f'{_code} of {len(_paras)} paragraphs' + (' -> ASK: render it or keep the code' if _paras and _code / len(_paras) > 0.3 else ''))
+# D9b: text against the shading behind it (run, paragraph or table-cell fill), as Panorama measures it (27 of 27 instances
+# matched on a project plan, Nov 17, 2026)
+def _L(h):
+    f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+def _R(a, b): la, lb = _L(a), _L(b); return (max(la, lb) + .05) / (min(la, lb) + .05)
+_low = []
+_cells = [(m.start(), m.end(), (re.search(r'<w:tcPr>(?:(?!</w:tcPr>).)*?<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', m.group(0), re.S) or [0, None])[1])
+          for m in re.finditer(r'<w:tc>(?:(?!<w:tc>).)*?</w:tc>', doc, re.S)]
+for _pm in re.finditer(r'<w:p[ >](?:(?!<w:p[ >]).)*?</w:p>', doc, re.S):
+    _c = min((c for c in _cells if c[0] <= _pm.start() and _pm.end() <= c[1]), key=lambda c: c[1] - c[0], default=None)
+    _pp = re.search(r'<w:pPr>.*?</w:pPr>', _pm.group(0), re.S)
+    _pf = re.search(r'<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', _pp.group(0)) if _pp else None
+    for _r in re.findall(r'<w:r[ >](?:(?!<w:r[ >]).)*?</w:r>', _pm.group(0), re.S):
+        if not re.search(r'<w:t[ >][^<]*\S', _r): continue
+        _rs = re.search(r'<w:rPr>.*?<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', _r, re.S)
+        _bg = _rs.group(1) if _rs else _pf.group(1) if _pf else (_c[2] if _c and _c[2] else 'FFFFFF')
+        _fg = (re.search(r'<w:color w:val="([0-9A-Fa-f]{6})"', _r) or [0, '000000'])[1]
+        if _R(_fg, _bg) < 4.5: _low.append(f'{_fg.upper()} on {_bg.upper()} {_R(_fg, _bg):.2f}')
+print('D9b text under 4.5:1 on its shading:', len(_low), sorted(set(_low))[:6])
 print('Known failing colors:', len(re.findall(r'w:val="(?:999999|808080|A6A6A6|BFBFBF|FF0000)"',doc+sty)))
 print('Colors used (check each vs its real background):', sorted(set(re.findall(r'<w:color w:val="([0-9A-Fa-f]{6})"',doc+sty))))
 print('Fills used:', sorted(set(re.findall(r'w:fill="([0-9A-Fa-f]{6})"',doc+sty))))

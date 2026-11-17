@@ -13,7 +13,8 @@ from playwright.sync_api import sync_playwright
 src = os.path.abspath(sys.argv[1])
 FIX = '--fix' in sys.argv
 dst = os.path.abspath(sys.argv[2]) if FIX else None
-CHROME = next((p for p in ('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser') if os.path.exists(p)), None)
+CHROME = next((p for p in ('/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+                           '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome') if os.path.exists(p)), None)   # Mac too
 
 JS = r"""
 () => {
@@ -100,6 +101,12 @@ def solid_behind_gradients(s):
         dark = min(cols, key=L); n += 1
         return decl + f';background-color:{dark}'
     s = re.sub(r'background(?:-image)?\s*:\s*[^;{}"]*?(?:linear|radial|conic)-gradient\((?:[^()]|\([^()]*\))*\)[^;{}"]*', rep, s)
+    # A plain color given with the `background` shorthand ("background: white" on a slide card) is not read as the text's
+    # background by Panorama, which then measures against the next ancestor's background-color (a dark page body):
+    # 49 Severe contrast flags on a slide-viewer page, Nov 17, 2026. Repeat the color as background-color.
+    COLOR = r'(?:#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|[a-zA-Z]+)'
+    s = re.sub(r'(?<![-\w])background\s*:\s*(' + COLOR + r')\s*(;|(?=}))(?!\s*background-color)',
+               lambda m: f'background: {m.group(1)}; background-color: {m.group(1)}' + (';' if m.group(2) == ';' else ''), s)
     return s, n
 
 html_src = open(src, encoding='utf-8').read()
@@ -129,7 +136,19 @@ for rnd in range(4 if FIX else 1):
     for e in bad_c:
         h = hexc(e['fg']); members = groups[h]
         new = passing(e['fg'], [m['bg'] for m in members], [need(m) for m in members])
-        if not new: print('   no single color passes for', h); continue
+        if not new:
+            # light text (white on colored buttons) can't get lighter and is used on many backgrounds: darken the
+            # failing elements' own background colors instead (a slide-viewer page's three buttons, Nov 17, 2026)
+            done_bg = 0
+            for m in [x for x in bad_c if hexc(x['fg']) == h]:
+                bh = hexc(m['bg']); k = 0.0; nb = m['bg']
+                while ratio(m['fg'], nb) < need(m) + 0.3 and k < 1: k += 0.02; nb = mix(m['bg'], {'r': 0, 'g': 0, 'b': 0}, k)
+                nbh = hexc(nb)
+                for v in color_variants(bh):
+                    s, c_ = re.subn(r'((?<![-\w])background(?:-color)?\s*:\s*(?:[^;{}"]*?\s)?)' + re.escape(v) + r'(?![0-9a-fA-F])', r'\g<1>' + nbh, s); done_bg += c_
+                print(f'   {h} text on {bh}: background darkened to {nbh} ({ratio(m["fg"], nb):.2f}:1)')
+            if not done_bg: print('   no single color passes for', h)
+            continue
         nh = hexc(new); hit = 0
         for v in color_variants(h):
             # only in color declarations, never in background
