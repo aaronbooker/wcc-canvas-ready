@@ -134,7 +134,8 @@ def report(have, new, how, verbose):
         print('UPDATE AVAILABLE: WCC Canvas Ready v%s is out (you have v%s). It takes about a minute to update:\n'
               '1. Open this link and click wcc-canvas-ready.zip under Assets: %s\n'
               '2. Save the file. Do not unzip it.\n'
-              '3. In Claude, go to Customize, then Skills, and replace WCC Canvas Ready with that file.\n'
+              '3. In Claude, go to Customize, then Skills. Select +, then Create skill, then Upload a skill, and choose\n'
+              '   that file. When Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
               'Your next new chat will use the new version.' % (new, have, DOWNLOAD_URL))
     elif verbose:
         if key(new) == key(have):

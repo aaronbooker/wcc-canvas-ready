@@ -46,7 +46,9 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **A question about the skill itself is not a request to fix a file.** When the instructor only asks about the skill (which
   version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
   file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
-- You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
+- You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, Skills, +,
+  Create skill, Upload a skill). Claude asks whether to replace the installed copy and they say yes. Don't tell them to
+  delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## No file in the chat? Show them how to add one
