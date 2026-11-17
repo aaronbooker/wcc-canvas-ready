@@ -131,7 +131,9 @@ def issues_xlsx(f):
             I.append(('Table does not have a header', 'Major', 1))
     try:
         sys.path.insert(0, HERE); import xlsx_colors
-        a = xlsx_colors.Book({x: z.read(x) for x in n}).audit()
+        bk = xlsx_colors.Book({x: z.read(x) for x in n}); a = bk.audit()
+        k = sum(1 for l in xlsx_colors.links(bk) if xlsx_colors.bare_url(l[3]))
+        k and I.append(('The hyperlink text is not descriptive', 'Major', k))
     except Exception:
         a = None
     if a is None:

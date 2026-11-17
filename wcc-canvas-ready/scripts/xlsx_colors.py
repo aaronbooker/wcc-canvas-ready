@@ -13,6 +13,9 @@ Book(files) reads an unzipped .xlsx ({part name: bytes}) and resolves every text
                                            black/white. WCC Panorama, Nov 16 2026: dark teal on light peach at
                                            7.97:1 was flagged in 1 of 11 identical cells; black passed. A risk, not a
                                            certainty.
+links() lists hyperlinked cells (sheet, part, ref, shown text, address); bare_url(text) says whether the shown
+text is just a web address (WCC Panorama, Nov 16 2026: "The hyperlink text is not descriptive", Major, for three
+cells showing their URL).
 """
 import re, colorsys
 
@@ -165,3 +168,44 @@ class Book:
             elif bg and bg not in ('000000', 'FFFFFF') and r < 0.85 * max(ratio('000000', bg), ratio('FFFFFF', bg)):
                 out.append(('colored', name, ref, round(r, 2), fg, bg))
         return out
+
+
+BARE = re.compile(r'^(?:(?:https?|ftp)://\S+|www\.\S+|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?:[/?#]\S*)?)$')
+
+def bare_url(text):
+    """True when link text is only an address (https://..., www..., example.com/page). E-mail addresses are not:
+    Panorama didn't flag them in Word."""
+    t = (text or '').strip()
+    return bool(t) and '@' not in t and bool(BARE.match(t))
+
+def _refs(rng):
+    """'B4' -> ['B4']; 'B4:C5' -> every cell in the block."""
+    if ':' not in rng: return [rng]
+    (c1, r1), (c2, r2) = [re.match(r'([A-Z]+)(\d+)', x).groups() for x in rng.split(':')]
+    num = lambda c: sum((ord(ch) - 64) * 26 ** i for i, ch in enumerate(reversed(c)))
+    col = lambda n: (col((n - 1) // 26) if n > 26 else '') + chr(65 + (n - 1) % 26)
+    return [f'{col(c)}{r}' for c in range(num(c1), num(c2) + 1) for r in range(int(r1), int(r2) + 1)]
+
+def links(book):
+    """(sheet, part, ref, shown text, address) for every cell under a <hyperlink>."""
+    text = {(p, r): t for _, p, r, _, t, _, _ in book.cells()}
+    out = []
+    for name, part in book.sheets:
+        x = book.files[part].decode()
+        rels_part = re.sub(r'([^/]+)$', r'_rels/\1.rels', part)
+        rels = book.files.get(rels_part, b'').decode()
+        for h in re.findall(r'<hyperlink\b[^>]*>', x):
+            rng = re.search(r'\bref="([^"]+)"', h)
+            if not rng: continue
+            rid = re.search(r'\br:id="([^"]+)"', h)
+            addr = ''
+            if rid:
+                t = re.search(r'<Relationship\b[^>]*Id="%s"[^>]*>' % re.escape(rid.group(1)), rels)
+                t = t and re.search(r'Target="([^"]*)"', t.group(0))
+                addr = t.group(1) if t else ''
+            loc = re.search(r'\blocation="([^"]*)"', h)
+            addr = addr or (loc.group(1) if loc else '')
+            for ref in _refs(rng.group(1)):
+                if (part, ref) in text:
+                    out.append((name, part, ref, text[(part, ref)], addr))
+    return out

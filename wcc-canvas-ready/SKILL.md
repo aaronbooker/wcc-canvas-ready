@@ -145,7 +145,7 @@ Ask during the fix, showing what you'd change:
 | .doc, .rtf, .odt | convert to .docx (LibreOffice), then as .docx | then convert back: `.rtf` → `rtf_post.py`; `.odt` → `odf_colors.py`; `.doc` → **deliver .docx** (see L1) | same as .docx |
 | .pptx | `preflight_pptx.py` | `pptx_alt.py` → `pptx_links.py` → `pptx_fix.py` (run the fixer **last**, so pictures marked decorative move behind the content) | alt text, link text, slides with no heading |
 | .ppt, .odp | convert to .pptx, fix; `.ppt` → **deliver .pptx** (L1); `.odp` → convert back, then `odf_colors.py` | | |
-| .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1 |
+| .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text" --link "URL::Name (domain)"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1, link text |
 | PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
 | PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
@@ -185,6 +185,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty` | Panorama |
 | Table does not have a summary | PDF | Minor | `pdf_tagfix.py` "summary" / `postprocess_pdf.py` | Panorama |
 | The hyperlink text is not descriptive | Word | **Major** | `docx_links.py` | WCAG 2.4.4 |
+| The hyperlink text is not descriptive | Excel | **Major** | `xlsx_fix.py --link` (X9) | WCAG 2.4.4 |
 | The Image is not inline with the text | Word | **Major** ×picture | `docx_inline.py` | WCAG 1.3.2 |
 | The hyperlink text is not descriptive | PDF | Minor | fix in the source; can't be fixed in place | WCAG 2.4.4 |
 | The content is longer than 3000 words | HTML | Minor | `html_split.py` (ask first: the page becomes two) | Panorama |
@@ -366,6 +367,13 @@ re-saves with openpyxl, which drops charts and validation).
 - Charts, merged cells and embedded charts were **not** flagged by WCC's Panorama in Excel or PowerPoint, and
   neither were PowerPoint tables or embedded video (captions are still the instructor's job).
 - X5 Excel tables need a header row. X6 tool names out of author fields.
+- X9 **link text that is just the address** (Major at WCC: three linked cells showing their URLs held a workbook at
+  30%). The fixer lists them; **YOU** write "Site name (domain)" and rerun with `--link "https://site.org::Site name
+  (site.org)"`, one per link (show old and new text and ask, as for Word). With names written, the same workbook
+  scored 100% (Nov 16).
+- Practice workbooks (Nov 16): white text on medium green (2.7:1), gray text on white (2.9:1) and a bold-then-plain
+  cell on a light fill were **not** flagged, though the speaker calendar's cells were. Panorama's Excel contrast
+  check isn't consistent, so the fixer still makes all of these safe; the report's contrast prediction can run high.
 - **X7/X8 contrast (Major at WCC).** The fixer does both; don't recolor cells by hand. A club speaker calendar, Nov 16:
   the skill predicted 100% and Panorama gave 30% (5 instances). Learned by uploading one-change copies:
   - X7: **mixed formatting inside one cell** (a bold label then plain words) on a colored fill was flagged even
@@ -510,8 +518,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | fix_baseline.py / inline_notes.py | before PDF export: sub/superscripts and footnotes that make WCC's PDF check Severe |
 | pptx_fix.py / pptx_alt.py | slide titles, title-first + grouped busy slides, column-first reading order, contrast, sizes, title / picture alt text |
 | pptx_bg.py | what is really behind a slide's text (background, master art, pictures, fills): used by the fixer and the pre-flight's contrast check (P7) |
-| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks, cell text contrast (X7/X8) |
-| xlsx_colors.py | Excel cell colors as Panorama judges them (theme, tint, indexed); used by xlsx_fix.py and fix_report.py |
+| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks, cell text contrast (X7/X8), link text (X9) |
+| xlsx_colors.py | Excel cell colors as Panorama judges them (theme, tint, indexed) and linked cells; used by xlsx_fix.py and fix_report.py |
 | rtf_post.py | heading outline levels and 12 pt in RTF exported by LibreOffice |
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
 | docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
@@ -556,4 +564,6 @@ lives in the title above and in this log. Bump it for each change that goes out,
   also run on Python older than 3.12. Also the first release used to test the update notice in claude.ai.
   **Excel contrast** (X7/X8, new `xlsx_colors.py`): a workbook predicted at 100% scored 30% for text contrast. Mixed
   formatting inside colored cells becomes plain text; colored text on colored fills becomes black or white; the
-  report now predicts Excel contrast. The same workbook then scored 100%.
+  report now predicts Excel contrast. The same workbook then scored 100%. **Excel links** (X9): linked cells that show
+  only their web address are listed and renamed with `--link`, and predicted (Major). **Excel font sizes**: sizes written
+  as `<sz val="11" />` (with a space, as some programs save them) were skipped while the log said they were raised.
