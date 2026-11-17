@@ -83,6 +83,12 @@ Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at 
 300-page file costs the same as 300. So: fix every Severe and Major; then the Minors.
 
 ## The workflow (every file)
+**Student records: stop and ask first.** Before step 1, look at what the file holds. If it looks like student records (a
+roster, grades or scores next to names, student ID numbers, student emails, accommodation or advising notes), don't fix it
+yet. Tell the instructor plainly that student records are protected (FERPA) and don't belong in a course file or in a chat,
+and ask them to send a copy without the student information. Carry on only if they say the file has no real student
+records (for example, the names are made up). Names of authors, guest speakers or the instructor are fine.
+
 1. **Copy first.** Never edit the original. Work on a copy in the working folder; name outputs `*_Accessible.*`.
    Start a `notes.json` for the report (see step 6) and save every script's output with `| tee -a fixlog.txt`.
 2. **Identify the kind of file** (table below) and run its pre-flight to see what's wrong.

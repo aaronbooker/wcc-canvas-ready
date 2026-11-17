@@ -11,6 +11,8 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
   - `pdf_tagfix.py`: `--list` pairs each figure with the caption nearest it on the page and flags alt text that drifted onto the wrong picture (InDesign). The new `alt_from_caption` key writes alt text from the caption.
   - `pdf_tagfix.py` `link_refs` (on by default) retags link tags that go nowhere (footnote numbers) as `<Reference>`. WCC's Panorama did not flag these ("This link does not have a URL"), so the report lists F19 as Possible only.
 - `pdf_tagfix.py`: a figure whose only text is a caption tagged inside it is no longer turned into a paragraph.
+- Student records: when a file looks like it holds student records (a roster, grades next to names, student IDs or emails), Claude stops and asks the instructor for a copy without them before fixing anything.
+- Notes in the skill and the faculty guide now describe past test files only by kind, without naming their topics or the colleagues' departments.
 
 ## v1.0.6 (November 16, 2026)
 
