@@ -373,6 +373,9 @@ re-saves with openpyxl, which drops charts and validation).
   with contrast, alt, headings and title cleared but one Severe "Check reading order" whose trigger isn't
   known yet (two-column layout with list bullets tagged apart from their text). Report it; the design file is
   the real fix.
+  Tag order is one known trigger: a one-page test PDF whose picture tags ran out of page order (as InDesign
+  exports them) kept "Check reading order" until the tags were put in page order, then scored 100% (Nov 16,
+  2026). `pdf_tagfix.py` doesn't reorder tags and `preflight_pdf.py` doesn't check the order yet.
 
 **Printed from a browser, Google Docs or Google Forms** (Skia/Chrome PDFs, already tagged): `pdf_tagfix.py` fixes
 in place. **F13** "List item structure is missing" (Major, every Chrome-printed list): each <LI> gets an <Lbl> and
@@ -418,8 +421,8 @@ replacement** (`fix: ["0 0.2 0.6 0 k", "0.549 0.404 0.088 rg"]`): an orange dark
 at 5:1 by PDF.js's own conversion, so Panorama reads CMYK lighter than it draws it. **F18b** text on a picture:
 Panorama measures the picture's pixels (gray on a dark photo was flagged), so **YOU** check it by eye and recolor.
 **YOU** check every new color on a render. **F19** link tags that go nowhere (footnote numbers): not flagged at WCC,
-retagged anyway. Tested Nov 16, 2026 on a one-page test PDF (findings in the private notes); the RGB replacement for
-CMYK is still waiting for its score.
+retagged anyway. Tested Nov 16, 2026 on a one-page test PDF (findings in the private notes): with the CMYK color
+swapped for RGB and the tags in page order it scored 100%.
 
 **Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
