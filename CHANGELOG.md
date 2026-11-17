@@ -2,8 +2,13 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
-## Unreleased
+## v1.0.7 (November 17, 2026)
 
+- Fillable PDF forms (made in InDesign or Acrobat, with boxes to type in) now have their own steps. These forms usually have no accessibility tags, so Panorama scores them 0%, and the tags can't be added to the form as it is. The skill rebuilds the form as a printable PDF with real headings, write-in lines, check boxes and tables for the rating grids. Because the rebuilt PDF has no boxes to type in, the skill asks first whether you want Word, PDF or both. A seven-page bilingual student information form went from 0% to 100% in Panorama.
+- An asterisk inside a word (the German gender star, as in "Schüler*innen") is no longer dropped when a PDF is rebuilt.
+- Tables in rebuilt PDFs get column widths that fit their words. Before, every column was the same width, and long words were split in the middle ("Sportveranstaltung" on one line, "en" on the next), which changes what a screen reader reads.
+- The report lists a missing PDF title once instead of twice.
+- PDF rebuilds work on a Mac without extra setup.
 - Monica Riess is credited as a collaborator in `NOTICE` and the README. She shared her `pdf-accessibility-updater` and `pptx-accessibility-updater` skills and gave permission to use anything in them. Each rule adopted from them will be listed here with credit to her, after it is tested against WCC's Panorama.
 - Four PDF rules adapted from Monica Riess's `pdf-accessibility-updater`, tested on a one-page test PDF in WCC's Panorama (Nov 16):
   - `preflight_pdf.py` F17: checks that the tags point at real page content. A tag that points at content missing from the page is what Panorama reports as "The tag is empty" (Minor). Screen readers can also find such pages empty. The report counts it and lists it under "Check these yourself".
@@ -21,14 +26,6 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
   - PowerPoint: logos repeated on every slide are drafted as decorative; slides are grouped in more cases to clear "Check reading order of slide" (placeholders first, then the rest grouped; a photo edge touching the title box no longer blocks it); each slide uses its own slide master's colors; a text box turned into a slide title keeps the color it had.
   - PDF: heading levels are closed up so none is skipped; a rebuilt PDF that has links goes through Chrome, because LibreOffice's links were flagged on every page; slide decks saved as untagged PDFs have their own rebuild script (`pdf_slides2md.py`).
   - HTML: hidden slides and panels are measured too; text inside a colored box takes the box's own text color; text on a color gradient is checked against every color in it; a page that is really RTF is converted first.
-
-## v1.0.7 (November 16, 2026)
-
-- Fillable PDF forms (made in InDesign or Acrobat, with boxes to type in) now have their own steps. These forms usually have no accessibility tags, so Panorama scores them 0%, and the tags can't be added to the form as it is. The skill rebuilds the form as a printable PDF with real headings, write-in lines, check boxes and tables for the rating grids. Because the rebuilt PDF has no boxes to type in, the skill asks first whether you want Word, PDF or both. A seven-page bilingual student information form went from 0% to 100% in Panorama.
-- An asterisk inside a word (the German gender star, as in "Schüler*innen") is no longer dropped when a PDF is rebuilt.
-- Tables in rebuilt PDFs get column widths that fit their words. Before, every column was the same width, and long words were split in the middle ("Sportveranstaltung" on one line, "en" on the next), which changes what a screen reader reads.
-- The report lists a missing PDF title once instead of twice.
-- PDF rebuilds work on a Mac without extra setup.
 
 ## v1.0.6 (November 16, 2026)
 

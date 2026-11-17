@@ -14,11 +14,12 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.7** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.7** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
-contrast checks, caption-paired alt text and footnote-link fix are adapted from Monica Riess's `pdf-accessibility-updater`.
+contrast checks, caption-paired alt text and footnote-link fix are adapted from Monica Riess's `pdf-accessibility-updater`. A second
+round on Nov 17 tested 50 more course files of every type in Panorama: 48 now score 100% (see "Learned from 50 course files").
 
 ## Update check (first step of every chat)
 Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It asks GitHub for
@@ -717,8 +718,12 @@ lives in the title above and in this log. Bump it for each change that goes out,
   report now predicts Excel contrast. The same workbook then scored 100%. **Excel links** (X9): linked cells that show
   only their web address are listed and renamed with `--link`, and predicted (Major). **Excel font sizes**: sizes written
   as `<sz val="11" />` (with a space, as some programs save them) were skipped while the log said they were raised.
-- **v1.0.7** (Nov 16, 2026): **fillable PDF forms** get their own route (ask first: the rebuild drops the fill-in boxes);
+- **v1.0.7** (Nov 17, 2026): **fillable PDF forms** get their own route (ask first: the rebuild drops the fill-in boxes);
   a bilingual InDesign form went 0% → 100% in Panorama. `md2docx.js`: `\*` keeps a literal asterisk (it was dropped
   as italic markup), and table columns are sized from their content (equal widths split long words mid-word).
   `fix_report.py` lists a missing PDF title once, not twice. `docx2pdf_ua.py` runs `postprocess_pdf.py` with the same
   Python it runs on; `export_pdf.sh` works on a Mac, which has no `timeout` command.
+  **Four PDF rules from Monica Riess** (F17 tag wiring, F18 contrast in each color space, caption-paired alt text,
+  footnote links as `<Reference>`). **PDF tag order** (F20, `pdf_order.py`): content numbers renumbered to follow the
+  tags; 0% → 100%. **Student records**: Claude stops and asks for a copy without them. **50-file round** (Nov 17): 48
+  of 50 course files at 100% in Panorama; the rules it taught are under "Learned from 50 course files".
