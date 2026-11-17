@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.8
+# WCC Canvas Ready, v1.0.9
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.8** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.9** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -24,24 +24,36 @@ round on Nov 17 tested 50 more course files of every type in Panorama: 48 now sc
 ## Update check (first step of every chat)
 Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It asks GitHub for
 the newest release number. Nothing about the instructor, their files or the chat is sent. It prints one of three things:
-- **`UPDATE AVAILABLE` message** (a line plus three numbered steps): show all of it to the instructor, as printed, at the top of
-  your first reply, in plain words with no extra jargon, then carry on with their request. Don't stop the work to update. If they
-  ask how to update, those three steps are the answer; if they get stuck, walk them through one step at a time.
+- **`UPDATE AVAILABLE` message** (a line plus three numbered steps): show all of it to the instructor, as printed, in plain
+  words with no extra jargon, then carry on with their request. Don't stop the work to update. Put it where the instructor is
+  sure to see it, using the first of these that fits:
+  1. If you have a tool that sends a message exactly as written (such as `SendUserMessage`), send it with that before any
+     other work.
+  2. Otherwise put it at the top of the same message as your first question to the instructor. If you ask with a question
+     tool, put it in the question text itself.
+  3. If you ask no questions, put it at the top of your final reply.
+
+  Whichever you used, show it once more after the delivered report ("Update notice backstop" under Delivering). Why: in some
+  claude.ai chats, text written between tool calls is summarized and never shown as written. On Nov 17, 2026 a notice written
+  just before a question was lost that way. If they ask how to update, those three steps are the answer; if they get stuck,
+  walk them through one step at a time.
 - **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
 - **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub, or GitHub only gave an out-of-date
   answer. This is normal on many accounts (Free plans, and any account with code-execution network access off) and it does
   **not** mean the skill is current. Do the web fallback once, quietly:
   1. If you have a web fetch tool, fetch `https://raw.githubusercontent.com/aaronbooker/wcc-canvas-ready/main/VERSION`. Your web
      tools run outside the sandbox, so this can work when the script can't. It is one line with the newest version number,
-     such as `1.0.8`. Only if that fetch fails or doesn't show a version, fetch
+     such as `1.0.9`. Only if that fetch fails or doesn't show a version, fetch
      `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest` instead and read the release number from the page.
      (A web tool can return a cached copy of the releases page: on Nov 17, 2026 it read v1.01 when the latest was v1.0.6.)
-  2. Run `python3 -I scripts/check_update.py --compare 1.0.8` with the number you read. It needs no network and compares
+  2. Run `python3 -I scripts/check_update.py --compare 1.0.9` with the number you read. It needs no network and compares
      correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`,
-     show the whole message. If it prints nothing, this copy is current: say nothing. If it prints `UPDATE CHECK BLOCKED`, the
-     number you read is older than this copy, so the page was out of date and the check is not confirmed: go to step 3.
+     show the whole message, placed as above. If it prints nothing, this copy is current: say nothing. If it prints
+     `UPDATE CHECK BLOCKED`, the number you read is older than this copy, so the page was out of date and the check is not
+     confirmed: go to step 3.
   3. If you have no web fetch tool, or the fetches are refused or show no version, or `--compare` said BLOCKED: say nothing,
-     **unless** a BLOCKED line says `STALE` (this copy is over 30 days old). Then add one line to your first reply: "I couldn't
+     **unless** a BLOCKED line says `STALE` (this copy is over 30 days old). Then show this one line, placed the same way as
+     an update notice (above): "I couldn't
      check for a newer version of this skill from here. Yours is vX.Y.Z from <date>; the newest is always at
      https://github.com/aaronbooker/wcc-canvas-ready/releases/latest".
   Never retry, and never hold up the instructor's work for any of this.
@@ -646,6 +658,11 @@ is a file headed for Canvas like any other. Nov 15: two PDFs built with a plain 
 have a summary", Minor) while their preflight looked fine except F6 (0/2). Rebuilt with `docx2pdf_ua.py` (F6 2/2) they scored 100%.
 Run `preflight_pdf.py` on every PDF you deliver and treat an F6 miss as a stop.
 
+**Update notice backstop.** If the update check printed `UPDATE AVAILABLE` (directly or through `--compare`), end the reply that
+delivers the last report with this one line, with the new version filled in: "A newer version of this skill (vX.Y.Z) is
+available. To update: https://github.com/aaronbooker/wcc-canvas-ready/releases/latest". Put it after the report, never inside
+it: the report is pasted exactly as `fix_report.py` prints it. Do this even if the notice was already shown at the start.
+
 # Testing in Canvas (optional)
 Upload to an **unpublished, hidden** folder only, log each upload with its rollback (delete the file), and
 read the score from the file list (the Panorama icon's label reads "Score: N%"). Scans take 1–15 minutes.
@@ -738,3 +755,8 @@ lives in the title above and in this log. Bump it for each change that goes out,
   an out-of-date copy of the releases page: Claude reads the one-line `VERSION` file first, and `check_update.py --compare`
   says BLOCKED (not "newer than the latest release") when the number it is given is older than this copy. The script's own
   check skips a source that answers with an older number and tries the next one.
+- **v1.0.9** (Nov 17, 2026): the update notice is shown with the first question (or sent with a message tool) and repeated
+  after the report, because in some claude.ai chats text written between tool calls is summarized and never shown. The
+  "couldn't check" line for a stale copy is placed the same way. `fix_report.py` drops the rebuild's "wrote … blocks … tables"
+  line from "Changes made". `content_check.py` names the original's pages that have no text (scanned pages) instead of
+  counting their words as added.

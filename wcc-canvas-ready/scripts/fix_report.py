@@ -277,7 +277,8 @@ elif before is None: M += ['The original is a different file type, so it was not
 else: M += ['The checks found nothing to fix in the original.', '']
 def tidy(lines):
     """Fixer output -> readable change list: drop tool noise, and fold per-slide/per-page repeats into one line."""
-    noise = re.compile(r'Warning|Traceback|^\s*File "|^/usr/|^return self\.|^\s*\^|^\(|not in JSON: \[\]$')
+    noise = re.compile(r'Warning|Traceback|^\s*File "|^/usr/|^return self\.|^\s*\^|^\(|not in JSON: \[\]$'
+                       r'|^wrote \S+ (?:blocks \d+ tables \d+|\| table summaries)')   # md2docx.js / docx2pdf_ua.py progress lines
     keep, groups, order, orig1 = [], {}, [], {}
     merged = []
     for l in lines:                   # a quoted slide text with a line break was printed over two lines: rejoin
