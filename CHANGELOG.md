@@ -13,6 +13,9 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - `pdf_tagfix.py`: a figure whose only text is a caption tagged inside it is no longer turned into a paragraph.
 - Student records: when a file looks like it holds student records (a roster, grades next to names, student IDs or emails), Claude stops and asks the instructor for a copy without them before fixing anything.
 - Notes in the skill and the faculty guide now describe past test files only by kind, without naming their topics or the colleagues' departments.
+- PDF: Panorama's "Check reading order" (Severe, 0%) on tagged PDFs, the kind InDesign exports, is now predicted and fixed. Seven one-page test PDFs showed what Panorama checks: on each page, the numbers that tie the text and pictures to their tags must go up in tag order. Where things sit on the page, and the order they are drawn, made no difference. `preflight_pdf.py` checks this as F20. `pdf_tagfix.py` now renumbers the content to follow the tags by default (`mcid_order`). This changes nothing a reader sees or hears. A test PDF went from 0% to 100% with that default alone (Panorama, Nov 17). On a 68-page InDesign file the check cleared every flagged page, and each page looks the same (checked on this computer, not in Panorama).
+- PDF: a new check, F21, asks whether the tag order follows the page: top to bottom in a column, left to right on a line. Panorama doesn't check this, but a screen reader reads the tags in that order. The report lists it as something for a person to check, not as part of the score. `pdf_tagfix.py` `"tag_order": true` moves only the tags that are clearly out of place. It changes what a screen reader reads first, so the instructor is asked before it is used.
+- `pdf_order.py` is new and holds both checks. It found no problem in the faculty guide or in PDFs the skill rebuilt.
 
 ## v1.0.6 (November 16, 2026)
 

@@ -250,3 +250,22 @@ def find_links(el):
         if isinstance(it, pikepdf.Dictionary) and '/S' in it: find_links(it)
 find_links(root.StructTreeRoot)
 print(ok(not nolink), f'F19 link tags that go nowhere (footnote numbers tagged as links): {len(nolink)}')
+
+# F20 [WCC Panorama "Check reading order" (Severe)]: on each page, the MCID numbers of text and pictures must go up in
+# tag order. Seven one-page test PDFs (Nov 17, 2026): numbers out of tag order were flagged; the same tags renumbered
+# scored 100%, whatever the page position or drawing order. Fix in place: pdf_tagfix.py (mcid_order, on by default).
+# F21: does the tag order follow the page (top to bottom in a column, left to right on a line)? Panorama does not check
+# this, but a screen reader reads the tags in order (WCAG 1.3.2). Fix: pdf_tagfix.py "tag_order": true, or by hand.
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pdf_order
+OB, OT = pdf_order.boxes(pl)
+num = pdf_order.number_order(pdf, pdf_order.content(pl))
+print(ok(not num), 'F20 MCID numbers go up in tag order (text and pictures):',
+      {p + 1: v[0] for p, v in sorted(num.items())} or 'yes')
+for p, (k, seq) in sorted(num.items())[:4]: print(f'    page {p + 1}: MCIDs in tag order start {seq}')
+inv = pdf_order.inversions(pdf, OB, OT)
+print(ok(not inv), 'F21 tag order follows the page (top to bottom in a column, left to right on a line):',
+      {p + 1: len(v) for p, v in sorted(inv.items())} or 'yes')
+ex = [(p, a, b) for p, v in sorted(inv.items()) for a, b in v[:2]]
+for p, a, b in ex[:8]: print(f'    page {p + 1}: "{a}" is tagged before "{b}", which comes first on the page')

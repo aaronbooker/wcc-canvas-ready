@@ -176,7 +176,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 |---|---|---|---|---|
 | The item does not have an alternative description | all | **Severe** | `docx_alt.py` / `pptx_alt.py` / `pdf_tagfix.py` alt | WCAG 1.1.1 |
 | Insufficient contrast between foreground text and background | all | **Severe** (Major in Word and Excel) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`). **Excel:** `xlsx_fix.py` X7/X8: mixed formatting inside a colored cell is flagged whatever its colors, and colored text on a colored fill can be flagged even at 8:1, so those become plain, black or white text | WCAG 1.4.3 |
-| Check reading order (PDF) | PDF | **Severe** | see F10–F12 | Panorama |
+| Check reading order (PDF) | PDF | **Severe** | see F10–F12; content numbers (MCIDs) out of tag order (F20): `pdf_tagfix.py` renumbers them (`mcid_order`, on by default) | Panorama |
 | The document's heading structure is not properly nested | Word | **Severe** | `postprocess_docx.py` (levels) | Panorama (WCAG best practice) |
 | Check reading order of slide | PowerPoint | Major | `pptx_fix.py`: title first, the rest of a busy slide (3+ other shapes) grouped as one unit; other slides in column-first order. Grouping cleared three slides that stayed flagged in every order tried (Nov 15, 2026). Left over: a person checks the flagged slides and ticks **Verify Reading Order** in Panorama. After the fixer it stayed only on decks with grid-like slides (rows of separate text boxes: exam-prep cards, a Jeopardy board, stat cards) and on two slides with staggered overlapping screenshots; `fix_report.py` predicts it from that | WCAG 1.3.2 |
 | The document does not have slide titles | PowerPoint | Major | `pptx_fix.py` (title placeholders) | WCAG 2.4.2 |
@@ -408,10 +408,9 @@ re-saves with openpyxl, which drops charts and validation).
   so the design survives. Tested on two InDesign flyers: 0% → 70% (only Minor small print left), and 0% → 0%
   with contrast, alt, headings and title cleared but one Severe "Check reading order" whose trigger isn't
   known yet (two-column layout with list bullets tagged apart from their text). Report it; the design file is
-  the real fix.
-  Tag order is one known trigger: a one-page test PDF whose picture tags ran out of page order (as InDesign
-  exports them) kept "Check reading order" until the tags were put in page order, then scored 100% (Nov 16,
-  2026). `pdf_tagfix.py` doesn't reorder tags and `preflight_pdf.py` doesn't check the order yet.
+  the real fix. One known trigger is **content numbers out of tag order** (F20): InDesign numbers each page's
+  content (MCIDs) in one order and can list the tags in another, and Panorama flags that. `pdf_tagfix.py` now
+  renumbers the content to follow the tags by default, which cleared the flag on test PDFs (Nov 17, 2026).
 
 **Printed from a browser, Google Docs or Google Forms** (Skia/Chrome PDFs, already tagged): `pdf_tagfix.py` fixes
 in place. **F13** "List item structure is missing" (Major, every Chrome-printed list): each <LI> gets an <Lbl> and
@@ -459,6 +458,22 @@ Panorama measures the picture's pixels (gray on a dark photo was flagged), so **
 **YOU** check every new color on a render. **F19** link tags that go nowhere (footnote numbers): not flagged at WCC,
 retagged anyway. Tested Nov 16, 2026 on a one-page test PDF (findings in the private notes): with the CMYK color
 swapped for RGB and the tags in page order it scored 100%.
+**F20 content numbers follow the tags** (`pdf_order.py`): every piece of tagged content on a page has a number
+(MCID). Panorama's "Check reading order" (Severe → 0%) fires when, on a page, the numbers of the text and pictures
+don't go up in tag order. Seven one-page test PDFs (Nov 17, 2026) showed it compares tags with **those numbers only**,
+not with where things sit or the order they are drawn: tags in the right order but numbered out of order were
+flagged, and the same file renumbered scored 100%. Shapes with no text (table-cell backgrounds Chrome draws first) are
+left out of the check. `pdf_tagfix.py` renumbers each page's content to follow the tags (`mcid_order`, on by
+default; content inside Form XObjects is left alone). The page looks the same and a screen reader reads the same
+order, so this needs no question to the instructor. A 68-page InDesign file: 19 flagged pages → 0, every tag's text
+and every page's look unchanged.
+**F21 tag order follows the page** (`pdf_order.py`): Panorama does **not** check this, but a screen reader reads the
+tags in order (WCAG 1.3.2). A tag that comes after something clearly below it in the same column, or clearly to its
+right on the same line, is out of order; row-first and column-first orders both pass, and so do two-column pages read
+column by column. `fix_report.py` lists it under "might also flag" as a check for a person, not in the score.
+`"tag_order": true` moves only the tags that are clearly out of order and keeps the rest in place. **Ask the
+instructor first** and tell them which tags moved (the fixer prints them): it changes what a screen reader reads
+first. Running heads and page numbers that are tagged instead of marked as artifacts also fail F21.
 
 **Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
@@ -472,7 +487,7 @@ swapped for RGB and the tags in page order it scored 100%.
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
 `colors` [["old op","new op"]] (exact operators from the page stream, fills lowercase `rg`/`k`, outlines
 uppercase `RG`/`K`; copy them from F18), `drop_empty`, `link_refs` (default on), `alt_from_caption` (`true` or a
-list of figure numbers). **Captioned pictures (InDesign booklets, grids of photos):** `--list` prints each figure's
+list of figure numbers), `mcid_order` (on by default), `tag_order` (when F21 fails and the instructor agrees). **Captioned pictures (InDesign booklets, grids of photos):** `--list` prints each figure's
 caption (the `<Caption>` tagged inside or next to it; in a grid, the one closest on the page) and `CHECK` when its alt
 text matches another figure's caption instead: InDesign lists figures out of page order, so alt text written in page
 order lands on the wrong picture. `alt_from_caption` writes "heading: caption" as the alt; **YOU** read each one in the
@@ -500,8 +515,8 @@ measures on the rendered page:
 - **"Check reading order of slide" that remains** after `pptx_fix.py`: the instructor checks the order (fixing
   any slide that is wrong) and ticks Verify Reading Order in Panorama; that clears it (tested, 100%).
 - **Small print in a designed PDF** (8–11 pt legal lines): needs the InDesign/Canva source.
-- **"Check reading order" (Severe) on designed PDFs** (multi-page brochures, two-column flyers): fix the design
-  file's reading order and export again. (Google Forms prints are now rebuilt with `--cards`.)
+- **"Check reading order" (Severe) on designed PDFs** (multi-page brochures, two-column flyers): `pdf_tagfix.py`
+  renumbers the content to follow the tags (F20); if the flag stays, fix the design file's reading order and export again. (Google Forms prints are now rebuilt with `--cards`.)
 - **Files the tools can't open** (a password-protected or damaged .doc): Panorama may still score them; ask the
   owner for an unprotected copy.
 - **Pages over 3000 words** (Minor): `html_split.py page.html out` splits at section headings into parts under
@@ -556,7 +571,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
 | fix_report.py | the report that goes with every output: changes, decisions, what to check, predicted Panorama flags and score; printed in full for the chat, `--pdf` for an accessible PDF copy |
 | pptx_order_preview.py | slides rendered with the reading order numbered, to ask the instructor; answers go back as `pptx_fix.py --keep-order` / `--order-file` |
-| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links |
+| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links, content numbers, tag order |
+| pdf_order.py | tag order in a tagged PDF: content numbers against the tags (F20, what Panorama checks; renumbering) and tags against the page (F21); used by `preflight_pdf.py` and `pdf_tagfix.py` |
 | pdf_flow2md.py | untagged one-column PDF (saved web page) → Markdown for the rebuild |
 | pdf_tag2html.py | tagged browser/Google print → clean 12 pt HTML from its structure tree (then print and `pdf_tagfix.py`); `--cards` for Forms summaries, `--describe-links` for bare-address links |
 | html_split.py | split an HTML page over 3000 words at section headings |
