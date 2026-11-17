@@ -1,5 +1,6 @@
 """Fix an .xlsx for WCC Panorama by editing the package XML (no openpyxl round-trip, so nothing is dropped).
 Usage: python3 xlsx_fix.py in.xlsx out.xlsx --title "Workbook title" [--author "Name"] [--a1 "Sheet name::text" ...]
+       [--link "shown text::new text" ...]
 X1 [WCAG+Panorama 2.4.2] "The title is missing from the document's properties" (Major): sets dc:title.
 X2 [WCC Panorama] "The font size is smaller than 11 points" (Minor, one per cell!): every <sz> in styles.xml
    raised to >= 12; column widths and custom row heights scaled by the largest raise so text still fits.
@@ -16,6 +17,10 @@ X8 [WCAG 1.4.3 + WCC Panorama] same flag for colored text on a colored fill: Pan
    on light peach at 7.97:1 in one cell and passed it in the cells around it; black passed. So text on a solid fill
    that isn't already black or white becomes whichever of the two contrasts more, and text with no fill under
    4.5:1 is darkened just enough (+0.3). Only the cell formats involved get a new font; nothing else changes.
+X9 [WCAG 2.4.4 + Panorama] "The hyperlink text is not descriptive" (Major in Excel, Nov 16 2026: 3 cells showing
+   their own URL held a workbook at 30%): linked cells whose text is just an address are listed; YOU write
+   "Site name (domain)" and pass --link "https://site.org/page::Site name (site.org)". The cell's text changes;
+   its link, format and position stay.
 """
 import sys, os, re, zipfile, html
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,6 +30,7 @@ src, dst = args[0], args[1]
 title = args[args.index('--title') + 1] if '--title' in args else None
 author = args[args.index('--author') + 1] if '--author' in args else None
 A1TEXT = dict(args[i + 1].split('::', 1) for i, a in enumerate(args) if a == '--a1')
+LINKTEXT = dict(args[i + 1].split('::', 1) for i, a in enumerate(args) if a == '--link')
 zin = zipfile.ZipFile(src)
 files = {n: zin.read(n) for n in zin.namelist()}
 log = []
@@ -35,7 +41,7 @@ st = files['xl/styles.xml'].decode()
 sizes = [float(v) for v in re.findall(r'<sz val="([\d.]+)"', st)]
 low = [s for s in sizes if s < 12]
 ratio = max([12 / s for s in low], default=1.0)
-st = re.sub(r'<sz val="([\d.]+)"/>', lambda m: '<sz val="%s"/>' % (m.group(1) if float(m.group(1)) >= 12 else '12'), st)
+st = re.sub(r'<sz val="([\d.]+)"\s*/>', lambda m: '<sz val="%s"/>' % (m.group(1) if float(m.group(1)) >= 12 else '12'), st)
 files['xl/styles.xml'] = st.encode()
 if low: log.append(f'raised {len(low)} font definitions to 12 pt (smallest was {min(low):g}); widths x{ratio:.2f}')
 
@@ -129,6 +135,20 @@ for n in list(files):
         t = files[n].decode()
         if 'headerRowCount="0"' in t:
             log.append(f'{n}: table has no header row - turn on Header Row')
+
+# X9 link text that is just the address
+for sname, part, ref, text, addr in XC.links(XC.Book(files)):
+    if not XC.bare_url(text): continue
+    new = LINKTEXT.get(text.strip())
+    if not new:
+        log.append(f'sheet "{sname}" {ref}: link text is the address "{text.strip()}" - write "Site name (domain)" and rerun with --link "{text.strip()}::new text"')
+        continue
+    x = files[part].decode()
+    m = re.search(r'<c r="%s"([^>]*?)(?:/>|>.*?</c>)' % ref, x, re.S)
+    attrs = re.sub(r'\s+t="[^"]*"', '', m.group(1))
+    x = x[:m.start()] + f'<c r="{ref}"{attrs} t="inlineStr"><is><t xml:space="preserve">{html.escape(new, quote=False)}</t></is></c>' + x[m.end():]
+    files[part] = x.encode()
+    log.append(f'sheet "{sname}" {ref}: link text "{text.strip()}" -> "{new}"')
 
 # X1 X3 X6 core properties
 core = files.get('docProps/core.xml', b'').decode()
