@@ -2,6 +2,10 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Unreleased
+
+- The faculty guide in `docs/` now describes v1.0.8: the install and update steps use **+ Add**, then **Upload skill**, and the update no longer asks you to delete the old copy first (Claude offers to replace it). Version numbers, the update notice and the timeline are brought up to date. The guide's license note lists these changes.
+
 ## v1.0.8 (November 17, 2026)
 
 - The update steps now match claude.ai: go to Customize, then Skills, select **+ Add**, then **Upload skill**, and choose the file. The old steps named a menu path that no longer exists, and following them led to "Create a skill" instead. Fixed in the update message, in the skill's own instructions and in the README.
