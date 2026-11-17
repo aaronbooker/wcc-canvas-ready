@@ -1,13 +1,16 @@
 """Compare words in the original PDF against the rebuild. Usage: content_check.py orig.pdf new.docx|new.html|new.pdf
-Running headers/footers the original printed (page numbers, repeated titles) show up as "missing"; that is expected."""
+Running headers/footers the original printed (page numbers, repeated titles) show up as "missing"; that is expected.
+Pages of the original with no text (scans, pictures) are named, and the rebuild's extra words are then not called "added"."""
 import re, sys, zipfile, collections, html, pdfplumber
 pdf = pdfplumber.open(sys.argv[1])
-ow = []
-for pg in pdf.pages:
+ow, blank = [], []
+for i, pg in enumerate(pdf.pages, 1):
+    n = 0
     for w in pg.extract_words(extra_attrs=['fontname'], x_tolerance=1.5):
         if 'HiddenHorzOCR' in w['fontname'] or w['top'] < 45:
             continue
-        ow.append(w['text'])
+        ow.append(w['text']); n += 1
+    if not n: blank.append(i)
 otext = ' '.join(ow)
 otext = re.sub(r'(\w)- (\w)', r'\1\2', otext)          # line-end hyphens
 if sys.argv[2].endswith('.docx'):
@@ -26,4 +29,10 @@ print('original words:', sum(O.values()), ' rebuilt words:', sum(N.values()))
 miss = O - N
 extra = N - O
 print('in original, missing from rebuild (%d):' % sum(miss.values()), sorted(miss.items(), key=lambda kv: -kv[1])[:60])
-print('added in rebuild (%d):' % sum(extra.values()), sorted(extra.items(), key=lambda kv: -kv[1])[:40])
+for i in blank:   # a scanned or picture-only page: its words in the rebuild have nothing to match
+    print('page %d has no text to compare (a scan or picture): check its words in the rebuild by eye' % i)
+if blank:
+    print('in rebuild, not in the original\'s text (%d; mostly from the page(s) above, so not counted as added):'
+          % sum(extra.values()), sorted(extra.items(), key=lambda kv: -kv[1])[:40])
+else:
+    print('added in rebuild (%d):' % sum(extra.values()), sorted(extra.items(), key=lambda kv: -kv[1])[:40])
