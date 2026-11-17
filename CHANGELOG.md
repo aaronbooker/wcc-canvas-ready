@@ -8,6 +8,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - Excel: links whose visible text is just the web address are now found and renamed (for example "WCC Library (library.whatcom.edu)"), the same way as in Word and PowerPoint. Panorama flags them as "The hyperlink text is not descriptive" (Major). A test workbook went from 30% to 100%. The report now predicts this too.
 - Excel: font sizes under 12 points are now raised in every workbook. Workbooks saved by some programs write font sizes in a slightly different form, which the skill skipped while reporting that it had raised them, so Panorama still flagged them (found with test workbooks, November 16).
 
+- Updating is simpler: upload the new ZIP and say yes when Claude asks whether to replace the version you have. You no longer need to delete the old one first. The update message and the README say so.
 - When you ask about the skill itself (which version, whether there is an update, what it does), Claude answers and does not ask you for a file.
 - When you ask Claude to use the skill without attaching a file, it shows the steps for adding one in general terms. It no longer names a document it remembers from earlier chats.
 - Three lines in `pptx_fix.py` and `pdf_tag2html.py` were rewritten so the scripts also run on Python versions older than 3.12. They work the same way.
