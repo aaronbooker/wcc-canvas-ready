@@ -2,6 +2,16 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Unreleased
+
+- Monica Riess is credited as a collaborator in `NOTICE` and the README. She shared her `pdf-accessibility-updater` and `pptx-accessibility-updater` skills and gave permission to use anything in them. Each rule adopted from them will be listed here with credit to her, after it is tested against WCC's Panorama.
+- Four PDF rules adapted from Monica Riess's `pdf-accessibility-updater`, tested on a one-page test PDF in WCC's Panorama (Nov 16):
+  - `preflight_pdf.py` F17: checks that the tags point at real page content. A tag that points at content missing from the page is what Panorama reports as "The tag is empty" (Minor). Screen readers can also find such pages empty. The report counts it and lists it under "Check these yourself".
+  - `preflight_pdf.py` F18: text contrast, read in each character's own color space (gray, RGB and the CMYK colors InDesign uses), against the shape behind it. It prints the exact color operator and a passing replacement for `pdf_tagfix.py`; a gray fix made this way passed in Panorama. CMYK text gets an RGB replacement, because Panorama still failed an orange that was darkened in CMYK (its score is pending). F18b lists text on a picture for a check by eye, since Panorama measures the picture's pixels.
+  - `pdf_tagfix.py`: `--list` pairs each figure with the caption nearest it on the page and flags alt text that drifted onto the wrong picture (InDesign). The new `alt_from_caption` key writes alt text from the caption.
+  - `pdf_tagfix.py` `link_refs` (on by default) retags link tags that go nowhere (footnote numbers) as `<Reference>`. WCC's Panorama did not flag these ("This link does not have a URL"), so the report lists F19 as Possible only.
+- `pdf_tagfix.py`: a figure whose only text is a caption tagged inside it is no longer turned into a paragraph.
+
 ## v1.0.5 (November 16, 2026)
 
 - Version numbers now have three parts. This is the release after v1.04. The update check reads the old two-part numbers as v1.0.0 to v1.0.4. Copies at v1.04 or earlier do not recognize three-part numbers and will not show an update notice, so reinstall them once.

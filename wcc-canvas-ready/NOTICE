@@ -9,6 +9,11 @@ extended it to PowerPoint, Excel, PDF and HTML files, and tested it against
 Whatcom Community College's YuJa Panorama. WCC colleagues contributed test
 files.
 
+Monica Riess is a collaborator. She shared her `pdf-accessibility-updater`
+and `pptx-accessibility-updater` skills (November 2026) and gave permission
+to use anything in them in this skill. Rules and scripts adapted from her
+work are credited to her in CHANGELOG.md.
+
 Licensing:
 
 The software and the written documents are licensed separately.

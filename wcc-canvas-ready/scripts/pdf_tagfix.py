@@ -20,6 +20,11 @@ fix.json keys (all optional):
                                              whose text sits only in plain <NonStruct>/<Span>
                                              children gets that text directly (Chrome prints every heading this
                                              way; WCC counted each one as an empty tag, 11 on a 3-page sheet)
+  "link_refs": true (default)            F19 [Panorama "This link does not have a URL" (Minor)]: a <Link> tag with
+                                             no annotation that goes anywhere (footnote numbers) becomes <Reference>
+  "alt_from_caption": true | [n, ...]    F20 alt text from each figure's paired caption (+ the heading above it):
+                                             --list prints the pairs and CHECKs alt text that drifted onto the wrong
+                                             picture (InDesign). Explicit "alt" entries still win.
   "drop_empty": true                     F6 [Panorama] "The tag is empty and contains no content" (Minor):
                                              removes tags with no content and turns marked content that is only
                                              spaces into /Artifact; text drawn twice in the same spot (outline +
@@ -67,9 +72,116 @@ def walk(e, parent=None):
 for c in kids(pdf.Root.StructTreeRoot): walk(c)
 desc = lambda e: ''.join(text[pg][m] for pg, m in mcids(e) if pg is not None).strip()
 
+# ---- Figure captions (adapted from Monica Riess's pdf-accessibility-updater, Nov 2026). InDesign exports often list
+# <Figure> tags in a different order from the page, so alt text written in page order lands on the wrong picture.
+# The <Caption> tagged next to each figure (or inside it) stays paired with it, so use that pairing instead.
+same = lambda a, b: a.objgen == b.objgen if a.objgen != (0, 0) else a == b
+def is_struct(c): return isinstance(c, pikepdf.Dictionary) and '/S' in c
+def as_caption(c):
+    """c itself if it is a <Caption>, or the one <Caption> inside a wrapper (InDesign /Story) holding nothing else."""
+    if not is_struct(c): return None
+    if role(c) == '/Caption': return c
+    if role(c) in BLOCK: return None
+    found = []
+    def f(x):
+        for k in kids(x):
+            if is_struct(k):
+                if role(k) in BLOCK: found.append(k)
+                else: f(k)
+    f(c)
+    return found[0] if len(found) == 1 and role(found[0]) == '/Caption' else None
+boxes = defaultdict(dict)                          # page index -> mcid -> [x0, top, x1, bottom]
+for pi, pg in enumerate(pl.pages):
+    for o in pg.chars + pg.images:
+        m = o.get('mcid')
+        if m is None: continue
+        b = boxes[pi].setdefault(m, [o['x0'], o['top'], o['x1'], o['bottom']])
+        b[:] = [min(b[0], o['x0']), min(b[1], o['top']), max(b[2], o['x1']), max(b[3], o['bottom'])]
+def centre(e):
+    bs = [boxes[pg][m] for pg, m in mcids(e) if pg is not None and m in boxes[pg]]
+    if not bs: return None
+    return (sum(b[0] + b[2] for b in bs) / (2 * len(bs)), sum(b[1] + b[3] for b in bs) / (2 * len(bs)), mcids(e)[0][0])
+def bbox(e):
+    """(page, [x0, top, x1, bottom]) of everything e draws, or None when it draws on more than one page or nothing."""
+    ms = [(pg, m) for pg, m in mcids(e) if pg is not None and m in boxes[pg]]
+    if not ms or len({pg for pg, _ in ms}) != 1: return None
+    bs = [boxes[pg][m] for pg, m in ms]
+    return ms[0][0], [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
+def gap(a, b):
+    """Distance between two boxes on the page (0 when they touch), plus a little for being off-centre."""
+    gx = max(0, b[0] - a[2], a[0] - b[2]); gy = max(0, b[1] - a[3], a[1] - b[3])
+    return (gx * gx + gy * gy) ** .5 + 0.1 * abs((a[0] + a[2]) / 2 - (b[0] + b[2]) / 2)
+# Pair by position first: a figure and a caption that are each other's nearest on the page belong together. Tag order
+# alone fails when an export lists "picture, picture, caption, caption" (tested on a two-picture grid, Nov 16, 2026).
+_figs = [(i, bbox(e)) for i, (e, _) in enumerate(items) if role(e) == '/Figure']
+_caps = [(j, bbox(e)) for j, (e, _) in enumerate(items) if role(e) == '/Caption' and desc(e)]
+_figs = [(i, b) for i, b in _figs if b]; _caps = [(j, b) for j, b in _caps if b]
+by_pos = {}
+for i, fb in _figs:
+    near = [(gap(fb[1], cb[1]), j) for j, cb in _caps if cb[0] == fb[0]]
+    if not near: continue
+    d, j = min(near)
+    back = min((gap(fb2[1], dict(_caps)[j][1]), i2) for i2, fb2 in _figs if fb2[0] == fb[0])
+    if back[1] == i: by_pos[i] = items[j][0]
+def caption_of(e, parent):
+    """(caption element or None, note). Looks inside the figure, then on the page, then at the tags beside it."""
+    inner = [as_caption(c) for c in kids(e)]
+    inner = [c for c in inner if c is not None]
+    if inner: return inner[0], 'inside'
+    n = next((k for k, (x, _) in enumerate(items) if same(x, e)), None)
+    if n in by_pos: return by_pos[n], 'closest on the page'
+    sib = kids(parent) if parent is not None else kids(pdf.Root.StructTreeRoot)
+    idx = next((j for j, c in enumerate(sib) if is_struct(c) and same(c, e)), None)
+    if idx is None: return None, ''
+    cands = [as_caption(sib[j]) for j in (idx - 1, idx + 1) if 0 <= j < len(sib)]
+    cands = [c for c in cands if c is not None and desc(c)]
+    if len(cands) == 1: return cands[0], 'next to it'
+    if len(cands) == 2:          # a grid of captioned pictures: take the caption that sits closest on the page
+        fc, d = centre(e), []
+        for c in cands:
+            cc = centre(c)
+            if fc and cc and fc[2] == cc[2]: d.append(((fc[0] - cc[0]) ** 2 + (fc[1] - cc[1]) ** 2, c))
+        if len(d) == 2 and d[0][0] != d[1][0]: return min(d, key=lambda t: t[0])[1], 'closest on the page'
+        return None, 'ambiguous: a caption on both sides'
+    return None, ''
+def heading_before(n):
+    for e, _ in reversed(items[:n]):
+        if re.fullmatch(r'/H\d?', role(e)) and desc(e): return desc(e)
+    return ''
+STOP = {'with', 'from', 'that', 'this', 'image', 'photo', 'picture', 'figure', 'showing', 'shows', 'graphic', 'logo'}
+def words(s): return set(re.findall(r'[a-z]{4,}|\d+(?:\.\d+)?', (s or '').lower())) - STOP
+def caption_alt(n, cap):
+    h, c = heading_before(n), desc(cap)
+    return f'{h}: {c}' if h and len(h) <= 40 and h.lower() not in c.lower() else c
+fig_caps = {i: caption_of(e, p) for i, (e, p) in enumerate(items) if role(e) == '/Figure'}
+def link_target(el):
+    for it in kids(el):
+        if isinstance(it, pikepdf.Dictionary) and it.get('/Type') == '/OBJR':
+            a = it.get('/Obj')
+            if isinstance(a, pikepdf.Dictionary) and ('/A' in a or '/Dest' in a): return True
+    return '/A' in el and isinstance(el.A, pikepdf.Dictionary) and '/URI' in el.A
+dead_links = []
+def find_dead(e):
+    if not is_struct(e): return
+    if role(e) == '/Link' and not link_target(e): dead_links.append(e)
+    for c in kids(e): find_dead(c)
+for c in kids(pdf.Root.StructTreeRoot): find_dead(c)
+
 if '--list' in sys.argv:
     for i, (e, _) in enumerate(items):
         print(i, role(e), str(e.S), 'Alt=' + str(e.get('/Alt')) if role(e) == '/Figure' else '', repr(desc(e)[:70]))
+        if i in fig_caps:
+            cap, how = fig_caps[i]
+            if cap is None:
+                if how: print(f'    caption: {how}')
+                continue
+            ct, alt = desc(cap), str(e.get('/Alt', ''))
+            print(f'    caption ({how}): {ct[:90]!r}')
+            if alt.strip() and words(ct) and not (words(ct) & words(alt)):
+                other = [j for j, (c2, _) in fig_caps.items() if c2 is not None and j != i and words(desc(c2)) & words(alt)]
+                print(f'    CHECK: alt text does not match this caption' + (f'; it matches the caption of figure {other[:3]}' if other else ''))
+    for e in dead_links:
+        print(f'link that goes nowhere (retagged as Reference unless "link_refs": false): {desc(e)[:40]!r}')
     tables = []
     def ft(e):
         if not isinstance(e, pikepdf.Dictionary) or '/S' not in e: return
@@ -89,12 +201,34 @@ if cfg.get('title'):
     pdf.Root.ViewerPreferences.DisplayDocTitle = True
     log.append('title set')
 pdf.Root.Lang = cfg.get('lang', str(pdf.Root.get('/Lang', 'en-US')))
+afc = cfg.get('alt_from_caption')
+if afc:
+    # F20 alt text from each figure's own caption (plus the heading above it), for figures listed by number or all
+    # captioned figures with true. Fixes alt text that drifted onto the wrong picture. YOU read each one in the log.
+    want = set(fig_caps) if afc is True else {int(n) for n in afc}
+    for i in sorted(want):
+        cap, how = fig_caps.get(i, (None, ''))
+        if cap is None:
+            if afc is not True or '/Alt' not in items[i][0]:
+                log.append(f'figure {i}: no caption paired ({how or "none found"}); write its alt by hand')
+            continue
+        a = caption_alt(i, cap); items[i][0].Alt = a; log.append(f'alt on {i} from its caption: {a}')
+def own_text(e):   # a figure's text, leaving out a <Caption> tagged inside it
+    pg = pages.get(e.Pg.objgen) if '/Pg' in e else None
+    out = []
+    for k in kids(e):
+        if is_struct(k):
+            if as_caption(k) is None: out += mcids(k, pg)
+        elif isinstance(k, int): out.append((pg, int(k)))
+        elif isinstance(k, pikepdf.Dictionary) and k.get('/Type') == '/MCR':
+            out.append((pages.get(k.Pg.objgen, pg) if '/Pg' in k else pg, int(k.MCID)))
+    return ''.join(text[p][m] for p, m in out if p is not None).strip()
 if cfg.get('text_figures', True):
     # F15: a <Figure> that holds only text (Google Forms / Sheets legends and labels exported as figures) is text,
     # not an image: retag it /P so it is read as text and needs no alt (WCC: "no alternative description", Severe)
     n_tf = 0
     for i, (e, _) in enumerate(items):
-        if role(e) == '/Figure' and str(i) not in cfg.get('alt', {}) and '/Alt' not in e and desc(e):
+        if role(e) == '/Figure' and str(i) not in cfg.get('alt', {}) and '/Alt' not in e and own_text(e):
             e.S = pikepdf.Name('/P'); n_tf += 1
     if n_tf: log.append(f'figures that were only text retagged as paragraphs: {n_tf}')
 for n, alt in cfg.get('alt', {}).items():
@@ -267,5 +401,10 @@ if cfg.get('drop_empty'):
     for c in kids(pdf.Root.StructTreeRoot):
         if isinstance(c, pikepdf.Dictionary): prune(c)
     # rebuild the ParentTree entries for removed MCIDs is not needed: orphaned entries only point at live elements
+if cfg.get('link_refs', True) and dead_links:
+    # F19 [Panorama "This link does not have a URL", Minor] a <Link> with no annotation that goes anywhere is a
+    # footnote number or cross-reference (Word exports do this): retag it <Reference>. From Monica Riess's skill.
+    for e in dead_links:
+        e.S = pikepdf.Name('/Reference'); log.append(f'link that went nowhere retagged as Reference: {desc(e)[:40]!r}')
 pdf.save(dst)
 print('\n'.join(log))

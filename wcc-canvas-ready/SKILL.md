@@ -17,7 +17,8 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 **WCC Canvas Ready v1.0.5** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
-with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
+with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
+contrast checks, caption-paired alt text and footnote-link fix are adapted from Monica Riess's `pdf-accessibility-updater`.
 
 ## Update check (first step of every chat)
 Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It asks GitHub for
@@ -174,11 +175,12 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The link is broken | HTML | Major | real broken links: fix; **429 = false positive** | Panorama |
 | Sheet does not have text in cell A1 | Excel | **Minor** (first sheet only was flagged) | **YOU** write a one-line sheet description; `xlsx_fix.py --a1` | Panorama |
 | The font size is smaller than 11 points | all | Minor (counted per cell/run) | raise everything to **12 pt** | WCC Panorama |
-| The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty` | Panorama |
+| The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty`; a tag that points at content missing from the page (`preflight_pdf.py` F17, Nov 16): rebuild | Panorama |
 | Table does not have a summary | PDF | Minor | `pdf_tagfix.py` "summary" / `postprocess_pdf.py` | Panorama |
 | The hyperlink text is not descriptive | Word | **Major** | `docx_links.py` | WCAG 2.4.4 |
 | The Image is not inline with the text | Word | **Major** ×picture | `docx_inline.py` | WCAG 1.3.2 |
 | The hyperlink text is not descriptive | PDF | Minor | fix in the source; can't be fixed in place | WCAG 2.4.4 |
+| This link does not have a URL | PDF | **not flagged at WCC** (Nov 16: a footnote number tagged as a link with no URL passed; Minor elsewhere) | `pdf_tagfix.py` still retags such links `<Reference>` (`link_refs`, default) for screen readers; `preflight_pdf.py` F19, reported as Possible | Panorama |
 | The content is longer than 3000 words | HTML | Minor | `html_split.py` (ask first: the page becomes two) | Panorama |
 | The font size is smaller than 11 points | PDF | Minor ×runs | browser prints: `pdf_tag2html.py` rebuild at 12 pt; designed PDFs: the design file | Panorama |
 
@@ -406,6 +408,18 @@ or real footnote gets **"Check reading order" (Severe → 0%)**. Fix in the .doc
 `fix_baseline.py` (sub/superscripts → Unicode ₀–₉ ⁰–⁹, raised/lowered runs too) and `inline_notes.py`
 (footnotes → "Note N:" paragraphs after the citing paragraph). **F12** text drawn twice in the same place
 (an outline layer under a fill) is read twice: `pdf_tagfix.py drop_empty` keeps the top copy.
+**F17 tags point at real page content**: a tag that names marked content missing from its page, or page content no
+tag points at, reads as "empty page" in Acrobat's Read Out Loud; WCC's Panorama counted a tag naming missing content
+as "The tag is empty" (Minor, Nov 16). The report also puts it under "Check these yourself"; a rebuild fixes it.
+**F18 text contrast** (Severe): each character's color, in the color space it was drawn in (gray, RGB or CMYK `k`,
+which InDesign uses), against the filled shape behind it or white. It prints the exact operator and a passing one for
+`pdf_tagfix.py` `colors`, e.g. `fix: ["0.75 g", "0.43 g"]` (tested: passed at WCC). **CMYK text gets an RGB
+replacement** (`fix: ["0 0.2 0.6 0 k", "0.549 0.404 0.088 rg"]`): an orange darkened in CMYK failed twice at WCC even
+at 5:1 by PDF.js's own conversion, so Panorama reads CMYK lighter than it draws it. **F18b** text on a picture:
+Panorama measures the picture's pixels (gray on a dark photo was flagged), so **YOU** check it by eye and recolor.
+**YOU** check every new color on a render. **F19** link tags that go nowhere (footnote numbers): not flagged at WCC,
+retagged anyway. Tested Nov 16, 2026 on a one-page test PDF (findings in the private notes); the RGB replacement for
+CMYK is still waiting for its score.
 
 **Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
@@ -418,7 +432,12 @@ or real footnote gets **"Check reading order" (Severe → 0%)**. Fix in the .doc
 **In-place fix** (`pdf_tagfix.py in.pdf --list` numbers every paragraph-level tag and figure with its text):
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
 `colors` [["old op","new op"]] (exact operators from the page stream, fills lowercase `rg`/`k`, outlines
-uppercase `RG`/`K`), `drop_empty`. QR codes: decode them (OpenCV `QRCodeDetector`) and say where they go.
+uppercase `RG`/`K`; copy them from F18), `drop_empty`, `link_refs` (default on), `alt_from_caption` (`true` or a
+list of figure numbers). **Captioned pictures (InDesign booklets, grids of photos):** `--list` prints each figure's
+caption (the `<Caption>` tagged inside or next to it; in a grid, the one closest on the page) and `CHECK` when its alt
+text matches another figure's caption instead: InDesign lists figures out of page order, so alt text written in page
+order lands on the wrong picture. `alt_from_caption` writes "heading: caption" as the alt; **YOU** read each one in the
+log, and give uncaptioned figures their alt by hand. QR codes: decode them (OpenCV `QRCodeDetector`) and say where they go.
 
 # HTML rules
 `preflight_html.py page.html` (links, alt, captions, headings, length, pasted report markup), then
@@ -497,7 +516,7 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
 | fix_report.py | the report that goes with every output: changes, decisions, what to check, predicted Panorama flags and score; printed in full for the chat, `--pdf` for an accessible PDF copy |
 | pptx_order_preview.py | slides rendered with the reading order numbered, to ask the instructor; answers go back as `pptx_fix.py --keep-order` / `--order-file` |
-| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries |
+| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links |
 | pdf_flow2md.py | untagged one-column PDF (saved web page) → Markdown for the rebuild |
 | pdf_tag2html.py | tagged browser/Google print → clean 12 pt HTML from its structure tree (then print and `pdf_tagfix.py`); `--cards` for Forms summaries, `--describe-links` for bare-address links |
 | html_split.py | split an HTML page over 3000 words at section headings |
