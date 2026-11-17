@@ -8,7 +8,7 @@ A skill for Claude that gets course files ready for Canvas at Whatcom Community 
 
 [Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release). Save it and do not unzip it.
 
-A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-15_v5.pdf).
+A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-17_v7.pdf).
 
 ## Install in Claude
 
