@@ -189,7 +189,7 @@ for i, s in enumerate(prs.slides, 1):
                     if not ppr.get('algn'): ppr.set('algn', 'l')
                 # also bold, line spacing, anchor, insets and autofit: the master title style is usually bold, centred
                 # vertically and set at 90% line spacing, which made three headings bold and pushed one up into two
-                # lines over a map (test deck, Nov 15, 2026)
+                # lines over a map (a test deck, Nov 15, 2026)
                 lst_b = any(d.get('b') for d in el.iter(A + 'defRPr'))
                 bp = el.find('.//' + A + 'bodyPr')
                 if bp is not None:
