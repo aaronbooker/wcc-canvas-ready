@@ -565,8 +565,8 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
   photo under it.
 - **Google Slides decks** often have several slide masters, each with its own theme, and master text styles that set
   black text while the theme's text color is white. The fixer now reads each slide's own master and gives a promoted
-  title the color its text really had (it had written the theme's white: white on white). Confirmed: contrast flags
-  0% → 30%, all cleared.
+  title the color its text really had (it had written the theme's white: white on white). Confirmed: all contrast
+  flags cleared; with the two grouping rules below, the deck went 0% → 100%.
 - A slide with a **body placeholder plus a picture and a small text box** (a citation strip along the bottom) is
   flagged "Check reading order of slide" in visual order. Placeholders can't be grouped, so the fixer now keeps the
   placeholders first and groups the shapes after them. Confirmed on a test slide: 30% → 100%.
@@ -603,6 +603,7 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
   set `color: white` (49 Severe, only on hidden slides); text in such a box now takes the box's own color.
 - Text on a **CSS gradient** is measured against each of its colors, and the worst one counts (dark text on a
   light-to-dark blue card failed at the dark end). `html_fix.py` checks every stop and changes the one that fails.
+  Confirmed with the two rules above: slideshow page 0% → 100%.
 - An interactive page whose script holds a lot of text (a quiz game's questions) is "longer than 3000 words" (Minor,
   70%); it can't be split. Tell the instructor.
 
