@@ -2,7 +2,7 @@
 
 A skill for Claude that gets course files ready for Canvas at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what YuJa Panorama flags, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.0.5** (November 16, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.0.6** (November 16, 2026). See the [changelog](CHANGELOG.md).
 
 ## Download
 
@@ -30,9 +30,10 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 **To update:**
 
-1. Download the latest ZIP from the link above.
-2. In Customize, then Skills, open WCC Canvas Ready, turn it off, select the three-dot button, choose Delete, and confirm.
-3. Upload the new ZIP as in the install steps, then check the version again.
+1. Download the latest ZIP from the link above. Do not unzip it.
+2. Upload it as in the install steps (Customize, then Skills, then +, Create skill, Upload a skill). You do not need to delete the old version first.
+3. When Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
+4. Start a new chat and check the version again.
 
 ## What it does not do
 
@@ -43,7 +44,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 ## Folder layout
 
-- `wcc-canvas-ready.zip`: the installable skill, version 1.0.5.
+- `wcc-canvas-ready.zip`: the installable skill, version 1.0.6.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide.

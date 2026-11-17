@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.5
+# WCC Canvas Ready, v1.0.6
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.5** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.6** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -44,10 +44,17 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
   says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
   give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
-- You can't update the skill yourself: they download the latest zip from the link and replace the skill (Customize, Skills).
+- **A question about the skill itself is not a request to fix a file.** When the instructor only asks about the skill (which
+  version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
+  file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
+- You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, Skills, +,
+  Create skill, Upload a skill). Claude asks whether to replace the installed copy and they say yes. Don't tell them to
+  delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## No file in the chat? Show them how to add one
+This section is for an instructor who asks you to use the skill or fix a file (for example "make my file Canvas ready" or "run
+WCC Canvas Ready") without attaching one. It is not for questions about the skill itself (see the Update check section).
 New users often ask for help before attaching anything, or paste a Canvas link, or paste the text of the document. **Look first:**
 check the uploads folder and the conversation for a file. If there is one, start work. If there isn't, don't guess, don't work
 from pasted text (pasting strips the headings, tables, images and alt text that Panorama scores), and don't just say "please
@@ -67,6 +74,9 @@ upload a file". Reply with these steps, in plain words, and leave out the lines 
 Also say what happens next in one sentence: you will check the file, ask a few questions before big changes, and hand back a
 fixed copy with a report. If they sent a file type the skill doesn't handle (a photo of a page, a video, a .pages file), say
 which types it does handle and how to export to one.
+**Keep it generic.** Say "your file", never a specific one. Don't name or suggest a document, course or task you remember from
+earlier chats, memory or project knowledge (not "your syllabus", not "the Week 3 slides"). Work only on a file attached to
+this chat.
 
 ## How Panorama scores (WCC)
 Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at **70–100%**. One Severe flag in a
@@ -138,7 +148,7 @@ Ask during the fix, showing what you'd change:
 | .doc, .rtf, .odt | convert to .docx (LibreOffice), then as .docx | then convert back: `.rtf` → `rtf_post.py`; `.odt` → `odf_colors.py`; `.doc` → **deliver .docx** (see L1) | same as .docx |
 | .pptx | `preflight_pptx.py` | `pptx_alt.py` → `pptx_links.py` → `pptx_fix.py` (run the fixer **last**, so pictures marked decorative move behind the content) | alt text, link text, slides with no heading |
 | .ppt, .odp | convert to .pptx, fix; `.ppt` → **deliver .pptx** (L1); `.odp` → convert back, then `odf_colors.py` | | |
-| .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1 |
+| .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text" --link "URL::Name (domain)"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1, link text |
 | PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
 | PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
@@ -159,7 +169,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | Panorama says | File | WCC severity | Fix | Label |
 |---|---|---|---|---|
 | The item does not have an alternative description | all | **Severe** | `docx_alt.py` / `pptx_alt.py` / `pdf_tagfix.py` alt | WCAG 1.1.1 |
-| Insufficient contrast between foreground text and background | all | **Severe** (Major in Word) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`) | WCAG 1.4.3 |
+| Insufficient contrast between foreground text and background | all | **Severe** (Major in Word and Excel) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`). **Excel:** `xlsx_fix.py` X7/X8: mixed formatting inside a colored cell is flagged whatever its colors, and colored text on a colored fill can be flagged even at 8:1, so those become plain, black or white text | WCAG 1.4.3 |
 | Check reading order (PDF) | PDF | **Severe** | see F10–F12 | Panorama |
 | The document's heading structure is not properly nested | Word | **Severe** | `postprocess_docx.py` (levels) | Panorama (WCAG best practice) |
 | Check reading order of slide | PowerPoint | Major | `pptx_fix.py`: title first, the rest of a busy slide (3+ other shapes) grouped as one unit; other slides in column-first order. Grouping cleared three slides that stayed flagged in every order tried (Nov 15, 2026). Left over: a person checks the flagged slides and ticks **Verify Reading Order** in Panorama. After the fixer it stayed only on decks with grid-like slides (rows of separate text boxes: exam-prep cards, a Jeopardy board, stat cards) and on two slides with staggered overlapping screenshots; `fix_report.py` predicts it from that | WCAG 1.3.2 |
@@ -178,6 +188,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty`; a tag that points at content missing from the page (`preflight_pdf.py` F17, Nov 16): rebuild | Panorama |
 | Table does not have a summary | PDF | Minor | `pdf_tagfix.py` "summary" / `postprocess_pdf.py` | Panorama |
 | The hyperlink text is not descriptive | Word | **Major** | `docx_links.py` | WCAG 2.4.4 |
+| The hyperlink text is not descriptive | Excel | **Major** | `xlsx_fix.py --link` (X9) | WCAG 2.4.4 |
 | The Image is not inline with the text | Word | **Major** ×picture | `docx_inline.py` | WCAG 1.3.2 |
 | The hyperlink text is not descriptive | PDF | Minor | fix in the source; can't be fixed in place | WCAG 2.4.4 |
 | This link does not have a URL | PDF | **not flagged at WCC** (Nov 16: a footnote number tagged as a link with no URL passed; Minor elsewhere) | `pdf_tagfix.py` still retags such links `<Reference>` (`link_refs`, default) for screen readers; `preflight_pdf.py` F19, reported as Possible | Panorama |
@@ -360,6 +371,25 @@ re-saves with openpyxl, which drops charts and validation).
 - Charts, merged cells and embedded charts were **not** flagged by WCC's Panorama in Excel or PowerPoint, and
   neither were PowerPoint tables or embedded video (captions are still the instructor's job).
 - X5 Excel tables need a header row. X6 tool names out of author fields.
+- X9 **link text that is just the address** (Major at WCC: three linked cells showing their URLs held a workbook at
+  30%). The fixer lists them; **YOU** write "Site name (domain)" and rerun with `--link "https://site.org::Site name
+  (site.org)"`, one per link (show old and new text and ask, as for Word). With names written, the same workbook
+  scored 100% (Nov 16).
+- Practice workbooks (Nov 16): white text on medium green (2.7:1), gray text on white (2.9:1) and a bold-then-plain
+  cell on a light fill were **not** flagged, though the same formatting in a real workbook was. Panorama's Excel contrast
+  check isn't consistent, so the fixer still makes all of these safe; the report's contrast prediction can run high.
+- **X7/X8 contrast (Major at WCC).** The fixer does both; don't recolor cells by hand. A real workbook, Nov 16:
+  the skill predicted 100% and Panorama gave 30% (5 instances). Learned by uploading one-change copies:
+  - X7: **mixed formatting inside one cell** (a bold label then plain words) on a colored fill was flagged even
+    as black on light peach. Explicit run colors, no run colors and rewritten fills all still failed; plain text
+    passed (4 of 4). The fixer makes those cells plain text in the cell's font. Report which cells lost their bold.
+  - X8: **colored text on a colored fill** becomes black or white, whichever contrasts more. Panorama flagged dark
+    teal link text on light peach at 7.97:1 in 1 of 11 identical cells; black passed. "Just passing" isn't enough
+    in Excel. Text with no fill under 4.5:1 is darkened just enough, as in Word.
+  - Say in the report when text colors changed (for example colored link text now black), because color can carry
+    meaning. If a cell's color was the only way to tell rows apart, adding a text column is the instructor's call.
+- `fix_report.py` predicts Excel contrast from the same checks (`xlsx_colors.py`); colored text on a fill that it
+  can't rule out is listed as "Possible".
 
 # PDF rules
 **Decide the route first:**
@@ -512,7 +542,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | fix_baseline.py / inline_notes.py | before PDF export: sub/superscripts and footnotes that make WCC's PDF check Severe |
 | pptx_fix.py / pptx_alt.py | slide titles, title-first + grouped busy slides, column-first reading order, contrast, sizes, title / picture alt text |
 | pptx_bg.py | what is really behind a slide's text (background, master art, pictures, fills): used by the fixer and the pre-flight's contrast check (P7) |
-| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks |
+| xlsx_fix.py | workbook title, 12 pt fonts + widths, A1 and header checks, cell text contrast (X7/X8), link text (X9) |
+| xlsx_colors.py | Excel cell colors as Panorama judges them (theme, tint, indexed) and linked cells; used by xlsx_fix.py and fix_report.py |
 | rtf_post.py | heading outline levels and 12 pt in RTF exported by LibreOffice |
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
 | docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
@@ -551,3 +582,12 @@ lives in the title above and in this log. Bump it for each change that goes out,
 - **v1.0.5** (Nov 16, 2026): version numbers now have three parts (this is the release after v1.04). `check_update.py` reads the
   old two-part numbers as v1.0.0 to v1.0.4, so comparisons stay correct. The skill is now licensed under Apache 2.0; `LICENSE`
   and `NOTICE` are in the skill folder. Nothing about how files are fixed changed.
+- **v1.0.6** (Nov 16, 2026): a question about the skill itself (its version, updates, what it does) gets a plain answer, with no
+  request for a file. When an instructor asks to use the skill without attaching a file, the steps for adding one are generic:
+  never a specific document remembered from earlier chats. Three lines in `pptx_fix.py` and `pdf_tag2html.py` rewritten so they
+  also run on Python older than 3.12. Also the first release used to test the update notice in claude.ai.
+  **Excel contrast** (X7/X8, new `xlsx_colors.py`): a workbook predicted at 100% scored 30% for text contrast. Mixed
+  formatting inside colored cells becomes plain text; colored text on colored fills becomes black or white; the
+  report now predicts Excel contrast. The same workbook then scored 100%. **Excel links** (X9): linked cells that show
+  only their web address are listed and renamed with `--link`, and predicted (Major). **Excel font sizes**: sizes written
+  as `<sz val="11" />` (with a space, as some programs save them) were skipped while the log said they were raised.
