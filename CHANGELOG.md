@@ -2,6 +2,10 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.0.10 (November 17, 2026)
+
+- Test release to check the v1.0.9 update notice end to end. Nothing about how the skill works changed.
+
 ## v1.0.9 (November 17, 2026)
 
 - The update notice can no longer get lost. In a test on claude.ai with v1.0.6, the check correctly found v1.0.8, but Claude wrote the notice just before asking a question, and in that kind of chat text written between steps is summarized, not shown. The instructor never saw it. Now the notice goes where it will be seen: sent with a message tool if Claude has one, otherwise at the top of the first question (inside the question itself when Claude asks with a question box), otherwise at the top of the final reply. It is repeated as one line with the download link after the report. The "couldn't check" line for an out-of-date copy is placed the same way.
