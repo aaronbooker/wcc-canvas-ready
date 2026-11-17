@@ -12,6 +12,10 @@ z = zipfile.ZipFile(src); files = {n: z.read(n) for n in z.namelist()}
 doc = files['word/document.xml'].decode()
 BUL = re.compile(r'^(\s*)([-*•◦▪‣·])[\s ]+')
 NUM = re.compile(r'^(\s*)(\d{1,2}|[a-z])[.)][\s ]+')
+# Capital letters ("A. ", "B) ") are list items only in a run that starts at A and goes A, B, C... with nothing
+# between them (answer choices on a quiz). A lone "A. " is more likely an initial. Panorama flagged typed answer
+# choices on a quiz handout as "This element should be formatted as a list" (Major), Nov 17, 2026. They keep their letters.
+UP = re.compile(r'^(\s*)([A-Z])[.)][\s ]+')
 txt = lambda p: html.unescape(''.join(re.findall(r'<w:t(?:\s[^>]*)?>([^<]*)</w:t>', p)))
 
 num = files.get('word/numbering.xml', b'').decode()
@@ -29,11 +33,13 @@ def lvl(i, fmt, text):
     return (f'<w:lvl w:ilvl="{i}"><w:start w:val="1"/><w:numFmt w:val="{fmt}"/><w:lvlText w:val="{text}"/><w:lvlJc w:val="left"/>'
             f'<w:pPr><w:ind w:left="{720 * (i + 1)}" w:hanging="360"/></w:pPr>'
             + ('<w:rPr><w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default"/></w:rPr>' if fmt == 'bullet' else '') + '</w:lvl>')
-abs_b, abs_n = aid, aid + 1
+abs_b, abs_n, abs_u = aid, aid + 1, aid + 2
 abstract = (f'<w:abstractNum w:abstractNumId="{abs_b}"><w:multiLevelType w:val="hybridMultilevel"/>'
             + lvl(0, 'bullet', '') + lvl(1, 'bullet', 'o').replace('Symbol', 'Courier New') + '</w:abstractNum>'
             f'<w:abstractNum w:abstractNumId="{abs_n}"><w:multiLevelType w:val="hybridMultilevel"/>'
-            + lvl(0, 'decimal', '%1.') + lvl(1, 'lowerLetter', '%2.') + '</w:abstractNum>')
+            + lvl(0, 'decimal', '%1.') + lvl(1, 'lowerLetter', '%2.') + '</w:abstractNum>'
+            f'<w:abstractNum w:abstractNumId="{abs_u}"><w:multiLevelType w:val="hybridMultilevel"/>'
+            + lvl(0, 'upperLetter', '%1.') + lvl(1, 'lowerLetter', '%2.') + '</w:abstractNum>')
 new_nums = []
 def new_num(abs_id):
     global nid
@@ -116,19 +122,31 @@ lone = set()
 for a, b2 in cells:
     nums = [q for q in re.finditer(r'<w:p\b(?:(?!<w:p\b).)*?</w:p>', doc[a:b2], re.S) if NUM.match(txt(q.group(0)))]
     if len(nums) == 1: lone.add((a, b2))
+PARAS = list(re.finditer(r'<w:p\b(?:(?!<w:p\b).)*?</w:p>', doc, re.S))
+upper = set()   # paragraph starts that are capital-letter items in an A, B, C... run
+run_ = []
+for m in PARAS + [None]:
+    t = txt(m.group(0)) if m else ''
+    u = UP.match(t) if m and '<w:numPr>' not in m.group(0) and not re.search(r'<w:pStyle w:val="(Heading\d|Title)"', m.group(0)) else None
+    if u and ord(u.group(2)) - ord('A') == len(run_): run_.append(m.start()); continue
+    if len(run_) >= 2: upper.update(run_)
+    run_ = [m.start()] if u and u.group(2) == 'A' else []
 out, pos, cur, count = [], 0, None, 0
-for m in re.finditer(r'<w:p\b(?:(?!<w:p\b).)*?</w:p>', doc, re.S):
+for m in PARAS:
     p = m.group(0); t = txt(p)
     is_head = re.search(r'<w:pStyle w:val="(Heading\d|Title)"', p)
     b, nm = BUL.match(t), NUM.match(t)
+    up = UP.match(t) if m.start() in upper else None
     if nm and not b and cell_of(m.start()) in lone: nm = None
-    if is_head or '<w:numPr>' in p or not (b or nm) or len(t) < 3:
+    if up: b = nm = None
+    if is_head or '<w:numPr>' in p or not (b or nm or up) or len(t) < 3:
         cur = None if t.strip() else cur
         continue
-    kind = 'b' if b else 'n'
-    mk = b or nm
-    level = 1 if (mk.group(1) or re.search(r'<w:ind w:left="(?:[7-9]\d\d|[1-9]\d{3})"', p)) else 0
-    if cur is None or cur[0] != kind: cur = (kind, new_num(abs_b if kind == 'b' else abs_n))
+    kind = 'b' if b else ('u' if up else 'n')
+    mk = b or nm or up
+    level = 0 if up else (1 if (mk.group(1) or re.search(r'<w:ind w:left="(?:[7-9]\d\d|[1-9]\d{3})"', p)) else 0)
+    if cur is None or cur[0] != kind or (up and up.group(2) == 'A'):
+        cur = (kind, new_num({'b': abs_b, 'n': abs_n, 'u': abs_u}[kind]))
     q = strip_marker(p, len(mk.group(0)))
     numpr = f'<w:numPr><w:ilvl w:val="{level}"/><w:numId w:val="{cur[1]}"/></w:numPr>'
     if '<w:pPr>' in q:

@@ -38,6 +38,11 @@ TITLE = args[args.index('--title') + 1] if '--title' in args else None
 KEEP = {int(x) for x in args[args.index('--keep-order') + 1].split(',') if x.strip()} if '--keep-order' in args else set()
 import json as _json
 ORDER_FILE = {int(k): v for k, v in _json.load(open(args[args.index('--order-file') + 1])).items()} if '--order-file' in args else {}
+# --titles titles.json: {"5": "Slide title", ...} for slides with no heading-like text (YOU write them, the instructor
+# agrees). The title is added as a real title placeholder just above the slide's top edge: screen readers and Panorama
+# read it, the slide looks the same. Used for slides that are one picture of text (a deck of pasted slide images,
+# Nov 17, 2026: five such slides stayed "The document does not have slide titles", Major).
+TITLES = {int(k): v for k, v in _json.load(open(args[args.index('--titles') + 1])).items()} if '--titles' in args else {}
 prs = Presentation(src)
 SW, SH = prs.slide_width, prs.slide_height
 log = []
@@ -64,19 +69,57 @@ def fix_color(fg, bg, need):
             return c
     return target
 
-def theme_colors():
+def theme_colors(master=None):
+    """the theme colors of one slide master, with the master's color map applied (tx1, bg1, ... -> theme colors).
+    A deck can have several masters with different themes: a Google Slides export had a second master whose theme
+    swaps light and dark, and its slides' white titles on black were "fixed" against white (Nov 17, 2026)."""
     th = {}
-    master = prs.slide_masters[0]
+    master = master or prs.slide_masters[0]
     for rel in master.part.rels.values():
         if rel.reltype.endswith('/theme'):
             x = etree.fromstring(rel.target_part.blob)
             for el in x.iter():
                 if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
-                    c = el.find(A + 'srgbClr'); s = el.find(A + 'sysClr')
-                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s.get('lastClr') if s is not None else None)
-    th.update({'tx1': th.get('dk1'), 'bg1': th.get('lt1'), 'tx2': th.get('dk2'), 'bg2': th.get('lt2')})
+                    c = el.find(A + 'srgbClr'); s_ = el.find(A + 'sysClr')
+                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s_.get('lastClr') if s_ is not None else None)
+    cm = master._element.find(P + 'clrMap')
+    mp = dict(cm.attrib) if cm is not None else {'tx1': 'dk1', 'bg1': 'lt1', 'tx2': 'dk2', 'bg2': 'lt2'}
+    for k in ('tx1', 'bg1', 'tx2', 'bg2'):
+        th[k] = th.get(mp.get(k, {'tx1': 'dk1', 'bg1': 'lt1', 'tx2': 'dk2', 'bg2': 'lt2'}[k]))
     return th
-THEME = theme_colors()
+THEMES = {id(m._element): theme_colors(m) for m in prs.slide_masters}
+THEME = dict(THEMES[id(prs.slide_masters[0]._element)])
+def inherited_color(slide, el):
+    """the color text in el gets when its runs set none: the shape's own list style, then the layout and master
+    placeholder of the same type, then the master's title/body/other text style, then the deck default. Assuming the
+    theme's text color (tx1) instead turned a Google Slides deck's black titles white on white: its master styles set
+    000000 while the theme's dark 1 is white (Nov 17, 2026)."""
+    def lvl1(x):
+        if x is None: return None
+        d = x.find('.//' + A + 'lvl1pPr/' + A + 'defRPr/' + A + 'solidFill')
+        return color_of(d) if d is not None else None
+    c = lvl1(el.find('.//' + A + 'lstStyle'))
+    if c: return c
+    ph = el.find('.//' + P + 'nvPr/' + P + 'ph')
+    master = slide.slide_layout.slide_master._element
+    if ph is not None:
+        typ = ph.get('type', 'body')
+        for part in (slide.slide_layout._element, master):
+            for q in part.iter(P + 'sp'):
+                qph = q.find('.//' + P + 'nvPr/' + P + 'ph')
+                if qph is not None and qph.get('type', 'body') == typ:
+                    c = lvl1(q.find('.//' + A + 'lstStyle'))
+                    if c: return c
+        sty = 'titleStyle' if typ in ('title', 'ctrTitle') else 'bodyStyle'
+    else:
+        sty = 'otherStyle'
+    c = lvl1(master.find('.//' + P + sty))
+    if c: return c
+    c = lvl1(prs.part._element.find('.//' + P + 'defaultTextStyle'))
+    return c or (THEME.get('tx1') or '000000').upper()
+def use_theme(slide):
+    """switch THEME (in place, so pptx_bg sees it too) to the slide's own master"""
+    THEME.clear(); THEME.update(THEMES.get(id(slide.slide_layout.slide_master._element), {}))
 
 def color_of(el):
     if el is None: return None
@@ -141,6 +184,7 @@ from pptx_bg import Backdrop, leaf_shapes
 BACKDROP = Backdrop(prs, color_of, bg_color)
 titles_text = []
 for i, s in enumerate(prs.slides, 1):
+    use_theme(s)
     shapes = list(s.shapes)
     tree = s.shapes._spTree
     t = s.shapes.title
@@ -171,6 +215,7 @@ for i, s in enumerate(prs.slides, 1):
             el = best._element
             nvpr = el.find('.//' + P + 'nvPr')
             if el.tag == P + 'sp' and nvpr is not None:
+                inh_before = inherited_color(s, el)   # what the text looked like before it became the title
                 cnvsp = el.find('.//' + P + 'cNvSpPr')
                 if cnvsp is not None and cnvsp.get('txBox'): del cnvsp.attrib['txBox']
                 for old in nvpr.findall(P + 'ph'): nvpr.remove(old)
@@ -189,7 +234,7 @@ for i, s in enumerate(prs.slides, 1):
                     if not ppr.get('algn'): ppr.set('algn', 'l')
                 # also bold, line spacing, anchor, insets and autofit: the master title style is usually bold, centred
                 # vertically and set at 90% line spacing, which made three headings bold and pushed one up into two
-                # lines over a map (test deck, Nov 15, 2026)
+                # lines over a map (a test deck, Nov 15, 2026)
                 lst_b = any(d.get('b') for d in el.iter(A + 'defRPr'))
                 bp = el.find('.//' + A + 'bodyPr')
                 if bp is not None:
@@ -208,12 +253,18 @@ for i, s in enumerate(prs.slides, 1):
                         if 'spcBef' not in have:
                             sb = etree.Element(A + 'spcBef'); etree.SubElement(sb, A + 'spcPts', val='0')
                             ppr.find(A + 'lnSpc').addnext(sb)
+                inh = inh_before
                 for rp in list(el.iter(A + 'rPr')) + list(el.iter(A + 'endParaRPr')):
                     if not rp.get('b') and not lst_b: rp.set('b', '0')
                     if not rp.get('cap'): rp.set('cap', 'none')
                     if not rp.get('sz'): rp.set('sz', '1800')
                     if rp.find(A + 'solidFill') is None and rp.find(A + 'gradFill') is None:
-                        sf = etree.Element(A + 'solidFill'); etree.SubElement(sf, A + 'schemeClr', val='tx1')
+                        sf = etree.Element(A + 'solidFill')
+                        # keep the theme link when the inherited color is the theme's text color (most decks);
+                        # write the literal color only when they differ (a Google Slides master whose text styles
+                        # say 000000 while its theme's tx1 is white: promoted titles went white on white, Nov 17, 2026)
+                        if (inh or '').upper() == (THEME.get('tx1') or '').upper(): etree.SubElement(sf, A + 'schemeClr', val='tx1')
+                        else: etree.SubElement(sf, A + 'srgbClr', val=inh)
                         kids = [k for k in rp if etree.QName(k).localname in ('ln',)]
                         (kids[-1].addnext(sf) if kids else rp.insert(0, sf))
                     if rp.find(A + 'latin') is None:
@@ -223,6 +274,20 @@ for i, s in enumerate(prs.slides, 1):
                 shown = best.text_frame.text.strip().replace(chr(10), ' ').replace(chr(11), ' ')[:50]
                 log.append(f'slide {i}: title placeholder from "{shown}"')
                 t = best
+        elif i in TITLES:
+            ids = [int(x) for x in s._element.xpath('.//p:cNvPr/@id')] or [1]
+            from pptx.oxml import parse_xml   # python-pptx's own element classes, so s.shapes can read it
+            new = parse_xml(
+                f'<p:sp xmlns:p="{NS["p"]}" xmlns:a="{NS["a"]}"><p:nvSpPr><p:cNvPr id="{max(ids) + 1}" name="Title (added)"/>'
+                '<p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr>'
+                f'<p:spPr><a:xfrm><a:off x="0" y="-{int(SH * 0.12)}"/><a:ext cx="{SW}" cy="{int(SH * 0.1)}"/></a:xfrm></p:spPr>'
+                '<p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="2800"/><a:t></a:t></a:r></a:p></p:txBody></p:sp>')
+            new.find('.//' + A + 't').text = TITLES[i]
+            tree_ = s.shapes._spTree
+            first = [k for k in tree_ if etree.QName(k).localname not in ('nvGrpSpPr', 'grpSpPr')]
+            (first[0].addprevious(new) if first else tree_.append(new))
+            t = [sh for sh in s.shapes if sh._element is new][0]
+            log.append(f'slide {i}: title added just above the slide (not visible): "{TITLES[i][:50]}"')
         else:
             log.append(f'slide {i}: NO heading-like text; needs a title written by the instructor')
     if t is not None:
@@ -371,26 +436,58 @@ for i, s in enumerate(prs.slides, 1):
         if any(k.find('.//' + P + 'nvPr/' + P + 'ph') is not None for k in rest): return False
         if any(re.search(r'videoFile|audioFile|p14:media', etree.tostring(k).decode()) for k in rest): return False
         if any(k.find('.//' + A + 'tbl') is not None for k in rest): return False   # PowerPoint can't group tables
-        if t_el is not None and any(ov(t_el, k) for k in rest): return False
+        # a real overlap with the title blocks grouping; text boxes whose frames only touch it (a subtitle box starting
+        # 0.1 in above the title box's bottom edge) don't: that kept a checklist slide ungrouped and flagged, Nov 17, 2026
+        def ov_real(a, b):
+            A_, B_ = geo.get(a), geo.get(b)
+            if not A_ or not B_ or not ov(a, b): return False
+            w = min(A_[2], B_[2]) - max(A_[0], B_[0]); h = min(A_[3], B_[3]) - max(A_[1], B_[1])
+            small = min((A_[2] - A_[0]) * (A_[3] - A_[1]), (B_[2] - B_[0]) * (B_[3] - B_[1])) or 1
+            # a strip along the title box's top or bottom edge (a photo whose bottom edge runs 0.2 in into the title
+            # box) is not a real overlap either: title first + the rest grouped took such a slide from 30% to 100%,
+            # Nov 17, 2026, and the title text, centred in its box, stays clear of the photo
+            if a is t_el and h <= 0.3 * (A_[3] - A_[1]) and (B_[1] <= A_[1] or B_[3] >= A_[3]): return False
+            return w * h > 0.25 * small
+        if t_el is not None and any(ov_real(t_el, k) for k in rest): return False
         return all(geo.get(k) for k in rest)
-    grouped = None
-    if grp_ok():
-        bs = [geo[k] for k in rest]
+    def make_group(members):
+        bs = [geo[k] for k in members]
         x0, y0, x1, y1 = min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)
         nid = max(int(e.get('id')) for e in tree.iter(P + 'cNvPr') if (e.get('id') or '').isdigit()) + 1
-        grouped = parse_xml(
+        g = parse_xml(
             f'<p:grpSp xmlns:p="{NS["p"]}" xmlns:a="{NS["a"]}"><p:nvGrpSpPr><p:cNvPr id="{nid}" name="Slide content"/>'
             f'<p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="{x0}" y="{y0}"/><a:ext cx="{x1 - x0}" cy="{y1 - y0}"/>'
             f'<a:chOff x="{x0}" y="{y0}"/><a:chExt cx="{x1 - x0}" cy="{y1 - y0}"/></a:xfrm></p:grpSpPr></p:grpSp>')
-        for k in rest: grouped.append(k)        # (moved out of kids below)
+        for k in members: g.append(k)          # (moved out of kids below)
+        return g
+    grouped = None; part_grouped = 0
+    if grp_ok():
+        grouped = make_group(rest)
         final = ([t_el] if t_el is not None else []) + [grouped]
-    if not keep and (grouped is not None or back + final != kids):
+    elif not (NO_GROUP or keep or i in ORDER_FILE):
+        # P6c placeholders can't go in a group, but the shapes read after them can. Tested at WCC (Nov 17, 2026) on a
+        # slide with title, body placeholder, picture and a citation text box: 30% in visual order, 100% with the
+        # picture and the citation grouped after the placeholders (and 100% with the citation removed).
+        is_ph = lambda k: k.find('.//' + P + 'nvPr/' + P + 'ph') is not None
+        phs = [k for k in final if is_ph(k)]
+        if any(k is not t_el for k in phs):     # a body/content placeholder besides the title is what blocks grouping
+            last = max(final.index(k) for k in phs)
+            tail = final[last + 1:]
+            stray = [k for k in final[:last + 1] if not is_ph(k) and not is_dec(k)]
+            tail_content = [k for k in tail if not is_dec(k)]
+            if (not stray and len(tail_content) >= 2 and all(geo.get(k) for k in tail)
+                    and not any(is_ph(k) or k.find('.//' + A + 'tbl') is not None
+                                or re.search(r'videoFile|audioFile|p14:media', etree.tostring(k).decode()) for k in tail)):
+                final = final[:last + 1] + [make_group(tail)]; part_grouped = len(tail_content)
+    if not keep and (grouped is not None or part_grouped or back + final != kids):
         for k in kids:
             if k.getparent() is tree: tree.remove(k)
         for k in reversed(back + final):
             anchor.addnext(k)
         if grouped is not None:
             log.append(f'slide {i}: title first, then the other {len(content_rest)} content shapes grouped as one unit, in visual order (looks the same)')
+        elif part_grouped:
+            log.append(f'slide {i}: placeholders first, then the other {part_grouped} content shapes grouped as one unit, in visual order (looks the same)')
         else:
             log.append(f'slide {i}: reading order set to visual order ({len(ordered)} content shapes)')
     # ---- P11: tables get a header row (Panorama "Table does not have a header", Major; seen at WCC on a deck
@@ -456,7 +553,7 @@ for i, s in enumerate(prs.slides, 1):
                     rpr = r._r.find(A + 'rPr')
                     fg = color_of(rpr.find(A + 'solidFill')) if rpr is not None else None
                     if not fg:
-                        if worst(THEME.get('tx1') or '000000') < 4.5:
+                        if worst(inherited_color(s, sh._element)) < 4.5:
                             log.append(f'slide {i}: "{label}" (inherited color) sits on a picture: check its contrast by eye')
                         continue
                     if worst(fg) >= 4.5: continue
@@ -477,6 +574,25 @@ for i, s in enumerate(prs.slides, 1):
                         (geom[-1].addnext(nf) if geom else spPr.insert(0, nf))
                         backed = True
                         log.append(f'slide {i}: "{label}" on a busy picture: added a {fill} box behind the text ({ratio(fg, fill):.2f}:1); CHECK the look')
+            if backed:
+                # the box is now the background for EVERY run in the shape, not just the one it was chosen for: runs
+                # that passed on the picture, or were skipped once the box existed, can fail on it (a title slide's
+                # "By" line and two purple words stayed Severe, Nov 17, 2026). Recheck each run against the box.
+                for p_ in sh.text_frame.paragraphs:
+                    for r in p_.runs:
+                        if not r.text.strip(): continue
+                        rpr = r._r.get_or_add_rPr()
+                        sf = rpr.find(A + 'solidFill')
+                        fg = color_of(sf) or inherited_color(s, sh._element)
+                        if ratio(fg, fill) >= 4.5: continue
+                        new = fix_color(fg, fill, 4.5)
+                        if sf is None:
+                            sf = etree.Element(A + 'solidFill')
+                            after = [k for k in rpr if etree.QName(k).localname in ('ln',)]
+                            (after[-1].addnext(sf) if after else rpr.insert(0, sf))
+                        for c in list(sf): sf.remove(c)
+                        etree.SubElement(sf, A + 'srgbClr', val=new)
+                        log.append(f'slide {i}: "{r.text.strip()[:30]}" {fg} on the new {fill} box = {ratio(fg, fill):.2f}:1 -> {new} ({ratio(new, fill):.2f}:1)')
             continue
         for p in sh.text_frame.paragraphs:
             for r in p.runs:
@@ -523,6 +639,7 @@ for i, s in enumerate(prs.slides, 1):
                     etree.SubElement(sf, A + 'srgbClr', val=new)
 # ---- P10: link text that is just the URL (Panorama: "The hyperlink text is not descriptive", Major)
 for i, s in enumerate(prs.slides, 1):
+    use_theme(s)
     for sh in s.shapes:
         if not sh.has_text_frame: continue
         for para in sh.text_frame.paragraphs:

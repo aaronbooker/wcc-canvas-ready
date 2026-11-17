@@ -71,6 +71,12 @@ for l in keep:
         flush()
         h = lvl.get(size, 3 if not md or True else 3)
         md.append('#' * h + ' ' + plain + '\n'); last = l; continue
+    # a line that starts with a bullet or a number starts a new item: joined into the paragraph, a slide handout's
+    # "· item" lines became one run-on line (Nov 17, 2026, two handouts). Bullets become "- " list items.
+    if re.match(r'[·•▪◦‣–*-]\s', plain):
+        flush(); para.append('- ' + re.sub(r'^(\**)[·•▪◦‣–*-]\s+', r'\1', txt)); last = l; continue
+    if re.match(r'(\d{1,2}|[A-Za-z])[.)]\s', plain) and not (para and para[-1].endswith(('-', ','))):
+        flush()
     if gap > size * 0.9: flush()
     if para and para[-1].endswith('-') and plain[:1].islower():
         para[-1] = para[-1][:-1] + txt

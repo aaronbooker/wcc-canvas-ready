@@ -160,6 +160,14 @@ if not core:
     files['[Content_Types].xml'] = ct.encode()
     r = files['_rels/.rels'].decode().replace('</Relationships>', '<Relationship Id="rIdCore1" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>')
     files['_rels/.rels'] = r.encode()
+# Some generators write the root in the default namespace (<coreProperties xmlns="...core-properties">, with a BOM),
+# no cp: prefix: the edits below need the prefix (a survey workbook crashed the fixer here, Nov 17, 2026).
+core = core.lstrip('\ufeff')
+if not re.search(r'<cp:coreProperties\b', core) and re.search(r'<coreProperties\b', core):
+    _CP = 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties'
+    core = re.sub(r'\sxmlns="' + re.escape(_CP) + '"', f' xmlns:cp="{_CP}"', core, count=1)
+    core = re.sub(r'<(/?)(coreProperties|keywords|lastModifiedBy|revision|category|contentStatus|lastPrinted|version)\b',
+                  r'<\1cp:\2', core)
 # an empty core-properties part can be one self-closing tag (<cp:coreProperties .../>): open it so fields can be added
 core = re.sub(r'<cp:coreProperties\b([^>]*?)\s*/>', r'<cp:coreProperties\1></cp:coreProperties>', core)
 # make sure dc/dcterms/xsi prefixes are declared on the root (openpyxl declares them per element)

@@ -74,7 +74,8 @@ def issues_docx(t):
         try: n = sum(eval(m.group(1)).values())
         except Exception: n = 1
         n and I.append(('The font size is smaller than 11 points (this skill uses 12 pt)', 'Minor', n))
-    n = num(r'Known failing colors: (\d+)', t);  n and I.append(('Insufficient contrast between foreground text and background', 'Major', n))
+    n = (num(r'Known failing colors: (\d+)', t) or 0) + (num(r'D9b text under 4.5:1 on its shading: (\d+)', t) or 0)
+    n and I.append(('Insufficient contrast between foreground text and background', 'Major', n))
     n = num(r'D20 justified: (\d+)', t);  n and I.append(('Justified text', 'Minor', n))
     return I
 
@@ -96,12 +97,27 @@ PDF_MAP = {'F1': ('The title is missing from the document\'s properties', 'Major
            'F5': ('The item does not have an alternative description', 'Severe'), 'F6': ('Table does not have a summary', 'Minor'),
            'F7': ('Table does not have a header', 'Major'), 'F9': ('The font size is smaller than 11 points', 'Minor'),
            'F10': ('Check reading order (text off the baseline: sub/superscripts)', 'Severe'),
-           'F11': ('Check reading order (footnote tags)', 'Severe'), 'F13': ('List item structure is missing', 'Major')}
+           'F11': ('Check reading order (footnote tags)', 'Severe'), 'F13': ('List item structure is missing', 'Major'),
+           'F4b': ("The document's heading structure is not properly nested", 'Severe'),
+           'F20': ('Check reading order (tags out of numbered order)', 'Severe'),
+           'F21': ('Reading order may not follow the page (Panorama does not check this; a person checks it with a screen reader)', 'Possible'),
+           'F18': ('Insufficient contrast between foreground text and background', 'Severe'),
+           'F18b': ('Insufficient contrast between foreground text and background (text on a picture: check it by eye)', 'Possible'),
+           'F19': ('This link does not have a URL (footnote numbers tagged as links; not flagged at WCC in a Nov 16 test)', 'Possible')}
+HAND = {}    # things a person must check that Panorama doesn't score (F17), from the last pre-flight run
 def issues_pdf(t):
     I = []
-    for m in re.finditer(r'^FAIL\s+(F\d+)\s+(.*)$', t, re.M):
+    for m in re.finditer(r'^(?:FAIL|CHECK)\s+(F\d+b?)\s+(.*)$', t, re.M):
         name, sev = PDF_MAP.get(m.group(1), (m.group(2)[:70], 'Minor'))
         if m.group(1) == 'F8': continue                       # untagged drawing: not a Panorama issue by itself
+        if any(x[0] == name for x in I): continue             # F1 title and F1 DisplayDocTitle are one Panorama flag
+        if m.group(1) == 'F17':                               # broken tag wiring: screen readers, and Panorama
+            if 'not on the page' in m.group(2):               # a tag naming a missing MCID = "The tag is empty" (WCC, Nov 16)
+                I.append(('The tag is empty and contains no content (tags that point at content missing from the page)', 'Minor', 1))
+            HAND['F17'] = ('Screen readers may find parts of this PDF empty: some of its tags do not point at the page '
+                           'content. Listen to each page with Acrobat\'s Read Out Loud; '
+                           'rebuilding the PDF fixes it.')
+            continue
         I.append((name, sev, 1))
     return I
 
@@ -218,7 +234,9 @@ def check(f):
     return None
 
 before = check(orig) if os.path.exists(orig) else None
+HAND.clear()
 after = check(fixed) or []
+if HAND: notes['check'] = list(notes.get('check', [])) + list(HAND.values())
 for item in notes.get('not_fixed', []):
     name, sev = item[0], (item[1] if len(item) > 1 else 'Major')
     if 'reading order of slide' in name.lower() and any('reading order of slide' in a[0].lower() for a in after):

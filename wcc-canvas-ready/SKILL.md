@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.6
+# WCC Canvas Ready, v1.0.7
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,10 +14,12 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.6** (Nov 16, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.7** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
-with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%).
+with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
+contrast checks, caption-paired alt text and footnote-link fix are adapted from Monica Riess's `pdf-accessibility-updater`. A second
+round on Nov 17 tested 50 more course files of every type in Panorama: 48 now score 100% (see "Learned from 50 course files").
 
 ## Update check (first step of every chat)
 Before anything else, run `python3 -I scripts/check_update.py` (the path is relative to this skill's folder). It asks GitHub for
@@ -82,6 +84,15 @@ Severe issues hold a file at **0%**, Major at **30%**, Minor-only files land at 
 300-page file costs the same as 300. So: fix every Severe and Major; then the Minors.
 
 ## The workflow (every file)
+**Student records: stop and ask first.** Before step 1, look at what the file holds. If it looks like student records (a
+roster, grades or scores next to names, student ID numbers, student emails, accommodation or advising notes), don't fix it
+yet. Tell the instructor plainly that student records are protected (FERPA) and don't belong in a course file or in a chat,
+and ask them to send a copy without the student information. Carry on only if they say the file has no real student
+records (for example, the names are made up). Names of authors, guest speakers or the instructor are fine.
+A **student's submitted work** is a student record too, and it looks like ordinary course material: a lab write-up or
+assignment whose first lines are a person's name, a date and a course code, and whose author (`D24` in the pre-flight)
+is not the instructor. Two such files were found among an instructor's "lab" downloads (Nov 17, 2026); ask before going on.
+
 1. **Copy first.** Never edit the original. Work on a copy in the working folder; name outputs `*_Accessible.*`.
    Start a `notes.json` for the report (see step 6) and save every script's output with `| tee -a fixlog.txt`.
 2. **Identify the kind of file** (table below) and run its pre-flight to see what's wrong.
@@ -124,6 +135,9 @@ Ask the up-front questions together, before fixing:
   will flag the length), or split it at section headings into N parts?" Never split without a yes.
   *Default: keep one page.*
 - **Author** when it's empty or a tool name: "Whose name goes in Author?" *Default: leave it empty.*
+- **A fillable PDF form** (fill-in boxes, check boxes, signature fields): "The rebuilt form passes Panorama but has
+  no fill-in boxes: students print it or type into a Word copy. Word, PDF or both? Or keep the fillable original
+  (it stays at 0%)?" *Default: both, and say the boxes are gone.*
 - **Changing the file type** (.doc → .docx, .ppt → .pptx): "Keep the old format, or deliver the modern one?"
   Say why: a .doc saved by the tools loses its table-header marks (held at 30% in testing), and a .ppt saved
   by them loses its alt text, title and reading order (30%, 75 issues). *Default: deliver the modern file only
@@ -145,12 +159,15 @@ Ask during the fix, showing what you'd change:
 |---|---|---|---|
 | .docx | `preflight_docx.py` | `docx_lists.py` → `docx_headings.py` → `docx_unbox.py` → `docx_alt.py` → `docx_inline.py` → `docx_captions.py` → `docx_links.py` → `postprocess_docx.py --title` | alt text, table captions, link text, title, headings to check |
 | .doc, .rtf, .odt | convert to .docx (LibreOffice), then as .docx | then convert back: `.rtf` → `rtf_post.py`; `.odt` → `odf_colors.py`; `.doc` → **deliver .docx** (see L1) | same as .docx |
+| Word or RTF whose text is HTML/XML/CSS **source code** | `preflight_docx.py` D25 | **ask**: render it (text saved as .html → LibreOffice → .docx → as .docx; two syllabi pasted as HTML became real documents) or keep the code and add a title heading | which one |
 | .pptx | `preflight_pptx.py` | `pptx_alt.py` → `pptx_links.py` → `pptx_fix.py` (run the fixer **last**, so pictures marked decorative move behind the content) | alt text, link text, slides with no heading |
 | .ppt, .odp | convert to .pptx, fix; `.ppt` → **deliver .pptx** (L1); `.odp` → convert back, then `odf_colors.py` | | |
 | .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text" --link "URL::Name (domain)"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1, link text |
 | PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
 | PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
+| **Slide deck** saved as an untagged PDF (Keynote or PowerPoint "Save as PDF"; one slide per page) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_slides2md.py in.pdf out.md "Title" imgs.json` (one section per slide, largest text = its heading) → `md2docx.js` → as above. Leave out template art repeated on most slides | slide titles it got wrong, which pictures to keep, alt |
+| **Fillable** PDF form (InDesign/Acrobat, untagged; `widgets` on the pages) | `preflight_pdf.py` (F3 fails) | **ask first**: the rebuild drops the fill-in boxes. Then write the Markdown by hand → `md2docx.js` → `postprocess_docx.py` → `docx2pdf_ua.py` | answer lines, check-box grids as tables, alt for logos |
 | Tagged PDF printed from a browser, Google Docs or Forms | `preflight_pdf.py` | fix in place: `pdf_tagfix.py` (lists, table summaries, heading text); small print → rebuild at 12 pt: `pdf_tag2html.py` → Chrome print → `pdf_tagfix.py`; Forms summary: `pdf_tag2html.py --cards` first | table summaries |
 | **Scanned** PDF (no text) | `pdftotext` gives nothing | `scan2md.py` (OCR) → `md2docx.js` → … as above | **proofread OCR**, figures |
 | Designed one-pager (InDesign flyer, poster) | `preflight_pdf.py` | fix in place: `pdf_tagfix.py --list`, then a JSON of fixes | headings, alt, colors |
@@ -169,7 +186,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 |---|---|---|---|---|
 | The item does not have an alternative description | all | **Severe** | `docx_alt.py` / `pptx_alt.py` / `pdf_tagfix.py` alt | WCAG 1.1.1 |
 | Insufficient contrast between foreground text and background | all | **Severe** (Major in Word and Excel) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`). **Excel:** `xlsx_fix.py` X7/X8: mixed formatting inside a colored cell is flagged whatever its colors, and colored text on a colored fill can be flagged even at 8:1, so those become plain, black or white text | WCAG 1.4.3 |
-| Check reading order (PDF) | PDF | **Severe** | see F10–F12 | Panorama |
+| Check reading order (PDF) | PDF | **Severe** | see F10–F12; content numbers (MCIDs) out of tag order (F20): `pdf_tagfix.py` renumbers them (`mcid_order`, on by default) | Panorama |
 | The document's heading structure is not properly nested | Word | **Severe** | `postprocess_docx.py` (levels) | Panorama (WCAG best practice) |
 | Check reading order of slide | PowerPoint | Major | `pptx_fix.py`: title first, the rest of a busy slide (3+ other shapes) grouped as one unit; other slides in column-first order. Grouping cleared three slides that stayed flagged in every order tried (Nov 15, 2026). Left over: a person checks the flagged slides and ticks **Verify Reading Order** in Panorama. After the fixer it stayed only on decks with grid-like slides (rows of separate text boxes: exam-prep cards, a Jeopardy board, stat cards) and on two slides with staggered overlapping screenshots; `fix_report.py` predicts it from that | WCAG 1.3.2 |
 | The document does not have slide titles | PowerPoint | Major | `pptx_fix.py` (title placeholders) | WCAG 2.4.2 |
@@ -184,12 +201,13 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The link is broken | HTML | Major | real broken links: fix; **429 = false positive** | Panorama |
 | Sheet does not have text in cell A1 | Excel | **Minor** (first sheet only was flagged) | **YOU** write a one-line sheet description; `xlsx_fix.py --a1` | Panorama |
 | The font size is smaller than 11 points | all | Minor (counted per cell/run) | raise everything to **12 pt** | WCC Panorama |
-| The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty` | Panorama |
+| The tag is empty and contains no content | PDF | Minor | headings whose text sits only in child tags: `pdf_tagfix.py` (hoist_text, default); empty table cells: `pdf_tag2html.py` fills them; leftovers: `pdf_tagfix.py drop_empty`; a tag that points at content missing from the page (`preflight_pdf.py` F17, Nov 16): rebuild | Panorama |
 | Table does not have a summary | PDF | Minor | `pdf_tagfix.py` "summary" / `postprocess_pdf.py` | Panorama |
 | The hyperlink text is not descriptive | Word | **Major** | `docx_links.py` | WCAG 2.4.4 |
 | The hyperlink text is not descriptive | Excel | **Major** | `xlsx_fix.py --link` (X9) | WCAG 2.4.4 |
 | The Image is not inline with the text | Word | **Major** ×picture | `docx_inline.py` | WCAG 1.3.2 |
 | The hyperlink text is not descriptive | PDF | Minor | fix in the source; can't be fixed in place | WCAG 2.4.4 |
+| This link does not have a URL | PDF | **not flagged at WCC** (Nov 16: a footnote number tagged as a link with no URL passed; Minor elsewhere) | `pdf_tagfix.py` still retags such links `<Reference>` (`link_refs`, default) for screen readers; `preflight_pdf.py` F19, reported as Possible | Panorama |
 | The content is longer than 3000 words | HTML | Minor | `html_split.py` (ask first: the page becomes two) | Panorama |
 | The font size is smaller than 11 points | PDF | Minor ×runs | browser prints: `pdf_tag2html.py` rebuild at 12 pt; designed PDFs: the design file | Panorama |
 
@@ -400,7 +418,9 @@ re-saves with openpyxl, which drops charts and validation).
   so the design survives. Tested on two InDesign flyers: 0% → 70% (only Minor small print left), and 0% → 0%
   with contrast, alt, headings and title cleared but one Severe "Check reading order" whose trigger isn't
   known yet (two-column layout with list bullets tagged apart from their text). Report it; the design file is
-  the real fix.
+  the real fix. One known trigger is **content numbers out of tag order** (F20): InDesign numbers each page's
+  content (MCIDs) in one order and can list the tags in another, and Panorama flags that. `pdf_tagfix.py` now
+  renumbers the content to follow the tags by default, which cleared the flag on test PDFs (Nov 17, 2026).
 
 **Printed from a browser, Google Docs or Google Forms** (Skia/Chrome PDFs, already tagged): `pdf_tagfix.py` fixes
 in place. **F13** "List item structure is missing" (Major, every Chrome-printed list): each <LI> gets an <Lbl> and
@@ -428,6 +448,20 @@ Google Forms "print summary": every legend entry is a <Figure> made of letter ou
 missing (0%). `pdf_ocr_alt.py` reads each one with OCR and uses the words as its alt; proofread them.
 **Untagged** browser prints score 0%: rebuild with `pdf_flow2md.py` (one-column text → Markdown → Word → tagged
 PDF); a long essay went 0% → 100%. Put a blank line between list items in the Markdown for `md2docx.js`.
+**Fillable PDF forms** (fill-in boxes, radio buttons, signature fields; list them with PyMuPDF `page.widgets()`):
+an untagged InDesign form scores 0% and can't be tagged in place. **Ask the instructor** before rebuilding: the rebuilt
+PDF has no fill-in boxes (students print it, or type into the Word version). Offer Word, PDF or both; if they need a
+fillable PDF, the real fix is the form's source (InDesign/Acrobat) or an online form. Rebuild (a 7-page bilingual
+student information form, 0% → 100%, Nov 16, 2026): write the Markdown yourself from the page text and images, in the
+form's own question order (A1, A2 …, not the visual columns); a write-in line of underscores after each question; ☐
+for each choice ("☐ yes *ja*    ☐ no *nein*"); a grid of check boxes (rate 1 to 5, often/sometimes/never) as a table
+with a visible caption, a header row naming the scale and a summary saying how to fill it in (a ☐ in each cell, so no
+cell is empty); logos cut from a 110 dpi render as JPG with alt text; the logo header and the address footer once,
+not on every page. A choice that was **already selected** in the form starts empty: say so in `removed`. Copy the
+form's typos as they are and list them for the owner. Write a literal asterisk as `\*` (`Schüler\*innen`, the
+German gender star): an unescaped `*` is read as italic markup and dropped. `md2docx.js` sizes table columns from
+their longest word, so long words ("Sportveranstaltungen", "unternehmungslustig") don't break mid-word; check
+`content_check.py` for split words anyway.
 
 **PDF checks** (`preflight_pdf.py`): F1 title + DisplayDocTitle; F2 language; F3 tagged; F4 headings from H1;
 F5 figure alt; F6 table /Summary; F7 header cells; F8 no untagged text; F9 nothing under 12 pt;
@@ -436,6 +470,34 @@ or real footnote gets **"Check reading order" (Severe → 0%)**. Fix in the .doc
 `fix_baseline.py` (sub/superscripts → Unicode ₀–₉ ⁰–⁹, raised/lowered runs too) and `inline_notes.py`
 (footnotes → "Note N:" paragraphs after the citing paragraph). **F12** text drawn twice in the same place
 (an outline layer under a fill) is read twice: `pdf_tagfix.py drop_empty` keeps the top copy.
+**F17 tags point at real page content**: a tag that names marked content missing from its page, or page content no
+tag points at, reads as "empty page" in Acrobat's Read Out Loud; WCC's Panorama counted a tag naming missing content
+as "The tag is empty" (Minor, Nov 16). The report also puts it under "Check these yourself"; a rebuild fixes it.
+**F18 text contrast** (Severe): each character's color, in the color space it was drawn in (gray, RGB or CMYK `k`,
+which InDesign uses), against the filled shape behind it or white. It prints the exact operator and a passing one for
+`pdf_tagfix.py` `colors`, e.g. `fix: ["0.75 g", "0.43 g"]` (tested: passed at WCC). **CMYK text gets an RGB
+replacement** (`fix: ["0 0.2 0.6 0 k", "0.549 0.404 0.088 rg"]`): an orange darkened in CMYK failed twice at WCC even
+at 5:1 by PDF.js's own conversion, so Panorama reads CMYK lighter than it draws it. **F18b** text on a picture:
+Panorama measures the picture's pixels (gray on a dark photo was flagged), so **YOU** check it by eye and recolor.
+**YOU** check every new color on a render. **F19** link tags that go nowhere (footnote numbers): not flagged at WCC,
+retagged anyway. Tested Nov 16, 2026 on a one-page test PDF (findings in the private notes): with the CMYK color
+swapped for RGB and the tags in page order it scored 100%.
+**F20 content numbers follow the tags** (`pdf_order.py`): every piece of tagged content on a page has a number
+(MCID). Panorama's "Check reading order" (Severe → 0%) fires when, on a page, the numbers of the text and pictures
+don't go up in tag order. Seven one-page test PDFs (Nov 17, 2026) showed it compares tags with **those numbers only**,
+not with where things sit or the order they are drawn: tags in the right order but numbered out of order were
+flagged, and the same file renumbered scored 100%. Shapes with no text (table-cell backgrounds Chrome draws first) are
+left out of the check. `pdf_tagfix.py` renumbers each page's content to follow the tags (`mcid_order`, on by
+default; content inside Form XObjects is left alone). The page looks the same and a screen reader reads the same
+order, so this needs no question to the instructor. A 68-page InDesign file: 19 flagged pages → 0, every tag's text
+and every page's look unchanged.
+**F21 tag order follows the page** (`pdf_order.py`): Panorama does **not** check this, but a screen reader reads the
+tags in order (WCAG 1.3.2). A tag that comes after something clearly below it in the same column, or clearly to its
+right on the same line, is out of order; row-first and column-first orders both pass, and so do two-column pages read
+column by column. `fix_report.py` lists it under "might also flag" as a check for a person, not in the score.
+`"tag_order": true` moves only the tags that are clearly out of order and keeps the rest in place. **Ask the
+instructor first** and tell them which tags moved (the fixer prints them): it changes what a screen reader reads
+first. Running heads and page numbers that are tagged instead of marked as artifacts also fail F21.
 
 **Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
@@ -448,7 +510,12 @@ or real footnote gets **"Check reading order" (Severe → 0%)**. Fix in the .doc
 **In-place fix** (`pdf_tagfix.py in.pdf --list` numbers every paragraph-level tag and figure with its text):
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
 `colors` [["old op","new op"]] (exact operators from the page stream, fills lowercase `rg`/`k`, outlines
-uppercase `RG`/`K`), `drop_empty`. QR codes: decode them (OpenCV `QRCodeDetector`) and say where they go.
+uppercase `RG`/`K`; copy them from F18), `drop_empty`, `link_refs` (default on), `alt_from_caption` (`true` or a
+list of figure numbers), `mcid_order` (on by default), `tag_order` (when F21 fails and the instructor agrees). **Captioned pictures (InDesign booklets, grids of photos):** `--list` prints each figure's
+caption (the `<Caption>` tagged inside or next to it; in a grid, the one closest on the page) and `CHECK` when its alt
+text matches another figure's caption instead: InDesign lists figures out of page order, so alt text written in page
+order lands on the wrong picture. `alt_from_caption` writes "heading: caption" as the alt; **YOU** read each one in the
+log, and give uncaptioned figures their alt by hand. QR codes: decode them (OpenCV `QRCodeDetector`) and say where they go.
 
 # HTML rules
 `preflight_html.py page.html` (links, alt, captions, headings, length, pasted report markup), then
@@ -464,6 +531,86 @@ measures on the rendered page:
 - **Remove pasted Panorama report markup** (`panorama-html…`, `MuiList…`): copying from Panorama's preview
   can paste its overlay into a page.
 
+# Learned from 50 course files (Nov 17, 2026)
+Each rule below was found by uploading a fixed file and reading Panorama's report; "confirmed" means the fix then scored
+as stated at WCC. The scripts already do these unless a step says **YOU**.
+
+**Word**
+- Text on a **shaded table cell, paragraph or banner** is measured against that shading, not white. A project plan with
+  white text on teal and green status cells and gray text on a navy banner scored 30% (27 instances, Major).
+  `postprocess_docx.py` now lightens text on dark fills and darkens a fill under white text; pre-flight `D9b` counts
+  them. Confirmed: 30% → 100%.
+- A link whose target is a **bare email address** (no `mailto:`) has text equal to its URL: "The hyperlink text is not
+  descriptive" (Major). `postprocess_docx.py` adds `mailto:`; `D18` lists any link whose text equals its target.
+  Confirmed: 30% → 100%.
+- **Quiz answer choices typed "A. … B. …"** become a lettered list (letters kept); typed, they are "This element should
+  be formatted as a list" (Major). Not yet confirmed.
+- Some generators write document properties without the `cp:` prefix: the title and language were silently not set.
+  Fixed in `postprocess_docx.py` and `xlsx_fix.py` (which crashed on it). Not yet confirmed.
+- A Word or RTF file whose text is **HTML or XML source** (`D25`): ask, then render it (see the routing table).
+  Confirmed: two syllabi rendered from their HTML scored 100%.
+
+**PowerPoint**
+- **Logos repeated on every slide** (a publisher's or college's) get **decorative**, not alt text; `pptx_alt.py --list`
+  drafts any picture on 60% or more of the slides as decorative. With alt text they
+  count as content read before the slide title and each slide got "Check reading order of slide" (Major): two decks
+  that scored 100% before fixing dropped to 30%; marked decorative they scored 100% again (four publisher decks). Confirmed.
+- If Panorama flags a slide the fixer **reordered** and the original order read correctly, re-run with
+  `--keep-order N` for that slide (confirmed: 30% → 100%). A slide with a picture between the title and a body
+  placeholder can still be flagged (not every such slide is): give it `--order-file` with title, body, picture
+  (confirmed: three flagged slides cleared, 30% → 100%), or a person checks it and ticks Verify Reading Order.
+- A checklist-style grid stayed ungrouped because a text box merely touched the title box; touching no longer blocks
+  grouping. Confirmed: 30% → 100%.
+- Slides that are a **single picture of a slide** get a title from `--titles titles.json` (**YOU** write it; it sits
+  just above the slide). Text on **gradient-filled boxes** (Google Slides) is now measured against the box, not the
+  photo under it.
+- **Google Slides decks** often have several slide masters, each with its own theme, and master text styles that set
+  black text while the theme's text color is white. The fixer now reads each slide's own master and gives a promoted
+  title the color its text really had (it had written the theme's white: white on white). Confirmed: all contrast
+  flags cleared; with the two grouping rules below, the deck went 0% → 100%.
+- A slide with a **body placeholder plus a picture and a small text box** (a citation strip along the bottom) is
+  flagged "Check reading order of slide" in visual order. Placeholders can't be grouped, so the fixer now keeps the
+  placeholders first and groups the shapes after them. Confirmed on a test slide: 30% → 100%.
+- A photo whose bottom edge runs a little into the **title box** no longer blocks title-first grouping. Confirmed on
+  a test slide: 30% → 100% (reading the two card columns in order instead still scored 30%).
+
+**PDF**
+- **Headings that skip a level** (H1 then H3) = "The document's heading structure is not properly nested" (Severe,
+  0%). `pdf_tag2html.py` closes the gaps and pre-flight `F4b` checks. Confirmed: 0% → 100% (two files).
+- A rebuilt PDF with **no H1**: a bold first line or the first H2 becomes the H1. Confirmed by hand on two files.
+- **PowerPoint saved as PDF**: shapes behind text are tagged <Figure> with empty alt (37 of 44 in one deck). Use
+  `pdf_tagfix.py --list --crops figs/` to see each figure, then `"artifacts": [n, …]` for the decorative ones and
+  `"alt"` for the rest; `"header_row": true` makes each table's first row header cells. If the slide colors fail
+  contrast in many places, rebuild from the tags (`pdf_tag2html.py` → Chrome → `pdf_tagfix.py`). Confirmed: 0% → 100%.
+- One color operator can color several things (white headings and white text on a green picture). `"colors"` entries
+  take `{"pages": [12], "skip": 2}`. Confirmed: 0% → 100%. A designed flyer's 8.5 pt legal line still needs the
+  source file: 0% → 70%.
+- A link shown as a bare host ("zoom.us/my/name") is renamed by `--describe-links`; **YOU** give a better name with
+  `--links`. Confirmed: 70% → 100%.
+- **Links in PDFs that LibreOffice builds** (`docx2pdf_ua.py`) get "Check reading order" (Severe) once per page with
+  links (a 7-page rebuild: 0%; without links: 100%; links only in the table, only outside it, merged, reordered,
+  without underlines: all still 0%). **A rebuild that has links goes through Chrome instead:** build the PDF with
+  `docx2pdf_ua.py`, then `pdf_tag2html.py built.pdf page.html` → Chrome print → `pdf_tagfix.py` (title, table
+  summaries). Confirmed: same file with all its links, 0% → 100%.
+- Slide decks saved as untagged PDFs: `pdf_slides2md.py` (routing table). `md2docx.js` now takes PNG pictures and
+  `[text](url)` links, so a rebuild keeps them. Confirmed: 35-slide deck 0% → 100%.
+
+**HTML**
+- A `.html` that is really **RTF** (saved through TextEdit) shows RTF codes in Panorama: extract the HTML first
+  (`textutil -convert txt`).
+- White text on colored **buttons**: `html_fix.py` darkens the button background when no text color can pass.
+- **Slideshow pages and tabbed pages**: Panorama checks the hidden slides too. `html_fix.py` now shows hidden content
+  while it measures. On one slideshow, `p`/`h3`/`li` rules made the text dark inside purple, blue and red boxes that
+  set `color: white` (49 Severe, only on hidden slides); text in such a box now takes the box's own color.
+- Text on a **CSS gradient** is measured against each of its colors, and the worst one counts (dark text on a
+  light-to-dark blue card failed at the dark end). `html_fix.py` checks every stop and changes the one that fails.
+  Confirmed with the two rules above: slideshow page 0% → 100%.
+- An interactive page whose script holds a lot of text (a quiz game's questions) is "longer than 3000 words" (Minor,
+  70%); it can't be split. Tell the instructor.
+
+**Report (predictions)**: an empty shape inside an Excel chart's fallback is not a missing alt (Panorama: 100%), and a
+✓ or ✗ symbol from a fallback font sitting off the baseline was not flagged (100%).
+
 # Can't be fixed in the file (report these)
 - **Instagram / sites that block checkers:** Panorama gets HTTP 429 and calls the link broken (Major). It comes
   and goes: the same unchanged page re-uploaded on Nov 15 had no broken-link flag. Re-scan before changing
@@ -472,8 +619,8 @@ measures on the rendered page:
 - **"Check reading order of slide" that remains** after `pptx_fix.py`: the instructor checks the order (fixing
   any slide that is wrong) and ticks Verify Reading Order in Panorama; that clears it (tested, 100%).
 - **Small print in a designed PDF** (8–11 pt legal lines): needs the InDesign/Canva source.
-- **"Check reading order" (Severe) on designed PDFs** (multi-page brochures, two-column flyers): fix the design
-  file's reading order and export again. (Google Forms prints are now rebuilt with `--cards`.)
+- **"Check reading order" (Severe) on designed PDFs** (multi-page brochures, two-column flyers): `pdf_tagfix.py`
+  renumbers the content to follow the tags (F20); if the flag stays, fix the design file's reading order and export again. (Google Forms prints are now rebuilt with `--cards`.)
 - **Files the tools can't open** (a password-protected or damaged .doc): Panorama may still score them; ask the
   owner for an unprotected copy.
 - **Pages over 3000 words** (Minor): `html_split.py page.html out` splits at section headings into parts under
@@ -528,8 +675,10 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
 | fix_report.py | the report that goes with every output: changes, decisions, what to check, predicted Panorama flags and score; printed in full for the chat, `--pdf` for an accessible PDF copy |
 | pptx_order_preview.py | slides rendered with the reading order numbered, to ask the instructor; answers go back as `pptx_fix.py --keep-order` / `--order-file` |
-| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries |
+| pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links, content numbers, tag order |
+| pdf_order.py | tag order in a tagged PDF: content numbers against the tags (F20, what Panorama checks; renumbering) and tags against the page (F21); used by `preflight_pdf.py` and `pdf_tagfix.py` |
 | pdf_flow2md.py | untagged one-column PDF (saved web page) → Markdown for the rebuild |
+| pdf_slides2md.py | slide deck saved as an untagged PDF → Markdown, one section per slide, with the pictures YOU choose |
 | pdf_tag2html.py | tagged browser/Google print → clean 12 pt HTML from its structure tree (then print and `pdf_tagfix.py`); `--cards` for Forms summaries, `--describe-links` for bare-address links |
 | html_split.py | split an HTML page over 3000 words at section headings |
 | pdf_ocr_alt.py | alt text for figures that are text drawn as shapes (Google Forms charts) |
@@ -569,3 +718,12 @@ lives in the title above and in this log. Bump it for each change that goes out,
   report now predicts Excel contrast. The same workbook then scored 100%. **Excel links** (X9): linked cells that show
   only their web address are listed and renamed with `--link`, and predicted (Major). **Excel font sizes**: sizes written
   as `<sz val="11" />` (with a space, as some programs save them) were skipped while the log said they were raised.
+- **v1.0.7** (Nov 17, 2026): **fillable PDF forms** get their own route (ask first: the rebuild drops the fill-in boxes);
+  a bilingual InDesign form went 0% → 100% in Panorama. `md2docx.js`: `\*` keeps a literal asterisk (it was dropped
+  as italic markup), and table columns are sized from their content (equal widths split long words mid-word).
+  `fix_report.py` lists a missing PDF title once, not twice. `docx2pdf_ua.py` runs `postprocess_pdf.py` with the same
+  Python it runs on; `export_pdf.sh` works on a Mac, which has no `timeout` command.
+  **Four PDF rules from Monica Riess** (F17 tag wiring, F18 contrast in each color space, caption-paired alt text,
+  footnote links as `<Reference>`). **PDF tag order** (F20, `pdf_order.py`): content numbers renumbered to follow the
+  tags; 0% → 100%. **Student records**: Claude stops and asks for a copy without them. **50-file round** (Nov 17): 48
+  of 50 course files at 100% in Panorama; the rules it taught are under "Learned from 50 course files".

@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun, Table, TableRow, TableCell,
-  WidthType, BorderStyle, ShadingType, AlignmentType, LevelFormat,
+  WidthType, BorderStyle, ShadingType, AlignmentType, LevelFormat, ExternalHyperlink,
 } = require('docx');
 
 const [, , inPath, outPath, title, description, baseDir = path.dirname(inPath)] = process.argv;
@@ -18,23 +18,31 @@ const SIZE = 24; // 12 pt
 const HEAD = '1F4E79';
 
 // inline markup: ***bi***, **b**, *i*, ^sup^
+// A literal asterisk is written \* in the Markdown (the German gender star: Schüler\*innen). Without the
+// backslash the * is read as italic markup and dropped (found on a bilingual GAPP form, Nov 16, 2026).
+const STAR = '\uE000';
+const lit = s => s.replace(new RegExp(STAR, 'g'), '*');
 function runs(text, base = {}) {
+  text = text.replace(/\\\*/g, STAR);
   const out = [];
-  const re = /(\*\*\*[^*]+?\*\*\*|\*\*[^*]+?\*\*|\*[^*]+?\*|\^[^^\s]+\^|~[^~\s]+~)/g;
+  // [text](url): a real link. A rebuild that drops links loses content (a 6-page chart lost about 40, Nov 17, 2026).
+  const re = /(\[[^\]]+\]\([^)\s]+\)|\*\*\*[^*]+?\*\*\*|\*\*[^*]+?\*\*|\*[^*]+?\*|\^[^^\s]+\^|~[^~\s]+~)/g;
   let last = 0, m;
   while ((m = re.exec(text))) {
-    if (m.index > last) out.push(new TextRun({ text: text.slice(last, m.index), ...base }));
+    if (m.index > last) out.push(new TextRun({ text: lit(text.slice(last, m.index)), ...base }));
     const t = m[0];
+    const lk = t.startsWith('[') && t.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+    if (lk) { out.push(new ExternalHyperlink({ link: lk[2], children: runs(lk[1], { ...base, color: '0563C1', underline: {} }) })); last = m.index + t.length; continue; }
     if (t.startsWith('***')) out.push(...runs(t.slice(3, -3), { ...base, bold: true, italics: true }));
     else if (t.startsWith('**')) out.push(...runs(t.slice(2, -2), { ...base, bold: true }));
     // Panorama-safe: Unicode sub/superscript characters at full size, never vertAlign
     // (vertAlign shrinks glyphs to ~7 pt in the PDF and trips the size and reading-order checks)
-    else if (t.startsWith('^')) out.push(new TextRun({ text: uni(t.slice(1, -1), '⁰¹²³⁴⁵⁶⁷⁸⁹'), ...base }));
-    else if (t.startsWith('~')) out.push(new TextRun({ text: uni(t.slice(1, -1), '₀₁₂₃₄₅₆₇₈₉'), ...base }));
+    else if (t.startsWith('^')) out.push(new TextRun({ text: lit(uni(t.slice(1, -1), '⁰¹²³⁴⁵⁶⁷⁸⁹')), ...base }));
+    else if (t.startsWith('~')) out.push(new TextRun({ text: lit(uni(t.slice(1, -1), '₀₁₂₃₄₅₆₇₈₉')), ...base }));
     else out.push(...runs(t.slice(1, -1), { ...base, italics: true }));
     last = m.index + t.length;
   }
-  if (last < text.length) out.push(new TextRun({ text: text.slice(last).replace(/\*/g, ''), ...base }));
+  if (last < text.length) out.push(new TextRun({ text: lit(text.slice(last).replace(/\*/g, '')), ...base }));
   return out;
 }
 
@@ -73,21 +81,22 @@ for (let i = 0; i < md.length; i++) {
   } else if ((m = b.match(/^!img (\S+) \| (.*)$/))) {
     const file = path.join(baseDir, m[1]);
     const buf = fs.readFileSync(file);
-    const { w, h } = jpegSize(buf);
+    const png = buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));   // PNG too (crops, screenshots)
+    const { w, h } = png ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : jpegSize(buf);
     const maxW = 576; // 6 in at 96 px/in
     const width = Math.min(maxW, w), height = Math.round(h * width / w);
-    children.push(new Paragraph({ children: [new ImageRun({ type: 'jpg', data: buf, transformation: { width, height },
+    children.push(new Paragraph({ children: [new ImageRun({ type: png ? 'png' : 'jpg', data: buf, transformation: { width, height },
       altText: { title: '', description: m[2], name: path.basename(m[1]) } })] }));
   } else if ((m = b.match(/^!caption (.*)$/))) {
     if (/^Table/.test(m[1])) pendingCaption = m[1];
-    children.push(new Paragraph({ style: 'Caption', children: [new TextRun(m[1])], keepNext: true }));
+    children.push(new Paragraph({ style: 'Caption', children: [new TextRun(m[1].replace(/\\\*/g, '*'))], keepNext: true }));
   } else if ((m = b.match(/^!tabledesc (.*)$/))) {
     pendingDesc = m[1];
   } else if (b.startsWith('|')) {
     const rows = b.split('\n').filter(r => !/^\|[-| ]+\|$/.test(r)).map(r => r.slice(1, -1).split('|').map(c => c.trim()));
     const ncol = rows[0].length;
     const total = 9360;
-    const widths = ncol === 2 ? [3600, 5760] : Array(ncol).fill(Math.floor(total / ncol));
+    const widths = ncol === 2 ? [3600, 5760] : colWidths(rows, total);
     const cellB = { style: BorderStyle.SINGLE, size: 4, color: '595959' };
     children.push(new Table({
       width: { size: widths.reduce((a, c) => a + c, 0), type: WidthType.DXA },
@@ -126,6 +135,31 @@ for (let i = 0; i < md.length; i++) {
   } else {
     children.push(new Paragraph({ children: runs(b.replace(/\n/g, ' ')) }));
   }
+}
+
+// Column widths from the content (3+ columns). Equal widths split long words mid-word in narrow columns
+// ("Sportveranstaltung|en", "sometim|es" in a check-box grid), which changes the words a screen reader hears.
+// Each column gets at least its longest word (bold header words count wider); the rest of the width goes
+// to the columns with the most text. Twips: about 135 per character at 12 pt Arial, 150 bold, plus cell margins.
+function colWidths(rows, total) {
+  const clean = c => c.replace(/\\\*/g, '*').replace(/\*+/g, '');
+  const ncol = rows[0].length;
+  const need = Array(ncol).fill(0), text = Array(ncol).fill(0);
+  rows.forEach((r, ri) => r.forEach((c, ci) => {
+    const words = clean(c).split(/\s+/).filter(Boolean);
+    const longest = Math.max(0, ...words.map(w => w.length));
+    need[ci] = Math.max(need[ci], longest * (ri === 0 ? 150 : 135) + 260);
+    text[ci] += clean(c).length;
+  }));
+  let w = need.map(n => Math.max(n, 900));
+  const spare = total - w.reduce((a, c) => a + c, 0);
+  if (spare > 0) {
+    const sumT = text.reduce((a, c) => a + c, 0) || 1;
+    w = w.map((x, i) => x + Math.floor(spare * text[i] / sumT));
+  } else {
+    w = w.map(x => Math.floor(x * total / (total - spare)));   // too wide: shrink evenly (rare)
+  }
+  return w;
 }
 
 function jpegSize(buf) {

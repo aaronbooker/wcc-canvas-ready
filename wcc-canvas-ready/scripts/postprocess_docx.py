@@ -47,11 +47,63 @@ def fix_colors(x):
         return tag
     return re.sub(r'<w:color\b[^>]*/>', rep, x)
 
+def _r2(a, b):
+    la, lb = _lum(a), _lum(b); return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+def _toward(h, target, bg):
+    """move color h toward target (FFFFFF or 000000) just far enough for 5:1 against bg"""
+    t = [int(target[i:i + 2], 16) for i in (0, 2, 4)]
+    for k in range(0, 101):
+        c = ''.join('%02X' % round(int(h[i:i + 2], 16) + (t[i // 2] - int(h[i:i + 2], 16)) * k / 100) for i in (0, 2, 4))
+        if _r2(c, bg) >= 5.0: return c
+    return target
+def shade_fix(s):
+    """D9b: text against the shading behind it (run, paragraph or table-cell fill), not just white. WCC, Nov 17, 2026: a
+    project plan with white text on teal and green status cells and gray on a navy banner scored 30% (27 instances,
+    Major); D9 had even darkened the banner's light text against white. Text on a dark fill is lightened; white text on
+    a mid-tone fill keeps its color and the fill is darkened; other text is darkened."""
+    reps = []; cell_fill = {}
+    cells = [(m.start(), m.end()) for m in re.finditer(r'<w:tc>(?:(?!<w:tc>).)*?</w:tc>', s, re.S)]
+    def fill_of(span):
+        x = s[span[0]:span[1]]
+        f = re.search(r'<w:tcPr>(?:(?!</w:tcPr>).)*?<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', x, re.S)
+        return f.group(1).upper() if f else None
+    for pm in re.finditer(r'<w:p[ >](?:(?!<w:p[ >]).)*?</w:p>', s, re.S):
+        cell = min((c for c in cells if c[0] <= pm.start() and pm.end() <= c[1]), key=lambda c: c[1] - c[0], default=None)
+        cf = cell_fill.get(cell) or (fill_of(cell) if cell else None)
+        ppr = re.search(r'<w:pPr>.*?</w:pPr>', pm.group(0), re.S)
+        pf = re.search(r'<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', ppr.group(0)) if ppr else None
+        for rm in re.finditer(r'<w:r[ >](?:(?!<w:r[ >]).)*?</w:r>', pm.group(0), re.S):
+            r = rm.group(0)
+            if not re.search(r'<w:t[ >][^<]*\S', r): continue
+            rs = re.search(r'<w:rPr>.*?<w:shd [^>]*w:fill="([0-9A-Fa-f]{6})"', r, re.S)
+            bg = (rs.group(1) if rs else pf.group(1) if pf else cf or 'FFFFFF').upper()
+            cm = re.search(r'<w:color w:val="([0-9A-Fa-f]{6})"[^>]*/>', r)
+            fg = cm.group(1).upper() if cm else '000000'
+            if _r2(fg, bg) >= 4.5: continue
+            if not rs and not pf and cell and _lum(fg) > 0.8 and _lum(bg) > 0.1:
+                nf = _toward(bg, '000000', fg); cell_fill[cell] = nf
+                COLOR_LOG.append(f'cell fill {bg} under {fg} text ({_r2(fg, bg):.2f}:1) -> {nf} ({_r2(fg, nf):.2f}:1)')
+                continue
+            nc = _toward(fg, 'FFFFFF' if _lum(bg) < 0.18 else '000000', bg)
+            COLOR_LOG.append(f'{fg} on {bg} ({_r2(fg, bg):.2f}:1) -> {nc} ({_r2(nc, bg):.2f}:1)')
+            if cm: nr = r.replace(cm.group(0), f'<w:color w:val="{nc}"/>', 1)
+            elif '<w:rPr>' in r: nr = r.replace('<w:rPr>', f'<w:rPr><w:color w:val="{nc}"/>', 1)
+            else: nr = re.sub(r'(<w:r[ >][^>]*>|<w:r>)', r'\1' + f'<w:rPr><w:color w:val="{nc}"/></w:rPr>', r, count=1)
+            reps.append((pm.start() + rm.start(), pm.start() + rm.end(), nr))
+    for cell, nf in cell_fill.items():
+        x = s[cell[0]:cell[1]]
+        m = re.search(r'(<w:tcPr>(?:(?!</w:tcPr>).)*?<w:shd )([^>]*?)(/>)', x, re.S)
+        attrs = re.sub(r'\s*w:themeFill\w*="[^"]*"', '', m.group(2)); attrs = re.sub(r'w:fill="[0-9A-Fa-f]{6}"', f'w:fill="{nf}"', attrs)
+        reps.append((cell[0] + m.start(), cell[0] + m.end(), m.group(1) + attrs + m.group(3)))
+    for a_, b_, t_ in sorted(reps, key=lambda z: -z[0]): s = s[:a_] + t_ + s[b_:]
+    return s
+
 for n in list(files):
     if re.match(r'word/(document|styles|numbering|header\d*|footer\d*|footnotes|endnotes)\.xml$', n):
         s = floor(X(n))
         s = re.sub(r'<w:jc w:val="(?:both|distribute)"\s*/>', '<w:jc w:val="left"/>', s)
         s = fix_colors(s)
+        if re.match(r'word/(document|header\d*|footer\d*)\.xml$', n): s = shade_fix(s)
         # schema: w:pgMar needs w:gutter (some generators leave it out; Word calls the file damaged)
         s = re.sub(r'<w:pgMar\b(?![^>]*w:gutter)([^>]*?)(/?)>', r'<w:pgMar\1 w:gutter="0"\2>', s)
         # normalize stray languages to en-US
@@ -184,7 +236,20 @@ if 'docProps/core.xml' not in files:   # some generators write no document prope
         'ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>'))
     put('_rels/.rels', X('_rels/.rels').replace('</Relationships>', '<Relationship Id="rIdCoreProps" '
         'Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>'))
-core = X('docProps/core.xml')
+# D18b: a link whose target is a bare email address (no mailto:) shows text identical to its URL: WCC flagged it as "The
+# hyperlink text is not descriptive" (Major, a syllabus rendered from HTML, Nov 17, 2026). Give the target its mailto:.
+for n in [k for k in files if re.match(r'word/_rels/.*\.rels$', k)]:
+    put(n, re.sub(r'Target="(?!mailto:)([\w.+-]+@[\w-]+(?:\.[\w-]+)+)"', r'Target="mailto:\1"', X(n)))
+core = X('docProps/core.xml').lstrip('\ufeff')
+# Some generators (.NET tools, online form builders) write the core-properties root in the default namespace,
+# <coreProperties xmlns="...core-properties">, with no cp: prefix. Every edit below looks for </cp:coreProperties>,
+# so the title and language were silently not written (an order form, Nov 17, 2026: both still flagged). Rename
+# the root and its unprefixed children to the cp: prefix first.
+if not re.search(r'<cp:coreProperties\b', core) and re.search(r'<coreProperties\b', core):
+    CP = 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties'
+    core = re.sub(r'\sxmlns="' + re.escape(CP) + '"', f' xmlns:cp="{CP}"', core, count=1)
+    core = re.sub(r'<(/?)(coreProperties|keywords|lastModifiedBy|revision|category|contentStatus|lastPrinted|version)\b',
+                  r'<\1cp:\2', core)
 core = re.sub(r'<cp:coreProperties\b([^>]*?)\s*/>', r'<cp:coreProperties\1></cp:coreProperties>', core)   # self-closing root: open it
 title = arg('--title')
 if title:   # D2: dc:title (an explicit --title replaces whatever is there)

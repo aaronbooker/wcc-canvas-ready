@@ -329,7 +329,8 @@ def pad(m):                            # rows the print left short (an empty cel
         if 0 < width(r) < n: t = t.replace(r, r[:-5] + '<td></td>' * (n - width(r)) + '</tr>', 1)
     return t
 body = re.sub(r'<table>.*?</table>', pad, body, flags=re.S)
-BARE = re.compile(r'^\s*(https?://|www\.)\S')
+# a bare host with a path counts too ("whatcom-edu.zoom.us/my/name": WCC flagged it, Minor, Nov 17, 2026)
+BARE = re.compile(r'^\s*(https?://|www\.|[\w-]+(\.[\w-]+)*\.(com|org|edu|net|gov|us|io|ca|uk)(/|\s*$))\S?')
 def draft_label(u):
     from urllib.parse import urlparse, parse_qs, unquote
     pu = urlparse(u); host = pu.netloc.lower().removeprefix('www.'); path = [x for x in pu.path.split('/') if x]
@@ -399,6 +400,31 @@ def row_ctx(m):                       # in a table row, add the next cell's text
 body = re.sub(r'<tr>.*?</tr>', row_ctx, body, flags=re.S)
 body = body.replace('{CTX}', '')
 LABELS = [(u, l.replace('{CTX}', '')) for u, l in LABELS]
+# No H1 in the tags: a bold first line becomes the H1, or the first H2 does (Panorama: "The document does not have any
+# headings" / no H1. Nov 17, 2026: a one-page checklist whose title was only bold, and a browser syllabus print that
+# started at H2, both rebuilt without an H1).
+if not re.search(r'<h1[\s>]', body):
+    m_ = re.search(r'<p><strong>([^<]{2,150}?)\s*</strong></p>', body)
+    first_h = re.search(r'<h([2-6])[\s>]', body)
+    if m_ and (not first_h or m_.start() < first_h.start()):
+        body = body[:m_.start()] + f'<h1>{m_.group(1).strip()}</h1>' + body[m_.end():]
+    elif first_h:
+        n_ = first_h.group(1); i_ = first_h.start(); j_ = body.find(f'</h{n_}>', i_)
+        body = body[:i_] + '<h1' + body[i_ + 3:j_] + '</h1>' + body[j_ + 5:]
+# Headings must not skip levels (H1 then H3): WCC flagged "The document's heading structure is not properly nested"
+# (Severe, 0%) on a browser print rebuilt this way, Nov 17, 2026. Each heading may go at most one level deeper.
+_prev = [0]
+def _nest(m):
+    lv = int(m.group(2)); new = min(lv, _prev[0] + 1) if _prev[0] else lv
+    _prev[0] = new
+    return f'<{m.group(1)}h{new}'
+body = re.sub(r'<(/?)h([1-6])(?=[\s>])', lambda m: m.group(0) if m.group(1) else _nest(m), body)
+# closing tags follow their opening tag's new level
+_lv = []
+def _close(m):
+    if m.group(1) == '': _lv.append(m.group(2)); return m.group(0)
+    return f'</h{_lv.pop() if _lv else m.group(2)}'
+body = re.sub(r'<(/?)h([1-6])(?=[\s>])', _close, body)
 if not title:
     h1 = re.search(r'<h1>(.*?)</h1>', body, re.S)
     title = re.sub(r'<[^>]+>', '', h1.group(1)).strip() if h1 else os.path.basename(src)

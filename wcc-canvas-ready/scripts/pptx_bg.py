@@ -104,6 +104,31 @@ class Backdrop:
             canvas.alpha_composite(im, (box[0], box[1])) if box[0] >= 0 and box[1] >= 0 else \
                 canvas.paste(im, (box[0], box[1]), im)
             return
+        if el.tag == P + 'sp' and el.find('./' + P + 'spPr/' + A + 'gradFill') is not None:
+            # gradient fills (Google Slides boxes: one dark color going from half to fully opaque) were skipped, so text on
+            # them was measured against the photo underneath and recolored black on a near-black box (Severe, Nov 17, 2026)
+            gf = el.find('./' + P + 'spPr/' + A + 'gradFill'); stops = []
+            for gs in gf.iter(A + 'gs'):
+                kid = next((k for k in gs if k.tag in (A + 'srgbClr', A + 'schemeClr', A + 'sysClr', A + 'prstClr')), None)
+                c = self.color_of(gs) if kid is not None else None
+                if not c: continue
+                al = kid.find(A + 'alpha'); a_ = round(255 * int(al.get('val')) / 100000) if al is not None else 255
+                stops.append((int(gs.get('pos', '0')) / 100000, tuple(int(c[i:i + 2], 16) for i in (0, 2, 4)), a_))
+            if not stops: return
+            stops.sort()
+            lin = gf.find(A + 'lin'); ang = int(lin.get('ang', '0')) if lin is not None else 0
+            vertical = 2700000 <= ang % 10800000 <= 8100000
+            W_, H_ = max(1, box[2] - box[0]), max(1, box[3] - box[1]); n = H_ if vertical else W_
+            ov = Image.new('RGBA', canvas.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
+            for i in range(n):
+                t = i / max(1, n - 1)
+                lo = max([st for st in stops if st[0] <= t] or [stops[0]]); hi = min([st for st in stops if st[0] >= t] or [stops[-1]])
+                f = 0 if hi[0] == lo[0] else (t - lo[0]) / (hi[0] - lo[0])
+                col = tuple(round(lo[1][j] + (hi[1][j] - lo[1][j]) * f) for j in range(3)) + (round(lo[2] + (hi[2] - lo[2]) * f),)
+                if vertical: d.line([(box[0], box[1] + i), (box[2], box[1] + i)], fill=col)
+                else: d.line([(box[0] + i, box[1]), (box[0] + i, box[3])], fill=col)
+            canvas.alpha_composite(ov)
+            return
         if el.tag == P + 'sp':
             sp = el.find('./' + P + 'spPr')
             sf = sp.find(A + 'solidFill') if sp is not None else None
@@ -175,15 +200,23 @@ class Backdrop:
 def deck_colors(prs):
     """(color_of, bg_color) for decks checked outside pptx_fix.py (pre-flight): theme-aware color resolver and the
     slide's flat background color (None for a picture or gradient background)."""
-    th = {}
-    for rel in prs.slide_masters[0].part.rels.values():
-        if rel.reltype.endswith('/theme'):
-            x = etree.fromstring(rel.target_part.blob)
-            for el in x.iter():
-                if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
-                    c = el.find(A + 'srgbClr'); s = el.find(A + 'sysClr')
-                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s.get('lastClr') if s is not None else None)
-    th.update({'tx1': th.get('dk1'), 'bg1': th.get('lt1'), 'tx2': th.get('dk2'), 'bg2': th.get('lt2')})
+    def theme_of(master):
+        t = {}
+        for rel in master.part.rels.values():
+            if rel.reltype.endswith('/theme'):
+                x = etree.fromstring(rel.target_part.blob)
+                for el in x.iter():
+                    if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
+                        c = el.find(A + 'srgbClr'); s_ = el.find(A + 'sysClr')
+                        t[etree.QName(el).localname] = c.get('val') if c is not None else (s_.get('lastClr') if s_ is not None else None)
+        cm = master._element.find(P + 'clrMap')
+        mp = dict(cm.attrib) if cm is not None else {}
+        for k, d in (('tx1', 'dk1'), ('bg1', 'lt1'), ('tx2', 'dk2'), ('bg2', 'lt2')): t[k] = t.get(mp.get(k, d))
+        return t
+    # one theme per slide master (a Google Slides deck had two with opposite light/dark colors, Nov 17, 2026);
+    # bg_color(slide) switches to the slide's own master, so call it first for each slide
+    themes = {id(m._element): theme_of(m) for m in prs.slide_masters}
+    th = dict(themes[id(prs.slide_masters[0]._element)])
 
     def color_of(el):
         if el is None: return None
@@ -194,6 +227,7 @@ def deck_colors(prs):
         return None
 
     def bg_color(slide):
+        th.clear(); th.update(themes.get(id(slide.slide_layout.slide_master._element), {}))
         for part in (slide, slide.slide_layout, slide.slide_layout.slide_master):
             bg = part._element.find('.//' + P + 'bg')
             if bg is None: continue
