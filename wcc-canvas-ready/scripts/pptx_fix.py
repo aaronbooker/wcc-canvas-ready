@@ -69,19 +69,38 @@ def fix_color(fg, bg, need):
             return c
     return target
 
-def theme_colors():
+def theme_colors(master=None):
+    """the theme colors of one slide master, with the master's color map applied (tx1, bg1, ... -> theme colors).
+    A deck can have several masters with different themes: a Google Slides export had a second master whose theme
+    swaps light and dark, and its slides' white titles on black were "fixed" against white (Nov 17, 2026)."""
     th = {}
-    master = prs.slide_masters[0]
+    master = master or prs.slide_masters[0]
     for rel in master.part.rels.values():
         if rel.reltype.endswith('/theme'):
             x = etree.fromstring(rel.target_part.blob)
             for el in x.iter():
                 if el.getparent() is not None and el.getparent().tag == A + 'clrScheme':
-                    c = el.find(A + 'srgbClr'); s = el.find(A + 'sysClr')
-                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s.get('lastClr') if s is not None else None)
-    th.update({'tx1': th.get('dk1'), 'bg1': th.get('lt1'), 'tx2': th.get('dk2'), 'bg2': th.get('lt2')})
+                    c = el.find(A + 'srgbClr'); s_ = el.find(A + 'sysClr')
+                    th[etree.QName(el).localname] = c.get('val') if c is not None else (s_.get('lastClr') if s_ is not None else None)
+    # An "inverted" theme (dk1 light, lt1 dark, as Google Slides writes some dark themes) is drawn with the light and dark
+    # colors swapped by LibreOffice and by WCC's Panorama: black text and white boxes, on a black slide background. Read
+    # literally, a deck's links were darkened "against white" and then failed on black (Nov 17, 2026).
+    def _l(h):
+        try: return lum(h)
+        except Exception: return 0
+    if th.get('dk1') and th.get('lt1') and _l(th['dk1']) > _l(th['lt1']) + 0.2:
+        th['dk1'], th['lt1'] = th['lt1'], th['dk1']
+        if th.get('dk2') and th.get('lt2') and _l(th['dk2']) > _l(th['lt2']): th['dk2'], th['lt2'] = th['lt2'], th['dk2']
+    cm = master._element.find(P + 'clrMap')
+    mp = dict(cm.attrib) if cm is not None else {'tx1': 'dk1', 'bg1': 'lt1', 'tx2': 'dk2', 'bg2': 'lt2'}
+    for k in ('tx1', 'bg1', 'tx2', 'bg2'):
+        th[k] = th.get(mp.get(k, {'tx1': 'dk1', 'bg1': 'lt1', 'tx2': 'dk2', 'bg2': 'lt2'}[k]))
     return th
-THEME = theme_colors()
+THEMES = {id(m._element): theme_colors(m) for m in prs.slide_masters}
+THEME = dict(THEMES[id(prs.slide_masters[0]._element)])
+def use_theme(slide):
+    """switch THEME (in place, so pptx_bg sees it too) to the slide's own master"""
+    THEME.clear(); THEME.update(THEMES.get(id(slide.slide_layout.slide_master._element), {}))
 
 def color_of(el):
     if el is None: return None
@@ -146,6 +165,7 @@ from pptx_bg import Backdrop, leaf_shapes
 BACKDROP = Backdrop(prs, color_of, bg_color)
 titles_text = []
 for i, s in enumerate(prs.slides, 1):
+    use_theme(s)
     shapes = list(s.shapes)
     tree = s.shapes._spTree
     t = s.shapes.title
@@ -390,7 +410,15 @@ for i, s in enumerate(prs.slides, 1):
         if any(k.find('.//' + P + 'nvPr/' + P + 'ph') is not None for k in rest): return False
         if any(re.search(r'videoFile|audioFile|p14:media', etree.tostring(k).decode()) for k in rest): return False
         if any(k.find('.//' + A + 'tbl') is not None for k in rest): return False   # PowerPoint can't group tables
-        if t_el is not None and any(ov(t_el, k) for k in rest): return False
+        # a real overlap with the title blocks grouping; text boxes whose frames only touch it (a subtitle box starting
+        # 0.1 in above the title box's bottom edge) don't: that kept a checklist slide ungrouped and flagged, Nov 17, 2026
+        def ov_real(a, b):
+            A_, B_ = geo.get(a), geo.get(b)
+            if not A_ or not B_ or not ov(a, b): return False
+            w = min(A_[2], B_[2]) - max(A_[0], B_[0]); h = min(A_[3], B_[3]) - max(A_[1], B_[1])
+            small = min((A_[2] - A_[0]) * (A_[3] - A_[1]), (B_[2] - B_[0]) * (B_[3] - B_[1])) or 1
+            return w * h > 0.25 * small
+        if t_el is not None and any(ov_real(t_el, k) for k in rest): return False
         return all(geo.get(k) for k in rest)
     grouped = None
     if grp_ok():
@@ -561,6 +589,7 @@ for i, s in enumerate(prs.slides, 1):
                     etree.SubElement(sf, A + 'srgbClr', val=new)
 # ---- P10: link text that is just the URL (Panorama: "The hyperlink text is not descriptive", Major)
 for i, s in enumerate(prs.slides, 1):
+    use_theme(s)
     for sh in s.shapes:
         if not sh.has_text_frame: continue
         for para in sh.text_frame.paragraphs:

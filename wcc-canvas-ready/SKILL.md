@@ -530,6 +530,71 @@ measures on the rendered page:
 - **Remove pasted Panorama report markup** (`panorama-html…`, `MuiList…`): copying from Panorama's preview
   can paste its overlay into a page.
 
+# Learned from 50 course files (Nov 17, 2026)
+Each rule below was found by uploading a fixed file and reading Panorama's report; "confirmed" means the fix then scored
+as stated at WCC. The scripts already do these unless a step says **YOU**.
+
+**Word**
+- Text on a **shaded table cell, paragraph or banner** is measured against that shading, not white. A project plan with
+  white text on teal and green status cells and gray text on a navy banner scored 30% (27 instances, Major).
+  `postprocess_docx.py` now lightens text on dark fills and darkens a fill under white text; pre-flight `D9b` counts
+  them. Confirmed: 30% → 100%.
+- A link whose target is a **bare email address** (no `mailto:`) has text equal to its URL: "The hyperlink text is not
+  descriptive" (Major). `postprocess_docx.py` adds `mailto:`; `D18` lists any link whose text equals its target.
+  Confirmed: 30% → 100%.
+- **Quiz answer choices typed "A. … B. …"** become a lettered list (letters kept); typed, they are "This element should
+  be formatted as a list" (Major). Not yet confirmed.
+- Some generators write document properties without the `cp:` prefix: the title and language were silently not set.
+  Fixed in `postprocess_docx.py` and `xlsx_fix.py` (which crashed on it). Not yet confirmed.
+- A Word or RTF file whose text is **HTML or XML source** (`D25`): ask, then render it (see the routing table).
+  Confirmed: two syllabi rendered from their HTML scored 100%.
+
+**PowerPoint**
+- **Logos repeated on every slide** (a publisher's or college's) get **decorative**, not alt text; `pptx_alt.py --list`
+  drafts any picture on 60% or more of the slides as decorative. With alt text they
+  count as content read before the slide title and each slide got "Check reading order of slide" (Major): two decks
+  that scored 100% before fixing dropped to 30%; marked decorative they scored 100% again (four publisher decks). Confirmed.
+- If Panorama flags a slide the fixer **reordered** and the original order read correctly, re-run with
+  `--keep-order N` for that slide (confirmed: 30% → 100%). A slide with a picture between the title and a body
+  placeholder can still be flagged (not every such slide is): give it `--order-file` with title, body, picture
+  (confirmed: three flagged slides cleared, 30% → 100%), or a person checks it and ticks Verify Reading Order.
+- A checklist-style grid stayed ungrouped because a text box merely touched the title box; touching no longer blocks
+  grouping. Confirmed: 30% → 100%.
+- Slides that are a **single picture of a slide** get a title from `--titles titles.json` (**YOU** write it; it sits
+  just above the slide). Text on **gradient-filled boxes** (Google Slides) is now measured against the box, not the
+  photo under it. Not yet confirmed.
+
+**PDF**
+- **Headings that skip a level** (H1 then H3) = "The document's heading structure is not properly nested" (Severe,
+  0%). `pdf_tag2html.py` closes the gaps and pre-flight `F4b` checks. Confirmed: 0% → 100% (two files).
+- A rebuilt PDF with **no H1**: a bold first line or the first H2 becomes the H1. Confirmed by hand on two files.
+- **PowerPoint saved as PDF**: shapes behind text are tagged <Figure> with empty alt (37 of 44 in one deck). Use
+  `pdf_tagfix.py --list --crops figs/` to see each figure, then `"artifacts": [n, …]` for the decorative ones and
+  `"alt"` for the rest; `"header_row": true` makes each table's first row header cells. If the slide colors fail
+  contrast in many places, rebuild from the tags (`pdf_tag2html.py` → Chrome → `pdf_tagfix.py`). Confirmed: 0% → 100%.
+- One color operator can color several things (white headings and white text on a green picture). `"colors"` entries
+  take `{"pages": [12], "skip": 2}`. Confirmed: 0% → 100%. A designed flyer's 8.5 pt legal line still needs the
+  source file: 0% → 70%.
+- A link shown as a bare host ("zoom.us/my/name") is renamed by `--describe-links`; **YOU** give a better name with
+  `--links`. Confirmed: 70% → 100%.
+- **Links in PDFs that LibreOffice builds** (`docx2pdf_ua.py`) get "Check reading order" (Severe) once per page with
+  links (a 7-page rebuild: 0%; without links: 100%; links only in the table, only outside it, merged, reordered,
+  without underlines: all still 0%). **A rebuild that has links goes through Chrome instead:** build the PDF with
+  `docx2pdf_ua.py`, then `pdf_tag2html.py built.pdf page.html` → Chrome print → `pdf_tagfix.py` (title, table
+  summaries). Confirmed: same file with all its links, 0% → 100%.
+- Slide decks saved as untagged PDFs: `pdf_slides2md.py` (routing table). `md2docx.js` now takes PNG pictures and
+  `[text](url)` links, so a rebuild keeps them. Confirmed: 35-slide deck 0% → 100%.
+
+**HTML**
+- A `.html` that is really **RTF** (saved through TextEdit) shows RTF codes in Panorama: extract the HTML first
+  (`textutil -convert txt`).
+- White text on colored **buttons**: `html_fix.py` darkens the button background when no text color can pass.
+- An interactive page whose script holds a lot of text (a quiz game's questions) is "longer than 3000 words" (Minor,
+  70%); it can't be split. Tell the instructor.
+
+**Report (predictions)**: an empty shape inside an Excel chart's fallback is not a missing alt (Panorama: 100%), and a
+✓ or ✗ symbol from a fallback font sitting off the baseline was not flagged (100%).
+
 # Can't be fixed in the file (report these)
 - **Instagram / sites that block checkers:** Panorama gets HTTP 429 and calls the link broken (Major). It comes
   and goes: the same unchanged page re-uploaded on Nov 15 had no broken-link flag. Re-scan before changing
@@ -597,6 +662,7 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links, content numbers, tag order |
 | pdf_order.py | tag order in a tagged PDF: content numbers against the tags (F20, what Panorama checks; renumbering) and tags against the page (F21); used by `preflight_pdf.py` and `pdf_tagfix.py` |
 | pdf_flow2md.py | untagged one-column PDF (saved web page) → Markdown for the rebuild |
+| pdf_slides2md.py | slide deck saved as an untagged PDF → Markdown, one section per slide, with the pictures YOU choose |
 | pdf_tag2html.py | tagged browser/Google print → clean 12 pt HTML from its structure tree (then print and `pdf_tagfix.py`); `--cards` for Forms summaries, `--describe-links` for bare-address links |
 | html_split.py | split an HTML page over 3000 words at section headings |
 | pdf_ocr_alt.py | alt text for figures that are text drawn as shapes (Google Forms charts) |

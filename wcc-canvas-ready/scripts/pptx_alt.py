@@ -42,6 +42,14 @@ if '--list' in sys.argv:
         if not d['slide_text']:
             d['slide_text'] = ' | '.join(sh.text_frame.text.replace('\n', ' ')[:80] for sh in s.shapes if sh.has_text_frame and sh.text_frame.text.strip())[:300]
         if part is not None: open(os.path.join(out, key), 'wb').write(part.blob)
+    # A picture on most slides is branding (a publisher's or college's logo): suggest decorative. With alt text, such
+    # logos count as content read before each slide's title, and every slide got "Check reading order of slide"
+    # (two decks: 100% before fixing, 30% after, 100% again once the logos were decorative; WCC, Nov 17, 2026).
+    n_slides = len(prs.slides)
+    for k, d in info.items():
+        if n_slides >= 4 and len(set(d['slides'])) >= 0.6 * n_slides:
+            d['alt'] = 'decorative'; d['note'] = f'on {len(set(d["slides"]))} of {n_slides} slides: probably a logo; decorative unless it carries meaning'
+            print(f'{k}: on {len(set(d["slides"]))} of {n_slides} slides -> drafted as decorative (logo?)')
     json.dump(info, open(os.path.join(out, 'alt_draft.json'), 'w'), indent=1, ensure_ascii=False)
     print(f'{sum(len(v["slides"]) for v in info.values())} pictures, {len(info)} distinct -> {out}/alt_draft.json')
     sys.exit()

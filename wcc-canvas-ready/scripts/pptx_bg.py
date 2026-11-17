@@ -104,6 +104,31 @@ class Backdrop:
             canvas.alpha_composite(im, (box[0], box[1])) if box[0] >= 0 and box[1] >= 0 else \
                 canvas.paste(im, (box[0], box[1]), im)
             return
+        if el.tag == P + 'sp' and el.find('./' + P + 'spPr/' + A + 'gradFill') is not None:
+            # gradient fills (Google Slides boxes: one dark color going from half to fully opaque) were skipped, so text on
+            # them was measured against the photo underneath and recolored black on a near-black box (Severe, Nov 17, 2026)
+            gf = el.find('./' + P + 'spPr/' + A + 'gradFill'); stops = []
+            for gs in gf.iter(A + 'gs'):
+                kid = next((k for k in gs if k.tag in (A + 'srgbClr', A + 'schemeClr', A + 'sysClr', A + 'prstClr')), None)
+                c = self.color_of(gs) if kid is not None else None
+                if not c: continue
+                al = kid.find(A + 'alpha'); a_ = round(255 * int(al.get('val')) / 100000) if al is not None else 255
+                stops.append((int(gs.get('pos', '0')) / 100000, tuple(int(c[i:i + 2], 16) for i in (0, 2, 4)), a_))
+            if not stops: return
+            stops.sort()
+            lin = gf.find(A + 'lin'); ang = int(lin.get('ang', '0')) if lin is not None else 0
+            vertical = 2700000 <= ang % 10800000 <= 8100000
+            W_, H_ = max(1, box[2] - box[0]), max(1, box[3] - box[1]); n = H_ if vertical else W_
+            ov = Image.new('RGBA', canvas.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
+            for i in range(n):
+                t = i / max(1, n - 1)
+                lo = max([st for st in stops if st[0] <= t] or [stops[0]]); hi = min([st for st in stops if st[0] >= t] or [stops[-1]])
+                f = 0 if hi[0] == lo[0] else (t - lo[0]) / (hi[0] - lo[0])
+                col = tuple(round(lo[1][j] + (hi[1][j] - lo[1][j]) * f) for j in range(3)) + (round(lo[2] + (hi[2] - lo[2]) * f),)
+                if vertical: d.line([(box[0], box[1] + i), (box[2], box[1] + i)], fill=col)
+                else: d.line([(box[0] + i, box[1]), (box[0] + i, box[3])], fill=col)
+            canvas.alpha_composite(ov)
+            return
         if el.tag == P + 'sp':
             sp = el.find('./' + P + 'spPr')
             sf = sp.find(A + 'solidFill') if sp is not None else None
