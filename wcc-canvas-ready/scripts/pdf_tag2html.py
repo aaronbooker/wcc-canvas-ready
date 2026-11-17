@@ -369,7 +369,8 @@ def describe(m):
     if not BARE.match(plain): return m.group(0)
     u = html.unescape(href)
     if not DESCRIBE and u not in LINKMAP:
-        return f'<a href="{href}">{html.escape(re.sub(r"\s+", "", plain))}</a>'
+        shown = html.escape(re.sub(r"\s+", "", plain))
+        return f'<a href="{href}">{shown}</a>'
     host = re.sub(r'^https?://(www\.)?', '', u).split('/')[0]
     lab = LINKMAP.get(u) or f'{draft_label(u)}{{CTX}} ({host})'
     LABELS.append((u, lab))

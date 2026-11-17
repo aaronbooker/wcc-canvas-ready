@@ -10,3 +10,6 @@ __pycache__/
 # Local test files and outputs. Colleagues' course files stay out of this public repository.
 /testfiles/
 /out/
+
+# Private notes for Claude Code (Canvas ids, process)
+CLAUDE.local.md
