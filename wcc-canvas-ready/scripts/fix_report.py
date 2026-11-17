@@ -96,7 +96,10 @@ PDF_MAP = {'F1': ('The title is missing from the document\'s properties', 'Major
            'F5': ('The item does not have an alternative description', 'Severe'), 'F6': ('Table does not have a summary', 'Minor'),
            'F7': ('Table does not have a header', 'Major'), 'F9': ('The font size is smaller than 11 points', 'Minor'),
            'F10': ('Check reading order (text off the baseline: sub/superscripts)', 'Severe'),
-           'F11': ('Check reading order (footnote tags)', 'Severe'), 'F13': ('List item structure is missing', 'Major')}
+           'F11': ('Check reading order (footnote tags)', 'Severe'),
+           'F20': ('Check reading order (tags out of numbered order)', 'Severe'),
+           'F21': ('Reading order may not follow the page (Panorama does not check this; a person checks it with a screen reader)', 'Possible'),
+           'F13': ('List item structure is missing', 'Major')}
 def issues_pdf(t):
     I = []
     for m in re.finditer(r'^FAIL\s+(F\d+)\s+(.*)$', t, re.M):

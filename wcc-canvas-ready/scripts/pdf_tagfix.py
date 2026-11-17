@@ -20,6 +20,12 @@ fix.json keys (all optional):
                                              whose text sits only in plain <NonStruct>/<Span>
                                              children gets that text directly (Chrome prints every heading this
                                              way; WCC counted each one as an empty tag, 11 on a 3-page sheet)
+  "mcid_order": true (default)           F20 [WCC Panorama "Check reading order" (Severe)]: renumbers each page's
+                                             MCIDs so they go up in tag order (what Panorama checks). Changes
+                                             nothing a reader sees or hears
+  "tag_order": true                      F21 [WCAG 1.3.2; not checked by Panorama]: puts child tags in page order
+                                             (top to bottom in a column, left to right on a line) where
+                                             preflight_pdf.py F21 failed; only tags clearly out of order move
   "drop_empty": true                     F6 [Panorama] "The tag is empty and contains no content" (Minor):
                                              removes tags with no content and turns marked content that is only
                                              spaces into /Artifact; text drawn twice in the same spot (outline +
@@ -211,6 +217,39 @@ if cfg.get('hoist_text', True):
             for m in range(len(arr)):
                 if (pi, m) in moved2: arr[m] = moved2[(pi, m)]
     if hoisted: log.append(f'headings/paragraphs given their text directly: {len(hoisted)}')
+if cfg.get('tag_order'):
+    # F21 [WCAG 1.3.2]: tags out of page order (InDesign lists a right-hand picture and its caption before the left-hand
+    # ones). Inside each tag, its child tags are put in page order: top to bottom in a column, left to right on a line.
+    # Only children that clearly sit in the wrong order move; the rest keep their order. The ParentTree needs no change
+    # (no tag changes parent). Panorama doesn't check page order; mcid_order (below) is what clears its flag.
+    sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+    import pdf_order
+    OB, OT = pdf_order.boxes(pl)
+    def name(c, pg):
+        if isinstance(c, pikepdf.Dictionary) and '/S' in c:
+            t = desc(c) or str(c.get('/Alt', '')).strip()
+            return f'<{role(c)[1:]}>' + (f' "{t[:25]}"' if t else '')
+        ks_ = pdf_order.mcids(c, pages, pg)
+        return '"' + ''.join(OT.get(k, '') for k in ks_).strip()[:25] + '"'
+    n_ord = []
+    def reorder(e, pg=None):
+        if '/Pg' in e: pg = pages.get(e.Pg.objgen, pg)
+        ks = kids(e)
+        for c in ks:
+            if isinstance(c, pikepdf.Dictionary) and '/S' in c: reorder(c, pg)
+        if len(ks) < 2: return
+        fps = [pdf_order.footprint(c, pages, pg, OB) for c in ks]
+        new = pdf_order.page_order(ks, fps)
+        if new is None: return
+        moved = [i for pos, i in enumerate(new) if i > pos]          # pulled ahead of where it was
+        p = min((min(fps[i]) for i in moved if fps[i]), default=0)
+        e.K = pikepdf.Array([ks[i] for i in new])
+        n_ord.append(1)
+        tag = f'<{role(e)[1:]}>' if '/S' in e else 'the top level'
+        log.append(f'page {p + 1}: tags put in page order inside {tag}: ' + ', '.join(name(ks[i], pg) for i in moved[:4])
+                   + ' moved earlier')
+    reorder(pdf.Root.StructTreeRoot)
+    if not n_ord: log.append('tag order: nothing to do')
 if cfg.get('summary'):
     tables = []
     def ft(e):
@@ -267,5 +306,15 @@ if cfg.get('drop_empty'):
     for c in kids(pdf.Root.StructTreeRoot):
         if isinstance(c, pikepdf.Dictionary): prune(c)
     # rebuild the ParentTree entries for removed MCIDs is not needed: orphaned entries only point at live elements
+if cfg.get('mcid_order', True):
+    # F20 [WCC Panorama "Check reading order" (Severe)]: Panorama flags a page whose MCID numbers don't go up in tag
+    # order (seven one-page test PDFs, Nov 17, 2026: renumbering alone took one from 0% to 100%). Runs last, after
+    # every other change to the tags. The page looks the same and screen readers read the same order.
+    sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+    import pdf_order
+    done, skipped = pdf_order.renumber(pdf)
+    for p_, n_ in sorted(done.items()):
+        if n_: log.append(f'page {p_ + 1}: content renumbered to follow the tag order ({n_} tags)')
+    for p_ in skipped: log.append(f'page {p_ + 1}: content numbers not changed (named or repeated MCIDs); check F20')
 pdf.save(dst)
 print('\n'.join(log))

@@ -2,6 +2,12 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Unreleased
+
+- PDF: Panorama's "Check reading order" (Severe, 0%) on tagged PDFs, the kind InDesign exports, is now predicted and fixed. Seven one-page test PDFs showed what Panorama checks: on each page, the numbers that tie the text and pictures to their tags must go up in tag order. Where things sit on the page, and the order they are drawn, made no difference. `preflight_pdf.py` checks this as F20. `pdf_tagfix.py` now renumbers the content to follow the tags by default (`mcid_order`). This changes nothing a reader sees or hears. A test PDF went from 0% to 100% with that default alone (Panorama, Nov 17). On a 68-page InDesign file the check cleared every flagged page, and each page looks the same (checked on this computer, not in Panorama).
+- PDF: a new check, F21, asks whether the tag order follows the page: top to bottom in a column, left to right on a line. Panorama doesn't check this, but a screen reader reads the tags in that order. The report lists it as something for a person to check, not as part of the score. `pdf_tagfix.py` `"tag_order": true` moves only the tags that are clearly out of place. It changes what a screen reader reads first, so the instructor is asked before it is used.
+- `pdf_order.py` is new and holds both checks. It found no problem in the faculty guide or in PDFs the skill rebuilt.
+
 ## v1.0.6 (November 16, 2026)
 
 - Excel: text contrast is now fixed and predicted. A workbook the skill predicted at 100% scored 30% in Panorama ("Insufficient contrast between foreground text and background", Major). Tests in Panorama showed two causes: words formatted differently inside one colored cell (a bold label followed by plain text) are flagged whatever their colors, and colored text on a colored fill can be flagged even when it passes on paper. The skill now makes those cells plain text and turns colored text on colored fills black or white. The same workbook then scored 100%.
