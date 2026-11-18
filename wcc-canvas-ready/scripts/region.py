@@ -40,6 +40,7 @@ def region_paras(pdf, page, bbox, gap=4.5, size=9):
 if __name__ == '__main__':
     a = sys.argv
     pdf = pdfplumber.open(a[1]); page = int(a[2]); bbox = tuple(map(float, a[3:7]))
+    P.load_invisible(a[1])
     if '--layout' in a:
         P.L.update(json.load(open(a[a.index('--layout') + 1])))
     gap = float(a[a.index('--gap') + 1]) if '--gap' in a else 4.5

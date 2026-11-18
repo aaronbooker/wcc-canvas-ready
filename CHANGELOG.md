@@ -11,6 +11,15 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - The skill's description, README, NOTICE and CONTRIBUTING call it simply "Panorama", the name faculty know it by in Canvas, without the vendor's name. The README's first line also says that Canvas is WCC's learning management system (LMS).
 - The README's Credit section thanks Chris and Monica and links to each person's WCC staff directory entry and LinkedIn page.
 - Monica Riess is now named in the copyright line in `NOTICE` and in the suggested credit for anyone who shares or adapts the README or guide.
+- Textbook chapters rebuilt from scanned-and-recognized PDFs (Acrobat "Paper Capture"): three more chapters of one textbook went from 0% to 100% in Panorama, for the Word file and the PDF of each (Nov 18). Fixes found along the way:
+  - The layout settings file is now a blank template. It still held another chapter's settings, which made the next chapter silently lose its first lines.
+  - Each page's left- or right-hand layout is worked out from where the text sits. Two chapters of the same book start on opposite sides, and the old rule read every page of one of them with the wrong columns.
+  - Invisible OCR guesses that Acrobat hides in the page (for icons and maps) are dropped; they had landed in the middle of sentences.
+  - Accents drawn apart from their letter are joined again ("ć", not "c´").
+  - Margin notes are sorted into learning objectives, online-lab notes and glossary terms. Typed numbered lines become real lists, which Word's checker expects.
+  - A paragraph split by a page break with a footnote, box or picture in between is joined again. Footnotes read "Note 1:", and two footnotes run together are split.
+  - Era labels set in small capitals read "B.C.E." and "C.E.". "So-called" keeps its hyphen at a line break.
+  - New `ocr_gaps.py` reads every page image with OCR and lists words the text layer lacks or seems to misread. It works without the optional PyMuPDF and pytesseract libraries.
 
 ## v1.0.10 (November 17, 2026)
 

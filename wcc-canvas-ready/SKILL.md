@@ -523,13 +523,60 @@ column by column. `fix_report.py` lists it under "might also flag" as a check fo
 instructor first** and tell them which tags moved (the fixer prints them): it changes what a screen reader reads
 first. Running heads and page numbers that are tagged instead of marked as artifacts also fail F21.
 
-**Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
+**Rebuild pipeline** (textbook chapter, 0% → 100% at WCC; three more chapters of the same book, Nov 18, 2026: 0% → 100% for both the Word file and the PDF):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
 `node md2docx.js out.md out.docx "Title" "Description"` → `postprocess_docx.py out.docx fixed.docx out.docx.tables.json`
 → `fix_baseline.py` / `inline_notes.py` if needed → `export_pdf.sh fixed.docx` (LibreOffice, tagged PDF/UA) →
 `postprocess_pdf.py fixed.pdf final.pdf tables.json` (adds table /Summary LibreOffice doesn't write; for a .docx you wrote yourself,
 `docx2pdf_ua.py in.docx out.pdf` does both and reads each table's description from the .docx) →
 `preflight_pdf.py final.pdf` → `content_check.py original.pdf fixed.docx`.
+
+**Setting up `layout.json` for a chapter** (three chapters of one textbook, Nov 18, 2026):
+- `layout.json` is a template. Give each chapter its own copy, with its own `pages` (a `skip` box plus a
+  `marker_before`/`marker_after` for every feature box, figure, table and photo) and `manual_pages` (opener, photo
+  spreads, review and quiz pages). Then write each marker's block by hand from `region.py` and the page image.
+  The copy used for an earlier chapter skips that chapter's boxes: on the next chapter it silently dropped the
+  first lines of the text.
+- `pdf2md.py` works out each page's left or right layout from where the body text sits. Two chapters of the
+  same book start on pages of different parity, so the PDF page number alone picked the wrong columns.
+  Pages with little body text follow the chapter's majority, and `"parity": "pdf"` turns this off.
+- **Crop box ≠ media box.** `pdf2md.py`, `region.py` and pdfplumber work in media-box points, but a render (PyMuPDF,
+  a screenshot) shows only the crop box. On these chapters the crop box started 35 or 53 pt in, and the media box was
+  657 pt wide against 514 visible. Convert a render pixel with `x = px × 72 / dpi + cropbox.x0`. A box capped at the
+  visible width cut the last word of each line at the right edge (the last word of the chapter title).
+- A letter followed by a separate accent mark ("c´") is joined into the accented letter ("ć") by `clean()`.
+- **Pages run through Acrobat "Paper Capture"** (Producer says so) can carry an OCR layer on some pages. Run
+  `ocr_gaps.py original.pdf`: it OCRs every page with Tesseract and lists, by position, words in the image that
+  no text-layer word covers, and text-layer words that look misread. On these chapters the text layer was
+  complete. The only misreads were italic words whose first capital is a separate glyph ("I nternational"),
+  which `pdf2md.py` already joins. A word drawn as a picture would never reach `content_check.py`, so run
+  `ocr_gaps.py` whenever the Producer names an OCR tool.
+- Paper Capture also writes **invisible** OCR guesses for icons and map art in ordinary fonts (Times-Roman,
+  Helvetica), not only `HiddenHorzOCR`. Kept, they landed mid-sentence as stray letters and
+  symbols. `pdf2md.py` and `region.py` now drop invisible characters (text render mode 3, read with PyMuPDF).
+- `pdf2md.py` sorts the margin notes. Learning-objective tabs become `[lo]`, online-lab notes become `[media]`
+  (split from the glossary term printed under them), and glossary terms stay `[margin]`. Typed "**1.** States"
+  lines become real list items.
+- `pdf2md.py` also tidies the text:
+  - It rejoins a paragraph that a page break split around a footnote, box or picture (15 places in one 48-page
+    chapter; two were missed by hand in another), and moves those items after the paragraph.
+  - It numbers footnotes "Note N:" and splits two footnotes that came out as one.
+  - It writes small-caps era labels as "B.C.E." and "C.E.".
+  - At a line-break hyphen, the chapter's own spelling elsewhere decides. Without that, it keeps the hyphen when
+    the joined word is rare but both halves are common: "so-called" had become "socalled".
+- **Sideways pages** (`/Rotate 90`, a wide map or table) come out of pdfplumber as unusable text. Read them with
+  PyMuPDF (`page.get_text()`) or type them from the page image, and list them in `manual_pages`.
+- **Reading lists** ("Additional Readings") go in as bullets. In Word, an entry that starts with an initial
+  ("A. B. Author, …") is flagged "This element should be formatted as a list" (Major). As bullets, the same
+  file was predicted at 100% again.
+- **Still by hand (YOU):**
+  - a run-in head (a bold sans-serif phrase opening a paragraph) can merge with the bold term after it, or with
+    the paragraph before it when it starts a page;
+  - indented block quotes come out one line per paragraph;
+  - typed outline lists in plain type stay paragraphs;
+  - an accent drawn as a picture (a macron over a vowel in a name) is in neither the text layer nor `ocr_gaps.py`.
+
+  Read the Markdown against the page images for these.
 
 **In-place fix** (`pdf_tagfix.py in.pdf --list` numbers every paragraph-level tag and figure with its text):
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
@@ -770,3 +817,8 @@ lives in the title above and in this log. Bump it for each change that goes out,
   show it with its first question or final reply, and again after the report). Nothing about how the skill works changed.
 - **v1.0.11** (Nov 17, 2026): the update notice no longer says only a new chat will use the update. An existing chat was seen
   to pick up a new version (how is unknown), so the notice recommends a new chat as the sure route, without ruling out the other.
+  **Textbook rebuilds** (three more chapters of a scanned-and-recognized textbook, Nov 18: 0% → 100% in Panorama for the Word file
+  and the PDF of each): `pdf2md.py` picks each page's left or right layout itself, drops invisible OCR text, joins split accents,
+  sorts margin notes (learning objectives, online-lab notes, glossary terms), makes typed numbered lines real lists, rejoins
+  paragraphs split at page breaks, numbers footnotes, writes small-caps era labels in capitals and keeps "so-called" hyphenated.
+  `layout.json` is now a blank template. New `ocr_gaps.py` checks the text layer against the page images.
