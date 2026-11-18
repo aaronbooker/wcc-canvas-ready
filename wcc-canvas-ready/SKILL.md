@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.10
+# WCC Canvas Ready, v1.0.11
 
 **Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.10** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.11** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -43,10 +43,10 @@ the newest release number. Nothing about the instructor, their files or the chat
   **not** mean the skill is current. Do the web fallback once, quietly:
   1. If you have a web fetch tool, fetch `https://raw.githubusercontent.com/aaronbooker/wcc-canvas-ready/main/VERSION`. Your web
      tools run outside the sandbox, so this can work when the script can't. It is one line with the newest version number,
-     such as `1.0.9`. Only if that fetch fails or doesn't show a version, fetch
+     such as `1.0.11`. Only if that fetch fails or doesn't show a version, fetch
      `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest` instead and read the release number from the page.
      (A web tool can return a cached copy of the releases page: on Nov 17, 2026 it read v1.01 when the latest was v1.0.6.)
-  2. Run `python3 -I scripts/check_update.py --compare 1.0.9` with the number you read. It needs no network and compares
+  2. Run `python3 -I scripts/check_update.py --compare 1.0.11` with the number you read. It needs no network and compares
      correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`,
      show the whole message, placed as above. If it prints nothing, this copy is current: say nothing. If it prints
      `UPDATE CHECK BLOCKED`, the number you read is older than this copy, so the page was out of date and the check is not
@@ -60,6 +60,12 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **Never say or imply the skill is up to date unless** the script printed nothing, or `--verbose` said "You are up to date".
   A BLOCKED line means the check couldn't be confirmed, even after a web fetch. "The check couldn't run" and "no update" are
   different facts. A recent date on this copy is not evidence either.
+- **After they update:** a new chat is guaranteed to use the new zip. An existing chat may also pick it up (on Nov 17, 2026 a
+  chat that last ran v1.0.5 reported v1.0.9 when reopened), but how and when isn't known, so don't promise it either way. If
+  asked, say you can't tell from inside the chat, and that asking the chat to run
+  `python3 -I scripts/check_update.py --verbose` shows the version *that chat* is running (the copy it loaded), not
+  necessarily what is installed. Never say that relaunching the browser or the app will or won't refresh the skill: that is
+  unverified.
 - **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
   says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
   give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
@@ -762,3 +768,5 @@ lives in the title above and in this log. Bump it for each change that goes out,
   counting their words as added.
 - **v1.0.10** (Nov 17, 2026): test release to check the v1.0.9 update notice end to end on claude.ai (a copy at v1.0.9 should
   show it with its first question or final reply, and again after the report). Nothing about how the skill works changed.
+- **v1.0.11** (Nov 17, 2026): the update notice no longer says only a new chat will use the update. An existing chat was seen
+  to pick up a new version (how is unknown), so the notice recommends a new chat as the sure route, without ruling out the other.
