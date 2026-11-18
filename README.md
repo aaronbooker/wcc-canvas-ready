@@ -32,7 +32,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 1. Download the latest ZIP from the link above. Do not unzip it.
 2. Upload it as in the install steps (Customize, then Skills, then + Add, then Upload skill). You do not need to delete the old version first.
-3. When Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
+3. If Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
 4. Start a new chat and check the version again.
 
 ## What it does not do

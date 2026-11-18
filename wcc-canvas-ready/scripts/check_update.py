@@ -143,7 +143,7 @@ def report(have, new, how, verbose):
               '1. Open this link and click wcc-canvas-ready.zip under Assets: %s\n'
               '2. Save the file. Do not unzip it.\n'
               '3. In Claude, go to Customize, then Skills. Select + Add, then Upload skill, and choose that file.\n'
-              '   When Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
+              '   If Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
               'To be sure you\'re on the new version, start a new chat. An existing chat may pick it up too, but that isn\'t guaranteed.' % (new, have, DOWNLOAD_URL))
     elif verbose:
         print('Installed v%s. Latest release is v%s (%s). You are up to date.' % (have, new, how))
