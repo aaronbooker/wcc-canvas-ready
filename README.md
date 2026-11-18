@@ -87,6 +87,10 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 Built on the work of Chris Pasquini (WCC), whose `canvas-accessible-docx` skill is the starting point. Rebuilt and tested against Panorama by Aaron Booker (WCC, Computer Information Systems), with test files contributed by WCC colleagues. Monica Riess is a collaborator: she shared her PDF and PowerPoint accessibility skills, and parts of them are being folded into this one. Developed for Whatcom Community College.
 
+- Chris Pasquini: [WCC staff directory](https://www.whatcom.edu/Home/Components/StaffDirectory/StaffDirectory/2304/), [LinkedIn](https://www.linkedin.com/in/chris-pasquini/)
+- Aaron Booker: [WCC staff directory](https://www.whatcom.edu/Home/Components/StaffDirectory/StaffDirectory/4122/), [LinkedIn](https://www.linkedin.com/in/aaronbooker/)
+- Monica Riess: [LinkedIn](https://www.linkedin.com/in/monica-riess-02301854/)
+
 ## License
 
 You may use, copy, change and share this work, including at other colleges, as long as you keep the credit above with it. The software and the written documents have separate licenses.

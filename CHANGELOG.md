@@ -9,6 +9,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - The README lists every file type the skill handles (older Office formats, OpenDocument, RTF, scans, flyers, fillable forms and slide decks saved as PDF), how to give it a Google file, and what it can't fix.
 - The README's "What it does not do" section is now "Limitations": which files may not reach 100% and why, and what you still need to check or do yourself.
 - The skill's description, README, NOTICE and CONTRIBUTING call it simply "Panorama", the name faculty know it by in Canvas, without the vendor's name. The README's first line also says that Canvas is WCC's learning management system (LMS).
+- The README's Credit section links to each person's WCC staff directory entry and LinkedIn page.
 
 ## v1.0.10 (November 17, 2026)
 
