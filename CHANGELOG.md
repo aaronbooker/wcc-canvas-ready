@@ -8,6 +8,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - The update steps say "If Claude asks whether to replace" instead of "When", since that question may not appear every time.
 - The README lists every file type the skill handles (older Office formats, OpenDocument, RTF, scans, flyers, fillable forms and slide decks saved as PDF), how to give it a Google file, and what it can't fix.
 - The README's "What it does not do" section is now "Limitations": which files may not reach 100% and why, and what you still need to check or do yourself.
+- The skill's description, README, NOTICE and CONTRIBUTING call it simply "Panorama", the name faculty know it by in Canvas, without the vendor's name.
 
 ## v1.0.10 (November 17, 2026)
 
@@ -88,7 +89,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## v1.00 (November 15, 2026)
 
-First release. Built on Chris Pasquini's `canvas-accessible-docx` (v1 November 6, v3 November 13) and rebuilt and tested against WCC's YuJa Panorama.
+First release. Built on Chris Pasquini's `canvas-accessible-docx` (v1 November 6, v3 November 13) and rebuilt and tested against WCC's Panorama.
 
 - Handles Word, PowerPoint, Excel, PDF (including scans) and HTML files.
 - Includes `docx2pdf_ua.py`, which exports a Word file to a tagged PDF with the table summaries Panorama checks.

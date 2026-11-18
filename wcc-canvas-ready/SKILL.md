@@ -1,11 +1,11 @@
 ---
 name: wcc-canvas-ready
-description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
+description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Panorama, the accessibility checker in Whatcom Community College's Canvas. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
 # WCC Canvas Ready, v1.0.11
 
-**Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
+**Goal:** a file that scores **100% in Panorama** (in Canvas) at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
 
 - Many Panorama checks are also WCAG 2.2 AA (alt text, contrast, headings, language). Fixing them helps both.
@@ -204,7 +204,7 @@ an .odp that scored 100% fell to 0% after .odp → .pptx → .odp (LibreOffice w
 Units: Word `w:sz` is half-points (12 pt = 24); PowerPoint `sz` is hundredths (12 pt = 1200); Excel `<sz val>` is points.
 
 ## WCC Panorama issues seen, and what fixes them
-Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's published defaults.
+Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panorama's published defaults.
 
 | Panorama says | File | WCC severity | Fix | Label |
 |---|---|---|---|---|
@@ -236,7 +236,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The font size is smaller than 11 points | PDF | Minor ×runs | browser prints: `pdf_tag2html.py` rebuild at 12 pt; designed PDFs: the design file | Panorama |
 
 Label key: **WCAG x.x.x** = also a WCAG 2.2 AA requirement. **Panorama** = Panorama check, not WCAG AA.
-**WCC Panorama** = stricter at WCC than YuJa's defaults (11 pt flags at WCC; this skill uses 12 pt).
+**WCC Panorama** = stricter at WCC than Panorama's defaults (11 pt flags at WCC; this skill uses 12 pt).
 
 ## Golden rules
 - **Never replace, summarize or delete real content to pass a checker.** No placeholder text, no invented
@@ -261,7 +261,7 @@ Label key: **WCAG x.x.x** = also a WCAG 2.2 AA requirement. **Panorama** = Panor
   - before saving it offers to apply the same fixes to **identical copies elsewhere in Canvas**, with those copies
     already ticked and "Apply To Selected Files" as the main button. Choose "Apply To This File Only" unless you
     mean it.
-  (Ticking "Verify Reading Order" after a person has checked the order is YuJa's own instruction for that flag;
+  (Ticking "Verify Reading Order" after a person has checked the order is Panorama's own instruction for that flag;
   the instructor does it, not the skill.)
 - **Never stamp someone else's name on a file.** Keep the original author. Remove only tool names
   (`python-docx`, `openpyxl`, `Un-named`, `Steve Canny`). Ask whose name goes in Author if it's empty.
