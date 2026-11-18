@@ -5,6 +5,8 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 ## v1.0.11 (November 17, 2026)
 
 - The update notice no longer says only a new chat will use the update. In a test, a chat that had last run v1.0.5 reported v1.0.9 when it was reopened, so an existing chat can pick up the new version. How that happens isn't known, so the notice now recommends a new chat as the route that is sure to work, and says an existing chat may pick it up too but that isn't guaranteed. The skill's instructions tell Claude not to promise either way, and not to say whether relaunching the browser or app refreshes the skill.
+- The update steps say "If Claude asks whether to replace" instead of "When", since that question may not appear every time.
+- The README lists every file type the skill handles (older Office formats, OpenDocument, RTF, scans, flyers, fillable forms and slide decks saved as PDF), how to give it a Google file, and what it can't fix.
 
 ## v1.0.10 (November 17, 2026)
 

@@ -4,6 +4,19 @@ A skill for Claude that gets course files ready for Canvas at Whatcom Community 
 
 **Current version: 1.0.11** (November 17, 2026). See the [changelog](CHANGELOG.md).
 
+## Files it handles
+
+| Type | Formats |
+|---|---|
+| Word | .docx, plus older .doc, .rtf, and OpenDocument .odt (LibreOffice) |
+| PowerPoint | .pptx, plus older .ppt, and OpenDocument .odp |
+| Excel | .xlsx, plus older .xls, and OpenDocument .ods |
+| PDF | ordinary PDFs, scans, designed flyers, fillable forms, slide decks saved as PDF, and PDFs printed from a browser, Google Docs or Google Forms |
+| HTML | web pages |
+
+- **Google Docs, Sheets and Slides:** download the file first (File, then Download, then Word, Excel or PowerPoint) and give Claude that copy. Claude can't open Google Drive or Canvas links.
+- **Older formats:** a fixed .doc comes back as .docx and a .ppt as .pptx, because saving them in the old format loses things Panorama checks. Claude asks first.
+
 ## Download
 
 [Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release). Save it and do not unzip it.
@@ -40,6 +53,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 - A 100% Panorama score is not proof of WCAG 2.2 AA. Panorama cannot judge whether alt text is accurate, whether reading order makes sense, or whether video captions are right.
 - The predicted score in the skill's report is a prediction. Panorama scores the file when you upload it.
 - Claude can make mistakes. Read what changed before you post a file to students.
+- It can't fix a photo of a page, a video file, or an Apple Pages, Keynote or Numbers file. Export those to Word, PowerPoint, Excel or PDF first.
 - Do not give Claude files that contain student names, grades or other student records.
 
 ## Folder layout
