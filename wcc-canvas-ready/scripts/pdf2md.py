@@ -11,8 +11,12 @@ layout.json:
   "body_font": "Sabon", "body_size": 10,
   "pages": {"5": {"skip": [[x0,top,x1,bottom], ...], "marker_after": "FIG2_1"}, ...},
   "manual_pages": [1, 22, 23],                         # pages handled by hand
-  "symbol_map": {"MathematicalPi": {"j": ":"}}
+  "symbol_map": {"MathematicalPi": {"j": ":"}},
+  "runin": [["BellGothicStd-Black", 10]],             # run-in heads: become headings one level down
+  "parity": "pdf",                                     # optional: trust the PDF page number for even/odd
+  "media_site": "my[a-z]+lab\\.com"                    # optional: the online-lab notes in the margin
 }
+Draft "pages" and "manual_pages" with layout_draft.py, then check them against the page images.
 Output markdown: '#'-headings, paragraphs, *italic*, **bold**, ^sup^,
 '> [margin] text' margin notes, '<<MARKER>>' placeholders for hand-built blocks.
 """
@@ -242,6 +246,32 @@ def clean(t):
     t = re.sub(r'([A-Za-z]+)-(\*+) (\*+)([a-z]+)', lambda m: m.group(1) + m.group(4) + m.group(2) if zf(m.group(1)+m.group(4),'en')>0 else m.group(0), t)
     return t
 
+BLOCKS = []
+RUNIN = [None]   # heading level of run-in heads since the last real heading
+
+def runin_split(ln):
+    """A run-in head: a phrase in the run-in font that opens a body line (a few words in bold sans, then the text).
+    It is a heading in all but layout. Kept bold inside the paragraph it merged with a bold term after it, or, at
+    the top of a page, with the paragraph before it (a textbook chapter, Nov 18, 2026).
+    layout.json "runin": [[font, size], ...]. Returns (head words, rest of the line) or (None, None)."""
+    w0 = ln['words'][0]
+    if not any(f in w0['fontname'] and abs(w0['size'] - z) < 0.3 for f, z in L.get('runin', [])):
+        return None, None
+    n = 0
+    while n < len(ln['words']) and ln['words'][n]['fontname'] == w0['fontname']:
+        n += 1
+    head = ln['words'][:n]
+    if re.fullmatch(r'[\d.\s]+', ' '.join(w['text'] for w in head)):     # a learning-objective number, not a head
+        return None, None
+    return head, ln['words'][n:]
+
+def last_level():
+    """A run-in head goes one level under the heading before it, so heading levels stay nested."""
+    for b in reversed(BLOCKS):
+        if b[0] == 'h':
+            return b[1]
+    return 1
+
 def main():
     global L, HYPH, para
     pdf_path, layout_path, out_path = sys.argv[1:4]
@@ -255,7 +285,7 @@ def main():
     for tok in re.findall(r"[A-Za-z]+-?[A-Za-z]+", alltext):
         HYPH[tok.lower()] = HYPH.get(tok.lower(), 0) + 1
 
-    blocks = []          # ('h', level, text) | ('p', text) | ('m', text) | ('marker', name) | ('note', text)
+    blocks = BLOCKS      # ('h', level, text) | ('p', text) | ('m', text) | ('marker', name) | ('note', text)
     para = None          # current paragraph text
     pending = []         # floats to emit at next paragraph boundary
     body_size = L['body_size']
@@ -272,6 +302,11 @@ def main():
     for pno, pg in enumerate(pdf.pages, 1):
         pc = L.get('pages', {}).get(str(pno), {})
         if pno in L.get('manual_pages', []):
+            flush(); blocks.append(('marker', f'PAGE{pno}')); continue
+        if (pg.rotation or 0) % 180:
+            # a sideways page (a wide map or table): pdfplumber's text is unusable there (Nov 18, 2026, six pages of
+            # one chapter). Build it by hand: region.py prints PyMuPDF's upright reading of the page.
+            print('page %d is sideways (/Rotate %d): marked <<PAGE%d>>; build it by hand' % (pno, pg.rotation, pno), file=sys.stderr)
             flush(); blocks.append(('marker', f'PAGE{pno}')); continue
         ws = [w for w in get_words(pg) if L['top'] <= w['top'] and w['bottom'] <= L['bottom']]
         side = SIDES[pno]
@@ -318,7 +353,19 @@ def main():
                     h = blocks[-1]; blocks[-1] = ('h', lev, h[2] + ' ' + s.strip('*'))
                 else:
                     flush(); blocks.append(('h', lev, s.strip('*')))
-                ln['lev'] = lev; prev = ln; continue
+                ln['lev'] = lev; prev = ln; RUNIN[0] = None; continue
+            head, rest = runin_split(ln)
+            if head:
+                htxt = render(fmt_words(head, body_size)).strip('*').strip()
+                if prev is not None and prev.get('runin') and blocks and blocks[-1][0] == 'h':   # a head on two lines
+                    blocks[-1] = ('h', blocks[-1][1], blocks[-1][2] + ' ' + htxt)
+                else:
+                    flush(); RUNIN[0] = RUNIN[0] or min(4, last_level() + 1); blocks.append(('h', RUNIN[0], htxt))
+                if rest:
+                    para = render(fmt_words(rest, body_size)); para_kind[0] = 'p'
+                else:
+                    ln['runin'] = True
+                prev = ln; continue
             if ln['size'] < body_size - 1.5 and ln['top'] > 540:          # footnote
                 if para_kind[0] == 'note' and para is not None:
                     para = para + ' ' + s
@@ -328,8 +375,20 @@ def main():
             if bullet:
                 flush(); para = s; para_kind[0] = 'li'; para_kind[1] = words[0]['x0'] if words else ln['x0']
                 prev = ln; continue
-            if para_kind[0] == 'li' and para is not None and abs(ln['x0'] - para_kind[1]) < 4:
+            # a typed number in bold ("1." then the item) is a numbered list item, its turned lines follow it
+            if re.fullmatch(r'\d{1,2}\.', first['text']) and fontkind(first['fontname'])[1] and len(ln['words']) > 1:
+                flush(); para = first['text'] + ' ' + render(fmt_words(ln['words'][1:], body_size))
+                para_kind[0] = 'ol'; para_kind[1] = ln['words'][1]['x0']
+                prev = ln; continue
+            if para_kind[0] in ('li', 'ol') and para is not None and abs(ln['x0'] - para_kind[1]) < 4:
                 para = join_hyphen(para, s) if para.endswith('-') else para + ' ' + s
+                prev = ln; continue
+            # an indented block quote, set a size smaller: one quote, not one paragraph per line
+            if L.get('body_font', '') in first['fontname'] and body_size - 1.6 <= ln['size'] <= body_size - 0.4 and ln['x0'] - col_left > 8:
+                if para_kind[0] == 'q' and para is not None and prev is not None and ln['top'] - prev['bottom'] <= 6:
+                    para = join_hyphen(para, s) if para.endswith('-') else para + ' ' + s
+                else:
+                    flush(); para = s; para_kind[0] = 'q'
                 prev = ln; continue
             indent = ln['x0'] - col_left
             prev_short = prev is not None and prev['x1'] < col_right - 15
@@ -352,6 +411,8 @@ def main():
         if b[0] == 'h': out.append('#' * b[1] + ' ' + clean(b[2]))
         elif b[0] == 'p': out.append(clean(b[1]))
         elif b[0] == 'li': out.append('- ' + clean(b[1]))
+        elif b[0] == 'ol': out.append('  ' + clean(b[1]))
+        elif b[0] == 'q': out.append('> [quote] ' + clean(b[1]))
         elif b[0] == 'note': out.append('> [note] ' + clean(b[1]))
         elif b[0] == 'm': out.append('> [margin] ' + clean(b[1]))
         elif b[0] == 'marker': out.append(f'<<{b[1]}>>')

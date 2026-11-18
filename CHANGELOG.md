@@ -20,6 +20,10 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
   - A paragraph split by a page break with a footnote, box or picture in between is joined again. Footnotes read "Note 1:", and two footnotes run together are split.
   - Era labels set in small capitals read "B.C.E." and "C.E.". "So-called" keeps its hyphen at a line break.
   - New `ocr_gaps.py` reads every page image with OCR and lists words the text layer lacks or seems to misread. It works without the optional PyMuPDF and pytesseract libraries.
+  - New `layout_draft.py` drafts a chapter's layout from the page images: boxes, figures and photos to set aside, and the pages to build by hand. On the three chapters its pages matched the hand-made layouts, apart from one gray chart, which it flags for a person to mark. This was the longest step done by hand.
+  - Run-in heads (a phrase in the heading font that opens a paragraph) become headings, one level under the heading before them. Typed numbered lists become real numbered items with their turned lines, and indented block quotes become one quote.
+  - Sideways pages are marked for building by hand, and `region.py` prints a readable version of them.
+  - The skill tells the instructor that a long chapter takes a while, and offers to do it a few sections at a time.
 
 ## v1.0.10 (November 17, 2026)
 

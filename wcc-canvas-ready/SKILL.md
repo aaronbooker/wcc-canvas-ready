@@ -534,9 +534,18 @@ first. Running heads and page numbers that are tagged instead of marked as artif
 **Setting up `layout.json` for a chapter** (three chapters of one textbook, Nov 18, 2026):
 - `layout.json` is a template. Give each chapter its own copy, with its own `pages` (a `skip` box plus a
   `marker_before`/`marker_after` for every feature box, figure, table and photo) and `manual_pages` (opener, photo
-  spreads, review and quiz pages). Then write each marker's block by hand from `region.py` and the page image.
-  The copy used for an earlier chapter skips that chapter's boxes: on the next chapter it silently dropped the
-  first lines of the text.
+  spreads, review and quiz pages). The copy used for an earlier chapter skips that chapter's boxes: on the next
+  chapter it silently dropped the first lines of the text.
+- **Draft it first:** `layout_draft.py chapter.pdf layout.json chapter_layout.json`. It reads the page images:
+  - tinted areas (shaded boxes, photos, colored figures) become skip boxes and markers, with a figure's labels and
+    caption taken in;
+  - the first page, sideways pages, pages that are mostly one picture and pages with almost no body text become
+    manual pages.
+
+  On three chapters its manual pages matched the hand-made layouts exactly. The text pdf2md produced from it was
+  the same, word for word, apart from one gray chart: a gray-only figure isn't found, and the draft prints `CHECK`
+  for a printed "FIGURE" caption with nothing around it. Check every line it prints against the page images.
+  Then write each marker's block by hand from `region.py` and the page image.
 - `pdf2md.py` works out each page's left or right layout from where the body text sits. Two chapters of the
   same book start on pages of different parity, so the PDF page number alone picked the wrong columns.
   Pages with little body text follow the chapter's majority, and `"parity": "pdf"` turns this off.
@@ -564,19 +573,25 @@ first. Running heads and page numbers that are tagged instead of marked as artif
   - It writes small-caps era labels as "B.C.E." and "C.E.".
   - At a line-break hyphen, the chapter's own spelling elsewhere decides. Without that, it keeps the hyphen when
     the joined word is rare but both halves are common: "so-called" had become "socalled".
-- **Sideways pages** (`/Rotate 90`, a wide map or table) come out of pdfplumber as unusable text. Read them with
-  PyMuPDF (`page.get_text()`) or type them from the page image, and list them in `manual_pages`.
+- **Sideways pages** (`/Rotate 90`, a wide map or table) come out of pdfplumber as unusable text. `pdf2md.py` marks
+  them `<<PAGEn>>` and says so; `region.py` prints PyMuPDF's upright reading of such a page. Check it against the image.
+- **Run-in heads** (a phrase in the heading font that opens a paragraph, `"runin"` in `layout.json`) become headings,
+  one level under the heading before them, so the levels stay nested. Kept bold, one merged with the bold term after
+  it, and one at the top of a page merged with the paragraph before it. Twelve in one chapter and four in another
+  became level-4 headings.
+- **Typed numbered lists** ("**1.**" then the item, and its turned lines) become real numbered items. **Indented
+  block quotes** set a size smaller become one quote, not one paragraph per line.
 - **Reading lists** ("Additional Readings") go in as bullets. In Word, an entry that starts with an initial
   ("A. B. Author, …") is flagged "This element should be formatted as a list" (Major). As bullets, the same
   file was predicted at 100% again.
 - **Still by hand (YOU):**
-  - a run-in head (a bold sans-serif phrase opening a paragraph) can merge with the bold term after it, or with
-    the paragraph before it when it starts a page;
-  - indented block quotes come out one line per paragraph;
-  - typed outline lists in plain type stay paragraphs;
+  - every marker's block: boxes, photos with alt text, maps, review and quiz pages;
+  - outline lists typed in plain type (letters or numbers not in bold) stay paragraphs;
   - an accent drawn as a picture (a macron over a vowel in a name) is in neither the text layer nor `ocr_gaps.py`.
 
   Read the Markdown against the page images for these.
+- **Tell the instructor it takes a while.** A 48-page chapter is a long job, with many hand-built blocks and an alt text
+  for every picture. Say so before starting, and offer to do it a few sections at a time.
 
 **In-place fix** (`pdf_tagfix.py in.pdf --list` numbers every paragraph-level tag and figure with its text):
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
@@ -749,6 +764,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
 | docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
+| layout_draft.py | drafts a chapter's `layout.json` from the page images: skip boxes for boxes, figures and photos, manual pages |
+| ocr_gaps.py | checks a recognized (OCR'd) PDF's text layer against its page images: missing and misread words |
 | fix_report.py | the report that goes with every output: changes, decisions, what to check, predicted Panorama flags and score; printed in full for the chat, `--pdf` for an accessible PDF copy |
 | pptx_order_preview.py | slides rendered with the reading order numbered, to ask the instructor; answers go back as `pptx_fix.py --keep-order` / `--order-file` |
 | pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links, content numbers, tag order |
