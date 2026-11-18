@@ -48,12 +48,29 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 3. If Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
 4. Start a new chat and check the version again.
 
-## What it does not do
+## Limitations
+
+### What Panorama's score does and doesn't tell you
 
 - A 100% Panorama score is not proof of WCAG 2.2 AA. Panorama cannot judge whether alt text is accurate, whether reading order makes sense, or whether video captions are right.
-- The predicted score in the skill's report is a prediction. Panorama scores the file when you upload it.
-- Claude can make mistakes. Read what changed before you post a file to students.
+- The score in the skill's report is a prediction. Panorama scores the file when you upload it. In testing, the prediction matched Panorama on 62 of 63 fixed files, but it was tuned on those same files, so expect it to be right a little less often on new ones.
+
+### Files that may not reach 100%
+
+- Not every file gets there. In a November 2026 test of 50 course files, 48 scored 100% in Panorama. Two stayed at 70%: an interactive web page whose program code Panorama counts as more than 3,000 words, and a designed PDF flyer whose small print can only be fixed in the original design file.
+- A page over 3,000 words is flagged by Panorama and stays below 100% unless it is split. The skill asks before splitting anything.
+- A fillable PDF form is rebuilt without its fill-in boxes, so students print it or type into a Word copy. Keeping the fillable original means it stays at 0%.
+- An old .doc or .ppt is delivered as .docx or .pptx. Saved back in the old format, it scored 30% in testing.
+
+### Things you still need to check or do yourself
+
+- Read the alt text, captions and headings the skill adds. They are drafts.
+- Proofread anything rebuilt from a scan. The words are read from a picture of the page, and names, numbers and quotes can come out wrong, especially in columns and side boxes.
+- It does not caption or transcribe videos.
 - It can't fix a photo of a page, a video file, or an Apple Pages, Keynote or Numbers file. Export those to Word, PowerPoint, Excel or PDF first.
+- It can't open Canvas, Google Drive or OneDrive links. Download the file and attach it.
+- On a Free Claude account, a long or picture-heavy file can use up your usage allowance quickly. Start with one small file.
+- Claude can make mistakes. Read what changed before you post a file to students.
 - Do not give Claude files that contain student names, grades or other student records.
 
 ## Folder layout
