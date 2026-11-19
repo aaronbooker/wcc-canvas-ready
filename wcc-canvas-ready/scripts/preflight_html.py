@@ -43,7 +43,7 @@ prev = None
 for href, t, aria, title in p.links:
     t2 = ' '.join(t.split())
     if not t2 and not aria.strip(): empty.append(href)
-    elif WEAK.match(t2) or re.fullmatch(r'(https?://|www\.)\S+', t2) or re.fullmatch(r'[\w.-]+\.(com|org|edu|net|gov|io|us)(/\S*)?', t2) \
+    elif WEAK.match(t2) or re.fullmatch(r'(https?://|www\.)\S+', t2) or re.fullmatch(r'[\w.-]+\.(com|org|edu|net|gov|io|us|ca|uk|ai)(/\S*)?', t2, re.I) \
             or re.search(r'\.(pdf|docx?|pptx?|xlsx?)$', t2, re.I):
         weak.append(t2)
     if prev and prev == href and not href.startswith('#'): dup.append(href)

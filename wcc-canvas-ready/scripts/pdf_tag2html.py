@@ -330,7 +330,7 @@ def pad(m):                            # rows the print left short (an empty cel
     return t
 body = re.sub(r'<table>.*?</table>', pad, body, flags=re.S)
 # a bare host with a path counts too ("whatcom-edu.zoom.us/my/name": WCC flagged it, Minor, Nov 17, 2026)
-BARE = re.compile(r'^\s*(https?://|www\.|[\w-]+(\.[\w-]+)*\.(com|org|edu|net|gov|us|io|ca|uk)(/|\s*$))\S?')
+BARE = re.compile(r'^\s*(https?://|www\.|[\w-]+(\.[\w-]+)*\.(com|org|edu|net|gov|us|io|ca|uk|ai)(/|\s*$))\S?')
 def draft_label(u):
     from urllib.parse import urlparse, parse_qs, unquote
     pu = urlparse(u); host = pu.netloc.lower().removeprefix('www.'); path = [x for x in pu.path.split('/') if x]
