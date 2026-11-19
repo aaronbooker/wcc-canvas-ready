@@ -2,7 +2,7 @@
 
 A skill for Claude that gets course files ready for Canvas, the learning management system (LMS) at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what Panorama flags in Canvas, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.0.11** (November 17, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.0.11** (November 19, 2026). See the [changelog](CHANGELOG.md).
 
 ## Files it handles
 

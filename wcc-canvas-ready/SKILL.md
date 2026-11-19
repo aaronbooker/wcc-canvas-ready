@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.11** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.11** (Nov 19, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -834,7 +834,7 @@ lives in the title above and in this log. Bump it for each change that goes out,
   counting their words as added.
 - **v1.0.10** (Nov 17, 2026): test release to check the v1.0.9 update notice end to end on claude.ai (a copy at v1.0.9 should
   show it with its first question or final reply, and again after the report). Nothing about how the skill works changed.
-- **v1.0.11** (Nov 17, 2026): the update notice no longer says only a new chat will use the update. An existing chat was seen
+- **v1.0.11** (Nov 19, 2026): the update notice no longer says only a new chat will use the update. An existing chat was seen
   to pick up a new version (how is unknown), so the notice recommends a new chat as the sure route, without ruling out the other.
   **Textbook rebuilds** (three more chapters of a scanned-and-recognized textbook, Nov 18: 0% → 100% in Panorama for the Word file
   and the PDF of each): `pdf2md.py` picks each page's left or right layout itself, drops invisible OCR text, joins split accents,
