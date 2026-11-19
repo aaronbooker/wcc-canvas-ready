@@ -16,16 +16,6 @@ The audience is faculty, many of them new to Claude and on Free accounts. Anythi
 - `docs/`: the faculty guide (CC BY 4.0).
 - `CHANGELOG.md`, `README.md`, `NOTICE`, `LICENSE`, `CONTRIBUTING.md`.
 
-## Current phase: early users (updated November 17, 2026)
-
-Since November 17, 2026, a few faculty in Aaron's department have the skill: v1.0.10, from a link to the latest release. Aaron plans to share it with other WCC faculty later that week. Releases now reach real users. Publishing a release, or changing `VERSION` on `main`, shows their copies an update notice. Follow the rules below in full.
-
-- Hold changes on a branch and bundle them into one release. Release only when Aaron asks, after he has tested the files he wants to test.
-- Faculty now read the README and the faculty guide, so keep them current with each release.
-- Reviewing a colleague's PDF and PowerPoint skill and folding in the parts Aaron approves is still planned, recorded in the changelog under the 1.0.x series.
-
-Once Aaron says the skill has been shared with all faculty, delete this section.
-
 ## Rules for working here
 
 - Aaron is the human in the loop and edits files himself. Re-read the current version of any file before changing it. Never overwrite his edits.

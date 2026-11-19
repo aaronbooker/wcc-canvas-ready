@@ -6,6 +6,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 - PDFs with links now pass Panorama. When the skill made a PDF from a Word file, any clickable link left the page flagged "Check reading order" (Severe), so the PDF scored 0% while the skill's report predicted 100%. In tests on November 19, nothing changed inside such a PDF cleared the flag, but the same pages printed through Chrome passed. The skill now does that by itself whenever the PDF has links, and keeps the links. An 8-page guide with 7 links went from 0% to 100% in Panorama this way. The page layout comes from Chrome afterwards, so Claude checks every page.
 - The skill's report now predicts this flag, so it no longer promises 100% for a PDF like that.
+- A word with a hyphen that wrapped at the end of a line ("well-" then "known") came out with a space added ("well- known") when a PDF was printed again through Chrome. It is now joined back together.
 
 ## v1.0.11 (November 19, 2026)
 

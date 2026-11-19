@@ -73,7 +73,7 @@ title = (pdf.metadata or {}).get('Title') or ''
 if isinstance(title, bytes): title = title.decode('utf-8', 'ignore')
 
 LIG = {'\ufb00': 'ff', '\ufb01': 'fi', '\ufb02': 'fl', '\ufb03': 'ffi', '\ufb04': 'ffl', '\ufb05': 'st', '\ufb06': 'st'}
-state = {'last': None, 'plain': False}
+state = {'last': None, 'plain': False, 'tail': ''}
 def _style(c):
     f = c.get('fontname', '')
     return ('Bold' in f or 'Black' in f or 'Heavy' in f, 'Italic' in f or 'Oblique' in f)
@@ -90,6 +90,8 @@ def text_of_mcid(pi, mcid, raw=False):
             prev = segs[-1][1] if segs else ''
             if (newline or gap > c['size'] * 0.18) and not prev.endswith((' ', '\u00a0')) and c['text'] not in ' \u00a0':
                 sp = ' '
+            if newline and same_pg and re.search(r'[^\W_]-$', state['tail']):   # "canvas-" + "accessible-docx":
+                sp = ''                                    # a word with a hyphen, wrapped at the hyphen
         st = (False, False) if (raw or state['plain']) else _style(c)
         ch = LIG.get(c['text'], c['text'])
         if segs and segs[-1][1].endswith('\u2010') and sp:     # the browser's own hyphen at a line break: rejoin
@@ -99,6 +101,7 @@ def text_of_mcid(pi, mcid, raw=False):
         if segs and segs[-1][0] == st: segs[-1] = (st, segs[-1][1] + ch)
         else: segs.append((st, ch))
         state['last'] = (pi, c)
+        state['tail'] = (state['tail'] + sp + ch)[-2:]
     if raw: return ''.join(t for _, t in segs)
     out = []
     for (b, i), t in segs:

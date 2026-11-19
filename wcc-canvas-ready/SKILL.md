@@ -687,7 +687,8 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
   (`pdf_tag2html.py` → Chrome print → `pdf_tagfix.py` with the title and table summaries, then the content check).
   Pre-flight **F22** catches a LibreOffice PDF with links. Confirmed: the same 7-page rebuild with all its links,
   0% → 100%; an 8-page guide with 7 links, 0% → 100% (Nov 19). The layout is Chrome's afterwards: render and look.
-  No Chrome in the sandbox: `python3 -m playwright install chromium`; if that fails, deliver the .docx or ask before
+  The claude.ai sandbox has `/usr/bin/google-chrome` (checked Nov 19, 2026: the script ran there with no setup). If
+  Chrome is missing: `python3 -m playwright install chromium`; if that fails, deliver the .docx or ask before
   writing the addresses out as text.
 - Slide decks saved as untagged PDFs: `pdf_slides2md.py` (routing table). `md2docx.js` now takes PNG pictures and
   `[text](url)` links, so a rebuild keeps them. Confirmed: 35-slide deck 0% → 100%.
