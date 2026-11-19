@@ -4,7 +4,7 @@ Thank you for helping. This skill is built by Whatcom Community College faculty 
 
 ## Ways to contribute
 
-- **Report a miss.** If YuJa Panorama flags something the skill did not fix, open an issue with the exact flag text, the file type, and what cleared it, if you found out.
+- **Report a miss.** If Panorama flags something the skill did not fix, open an issue with the exact flag text, the file type, and what cleared it, if you found out.
 - **Share a fix or a rule.** If you built your own skill or script for the same job, we would like to fold it in with credit to you.
 - **Improve the guide.** Corrections to the README and the faculty guide are welcome.
 

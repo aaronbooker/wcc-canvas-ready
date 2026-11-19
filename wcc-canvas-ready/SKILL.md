@@ -1,11 +1,11 @@
 ---
 name: wcc-canvas-ready
-description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Whatcom Community College's YuJa Panorama. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
+description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Panorama, the accessibility checker in Whatcom Community College's Canvas. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.0.10
+# WCC Canvas Ready, v1.0.11
 
-**Goal:** a file that scores **100% in YuJa Panorama** at Whatcom Community College on its first upload, with
+**Goal:** a file that scores **100% in Panorama** (in Canvas) at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
 
 - Many Panorama checks are also WCAG 2.2 AA (alt text, contrast, headings, language). Fixing them helps both.
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.0.10** (Nov 17, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.0.11** (Nov 19, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -36,17 +36,18 @@ the newest release number. Nothing about the instructor, their files or the chat
   Whichever you used, show it once more after the delivered report ("Update notice backstop" under Delivering). Why: in some
   claude.ai chats, text written between tool calls is summarized and never shown as written. On Nov 17, 2026 a notice written
   just before a question was lost that way. If they ask how to update, those three steps are the answer; if they get stuck,
-  walk them through one step at a time.
+  walk them through one step at a time, and point them to the guide with pictures (the notice's last line). Updates always
+  come from the GitHub releases page; never offer the ZIP from anywhere else.
 - **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
 - **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub, or GitHub only gave an out-of-date
   answer. This is normal on many accounts (Free plans, and any account with code-execution network access off) and it does
   **not** mean the skill is current. Do the web fallback once, quietly:
   1. If you have a web fetch tool, fetch `https://raw.githubusercontent.com/aaronbooker/wcc-canvas-ready/main/VERSION`. Your web
      tools run outside the sandbox, so this can work when the script can't. It is one line with the newest version number,
-     such as `1.0.9`. Only if that fetch fails or doesn't show a version, fetch
+     such as `1.0.11`. Only if that fetch fails or doesn't show a version, fetch
      `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest` instead and read the release number from the page.
      (A web tool can return a cached copy of the releases page: on Nov 17, 2026 it read v1.01 when the latest was v1.0.6.)
-  2. Run `python3 -I scripts/check_update.py --compare 1.0.9` with the number you read. It needs no network and compares
+  2. Run `python3 -I scripts/check_update.py --compare 1.0.11` with the number you read. It needs no network and compares
      correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`,
      show the whole message, placed as above. If it prints nothing, this copy is current: say nothing. If it prints
      `UPDATE CHECK BLOCKED`, the number you read is older than this copy, so the page was out of date and the check is not
@@ -60,6 +61,12 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **Never say or imply the skill is up to date unless** the script printed nothing, or `--verbose` said "You are up to date".
   A BLOCKED line means the check couldn't be confirmed, even after a web fetch. "The check couldn't run" and "no update" are
   different facts. A recent date on this copy is not evidence either.
+- **After they update:** a new chat is guaranteed to use the new zip. An existing chat may also pick it up (on Nov 17, 2026 a
+  chat that last ran v1.0.5 reported v1.0.9 when reopened), but how and when isn't known, so don't promise it either way. If
+  asked, say you can't tell from inside the chat, and that asking the chat to run
+  `python3 -I scripts/check_update.py --verbose` shows the version *that chat* is running (the copy it loaded), not
+  necessarily what is installed. Never say that relaunching the browser or the app will or won't refresh the skill: that is
+  unverified.
 - **If the instructor asks** which version they have or whether an update exists: run it with `--verbose` and report what it
   says. If it says BLOCKED, do steps 1 and 2 above. If those fail too, tell them plainly that you can't check from this chat,
   give the installed version and the releases link, and suggest they paste that link into the chat (pasting it lets you fetch it).
@@ -67,7 +74,7 @@ the newest release number. Nothing about the instructor, their files or the chat
   version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
   file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
 - You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, then Skills,
-  then + Add, then Upload skill). Claude asks whether to replace the installed copy and they say yes. Don't tell them to
+  then + Add, then Upload skill). If Claude asks whether to replace the installed copy, they say yes. Don't tell them to
   delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
@@ -198,7 +205,7 @@ an .odp that scored 100% fell to 0% after .odp → .pptx → .odp (LibreOffice w
 Units: Word `w:sz` is half-points (12 pt = 24); PowerPoint `sz` is hundredths (12 pt = 1200); Excel `<sz val>` is points.
 
 ## WCC Panorama issues seen, and what fixes them
-Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's published defaults.
+Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panorama's published defaults.
 
 | Panorama says | File | WCC severity | Fix | Label |
 |---|---|---|---|---|
@@ -230,7 +237,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from YuJa's 
 | The font size is smaller than 11 points | PDF | Minor ×runs | browser prints: `pdf_tag2html.py` rebuild at 12 pt; designed PDFs: the design file | Panorama |
 
 Label key: **WCAG x.x.x** = also a WCAG 2.2 AA requirement. **Panorama** = Panorama check, not WCAG AA.
-**WCC Panorama** = stricter at WCC than YuJa's defaults (11 pt flags at WCC; this skill uses 12 pt).
+**WCC Panorama** = stricter at WCC than Panorama's defaults (11 pt flags at WCC; this skill uses 12 pt).
 
 ## Golden rules
 - **Never replace, summarize or delete real content to pass a checker.** No placeholder text, no invented
@@ -255,7 +262,7 @@ Label key: **WCAG x.x.x** = also a WCAG 2.2 AA requirement. **Panorama** = Panor
   - before saving it offers to apply the same fixes to **identical copies elsewhere in Canvas**, with those copies
     already ticked and "Apply To Selected Files" as the main button. Choose "Apply To This File Only" unless you
     mean it.
-  (Ticking "Verify Reading Order" after a person has checked the order is YuJa's own instruction for that flag;
+  (Ticking "Verify Reading Order" after a person has checked the order is Panorama's own instruction for that flag;
   the instructor does it, not the skill.)
 - **Never stamp someone else's name on a file.** Keep the original author. Remove only tool names
   (`python-docx`, `openpyxl`, `Un-named`, `Steve Canny`). Ask whose name goes in Author if it's empty.
@@ -517,13 +524,75 @@ column by column. `fix_report.py` lists it under "might also flag" as a check fo
 instructor first** and tell them which tags moved (the fixer prints them): it changes what a screen reader reads
 first. Running heads and page numbers that are tagged instead of marked as artifacts also fail F21.
 
-**Rebuild pipeline** (textbook chapter, 0% → 100% at WCC):
+**Rebuild pipeline** (textbook chapter, 0% → 100% at WCC; three more chapters of the same book, Nov 18, 2026: 0% → 100% for both the Word file and the PDF):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
 `node md2docx.js out.md out.docx "Title" "Description"` → `postprocess_docx.py out.docx fixed.docx out.docx.tables.json`
 → `fix_baseline.py` / `inline_notes.py` if needed → `export_pdf.sh fixed.docx` (LibreOffice, tagged PDF/UA) →
 `postprocess_pdf.py fixed.pdf final.pdf tables.json` (adds table /Summary LibreOffice doesn't write; for a .docx you wrote yourself,
 `docx2pdf_ua.py in.docx out.pdf` does both and reads each table's description from the .docx) →
 `preflight_pdf.py final.pdf` → `content_check.py original.pdf fixed.docx`.
+
+**Setting up `layout.json` for a chapter** (three chapters of one textbook, Nov 18, 2026):
+- `layout.json` is a template. Give each chapter its own copy, with its own `pages` (a `skip` box plus a
+  `marker_before`/`marker_after` for every feature box, figure, table and photo) and `manual_pages` (opener, photo
+  spreads, review and quiz pages). The copy used for an earlier chapter skips that chapter's boxes: on the next
+  chapter it silently dropped the first lines of the text.
+- **Draft it first:** `layout_draft.py chapter.pdf layout.json chapter_layout.json`. It reads the page images:
+  - tinted areas (shaded boxes, photos, colored figures) become skip boxes and markers, with a figure's labels and
+    caption taken in;
+  - the first page, sideways pages, pages that are mostly one picture and pages with almost no body text become
+    manual pages.
+
+  On three chapters its manual pages matched the hand-made layouts exactly. The text pdf2md produced from it was
+  the same, word for word, apart from one gray chart: a gray-only figure isn't found, and the draft prints `CHECK`
+  for a printed "FIGURE" caption with nothing around it. Check every line it prints against the page images.
+  Then write each marker's block by hand from `region.py` and the page image.
+- `pdf2md.py` works out each page's left or right layout from where the body text sits. Two chapters of the
+  same book start on pages of different parity, so the PDF page number alone picked the wrong columns.
+  Pages with little body text follow the chapter's majority, and `"parity": "pdf"` turns this off.
+- **Crop box ≠ media box.** `pdf2md.py`, `region.py` and pdfplumber work in media-box points, but a render (PyMuPDF,
+  a screenshot) shows only the crop box. On these chapters the crop box started 35 or 53 pt in, and the media box was
+  657 pt wide against 514 visible. Convert a render pixel with `x = px × 72 / dpi + cropbox.x0`. A box capped at the
+  visible width cut the last word of each line at the right edge (the last word of the chapter title).
+- A letter followed by a separate accent mark ("c´") is joined into the accented letter ("ć") by `clean()`.
+- **Pages run through Acrobat "Paper Capture"** (Producer says so) can carry an OCR layer on some pages. Run
+  `ocr_gaps.py original.pdf`: it OCRs every page with Tesseract and lists, by position, words in the image that
+  no text-layer word covers, and text-layer words that look misread. On these chapters the text layer was
+  complete. The only misreads were italic words whose first capital is a separate glyph ("I nternational"),
+  which `pdf2md.py` already joins. A word drawn as a picture would never reach `content_check.py`, so run
+  `ocr_gaps.py` whenever the Producer names an OCR tool.
+- Paper Capture also writes **invisible** OCR guesses for icons and map art in ordinary fonts (Times-Roman,
+  Helvetica), not only `HiddenHorzOCR`. Kept, they landed mid-sentence as stray letters and
+  symbols. `pdf2md.py` and `region.py` now drop invisible characters (text render mode 3, read with PyMuPDF).
+- `pdf2md.py` sorts the margin notes. Learning-objective tabs become `[lo]`, online-lab notes become `[media]`
+  (split from the glossary term printed under them), and glossary terms stay `[margin]`. Typed "**1.** States"
+  lines become real list items.
+- `pdf2md.py` also tidies the text:
+  - It rejoins a paragraph that a page break split around a footnote, box or picture (15 places in one 48-page
+    chapter; two were missed by hand in another), and moves those items after the paragraph.
+  - It numbers footnotes "Note N:" and splits two footnotes that came out as one.
+  - It writes small-caps era labels as "B.C.E." and "C.E.".
+  - At a line-break hyphen, the chapter's own spelling elsewhere decides. Without that, it keeps the hyphen when
+    the joined word is rare but both halves are common: "so-called" had become "socalled".
+- **Sideways pages** (`/Rotate 90`, a wide map or table) come out of pdfplumber as unusable text. `pdf2md.py` marks
+  them `<<PAGEn>>` and says so; `region.py` prints PyMuPDF's upright reading of such a page. Check it against the image.
+- **Run-in heads** (a phrase in the heading font that opens a paragraph, `"runin"` in `layout.json`) become headings,
+  one level under the heading before them, so the levels stay nested. Kept bold, one merged with the bold term after
+  it, and one at the top of a page merged with the paragraph before it. Twelve in one chapter and four in another
+  became level-4 headings.
+- **Typed numbered lists** ("**1.**" then the item, and its turned lines) become real numbered items. **Indented
+  block quotes** set a size smaller become one quote, not one paragraph per line.
+- **Reading lists** ("Additional Readings") go in as bullets. In Word, an entry that starts with an initial
+  ("A. B. Author, …") is flagged "This element should be formatted as a list" (Major). As bullets, the same
+  file was predicted at 100% again.
+- **Still by hand (YOU):**
+  - every marker's block: boxes, photos with alt text, maps, review and quiz pages;
+  - outline lists typed in plain type (letters or numbers not in bold) stay paragraphs;
+  - an accent drawn as a picture (a macron over a vowel in a name) is in neither the text layer nor `ocr_gaps.py`.
+
+  Read the Markdown against the page images for these.
+- **Tell the instructor it takes a while.** A 48-page chapter is a long job, with many hand-built blocks and an alt text
+  for every picture. Say so before starting, and offer to do it a few sections at a time.
 
 **In-place fix** (`pdf_tagfix.py in.pdf --list` numbers every paragraph-level tag and figure with its text):
 JSON keys `title`, `lang`, `alt` {n: text}, `headings` {n: "H1"}, `actualtext` {n: text},
@@ -660,7 +729,8 @@ Run `preflight_pdf.py` on every PDF you deliver and treat an F6 miss as a stop.
 
 **Update notice backstop.** If the update check printed `UPDATE AVAILABLE` (directly or through `--compare`), end the reply that
 delivers the last report with this one line, with the new version filled in: "A newer version of this skill (vX.Y.Z) is
-available. To update: https://github.com/aaronbooker/wcc-canvas-ready/releases/latest". Put it after the report, never inside
+available. To update: https://github.com/aaronbooker/wcc-canvas-ready/releases/latest (steps with pictures:
+https://github.com/aaronbooker/wcc-canvas-ready/blob/main/docs/install-and-update.md)". Put it after the report, never inside
 it: the report is pasted exactly as `fix_report.py` prints it. Do this even if the notice was already shown at the start.
 
 # Testing in Canvas (optional)
@@ -696,6 +766,8 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
 | docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
+| layout_draft.py | drafts a chapter's `layout.json` from the page images: skip boxes for boxes, figures and photos, manual pages |
+| ocr_gaps.py | checks a recognized (OCR'd) PDF's text layer against its page images: missing and misread words |
 | fix_report.py | the report that goes with every output: changes, decisions, what to check, predicted Panorama flags and score; printed in full for the chat, `--pdf` for an accessible PDF copy |
 | pptx_order_preview.py | slides rendered with the reading order numbered, to ask the instructor; answers go back as `pptx_fix.py --keep-order` / `--order-file` |
 | pdf_tagfix.py | fix a tagged PDF in place (flyers, posters, browser prints): title, headings, alt, colors, lists, table summaries, alt from captions, footnote numbers tagged as links, content numbers, tag order |
@@ -762,3 +834,12 @@ lives in the title above and in this log. Bump it for each change that goes out,
   counting their words as added.
 - **v1.0.10** (Nov 17, 2026): test release to check the v1.0.9 update notice end to end on claude.ai (a copy at v1.0.9 should
   show it with its first question or final reply, and again after the report). Nothing about how the skill works changed.
+- **v1.0.11** (Nov 19, 2026): the update notice no longer says only a new chat will use the update. An existing chat was seen
+  to pick up a new version (how is unknown), so the notice recommends a new chat as the sure route, without ruling out the other.
+  **Textbook rebuilds** (three more chapters of a scanned-and-recognized textbook, Nov 18: 0% → 100% in Panorama for the Word file
+  and the PDF of each): `pdf2md.py` picks each page's left or right layout itself, drops invisible OCR text, joins split accents,
+  sorts margin notes (learning objectives, online-lab notes, glossary terms), makes typed numbered lines real lists, rejoins
+  paragraphs split at page breaks, numbers footnotes, writes small-caps era labels in capitals and keeps "so-called" hyphenated.
+  `layout.json` is now a blank template. New `ocr_gaps.py` checks the text layer against the page images.
+  **Update guide with pictures:** the update notice and its backstop line link to `docs/install-and-update.md`, which shows
+  each install and update step with a screenshot; the notice also says Customize may be called Plugins.

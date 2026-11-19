@@ -30,6 +30,7 @@ Once Aaron says the skill has been shared with all faculty, delete this section.
 
 - Aaron is the human in the loop and edits files himself. Re-read the current version of any file before changing it. Never overwrite his edits.
 - Work on a branch and open a pull request. Do not commit to `main` unless Aaron says to in that session.
+- The skill's scripts run in Claude's own Linux sandbox (code execution in claude.ai), not on faculty computers. Faculty use Windows or Mac with Chrome, Firefox, Edge or Safari, and few have Python, and none of that matters to the scripts. What matters is what the sandbox has. Use the standard library and the packages SKILL.md installs. Make anything else (PyMuPDF, pytesseract) optional, with a fallback or a plain message, and test new scripts with those libraries hidden. A Python set up on this Mac for a test session says nothing about the sandbox.
 - Do not change `VERSION` on `main`, rebuild the zip, or describe something as released unless Aaron asked for a release. `VERSION` is live: installed copies read it.
 - This repository is public. Do not commit student information, colleagues' names without their consent, colleagues' course files, Canvas course or file IDs, or email addresses beyond the one already in the README.
 - Test files that belong to colleagues stay out of the repository.

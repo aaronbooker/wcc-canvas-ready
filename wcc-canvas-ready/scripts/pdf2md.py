@@ -11,12 +11,16 @@ layout.json:
   "body_font": "Sabon", "body_size": 10,
   "pages": {"5": {"skip": [[x0,top,x1,bottom], ...], "marker_after": "FIG2_1"}, ...},
   "manual_pages": [1, 22, 23],                         # pages handled by hand
-  "symbol_map": {"MathematicalPi": {"j": ":"}}
+  "symbol_map": {"MathematicalPi": {"j": ":"}},
+  "runin": [["BellGothicStd-Black", 10]],             # run-in heads: become headings one level down
+  "parity": "pdf",                                     # optional: trust the PDF page number for even/odd
+  "media_site": "my[a-z]+lab\\.com"                    # optional: the online-lab notes in the margin
 }
+Draft "pages" and "manual_pages" with layout_draft.py, then check them against the page images.
 Output markdown: '#'-headings, paragraphs, *italic*, **bold**, ^sup^,
 '> [margin] text' margin notes, '<<MARKER>>' placeholders for hand-built blocks.
 """
-import json, re, sys
+import json, re, sys, unicodedata
 import pdfplumber
 from wordfreq import zipf_frequency as zf
 
@@ -29,8 +33,39 @@ def fontkind(fn):
     bd = any(k in fn for k in ('Bold', 'Black'))
     return it, bd
 
+INVISIBLE = {}   # page index -> {char: [(x0, x1, top)]} drawn with text render mode 3 (invisible)
+
+def load_invisible(path):
+    """Acrobat Paper Capture writes its OCR guesses for icons and map art as invisible text (render mode 3), in
+    ordinary font names (Times-Roman, Helvetica) as well as HiddenHorzOCR. Kept, they landed inside sentences as stray
+    letters and symbols (a textbook chapter, Nov 18, 2026). pdfplumber can't see the render mode, so
+    PyMuPDF lists those characters. Its positions are relative to the crop box and pdfplumber's are media-box points,
+    so the crop box origin is added (a first try without it deleted real words next to the icons)."""
+    try:
+        import fitz
+    except ImportError:
+        print('note: PyMuPDF (fitz) not installed, so invisible OCR text is not filtered', file=sys.stderr)
+        return
+    for i, p in enumerate(fitz.open(path)):
+        ox, oy = p.cropbox.x0, p.cropbox.y0
+        for t in p.get_texttrace():
+            if t['type'] == 3:
+                for c in t['chars']:
+                    INVISIBLE.setdefault(i, {}).setdefault(chr(c[0]), []).append((c[3][0] + ox, c[3][2] + ox, c[3][1] + oy))
+
+def visible(pg):
+    inv = INVISIBLE.get(pg.page_number - 1)
+    if not inv:
+        return pg
+    def keep(o):
+        if o.get('object_type') != 'char' or o['text'] not in inv:
+            return True
+        cx = (o['x0'] + o['x1']) / 2
+        return not any(x0 - 1 <= cx <= x1 + 1 and abs(o['top'] - top) < 3 for x0, x1, top in inv[o['text']])
+    return pg.filter(keep)
+
 def get_words(pg):
-    ws = pg.extract_words(extra_attrs=['fontname', 'size'], x_tolerance=1.5)
+    ws = visible(pg).extract_words(extra_attrs=['fontname', 'size'], x_tolerance=1.5)
     out = []
     for w in ws:
         fn = w['fontname']
@@ -144,7 +179,13 @@ def join_hyphen(a, b):
         return a + ' ' + b
     whole = m.group(1) + n.group(1)
     keep = m.group(1) + '-' + n.group(1)
-    if HYPH.get(keep.lower(), 0) > HYPH.get(whole.lower(), 0) or (zf(whole, 'en') == 0 and zf(m.group(1), 'en') > 2 and zf(n.group(1), 'en') > 2):
+    k, w = HYPH.get(keep.lower(), 0), HYPH.get(whole.lower(), 0)
+    if k != w:                                  # the document's own spelling elsewhere decides
+        return a + b if k > w else a[:-1] + b
+    zw, zm, zn = zf(whole, 'en'), zf(m.group(1), 'en'), zf(n.group(1), 'en')
+    # no evidence: keep the hyphen when the joined word is unknown, or rare while both halves are common words
+    # ("so-called" became "socalled", Nov 18, 2026: wordfreq lists "socalled" at 1.7)
+    if (zw == 0 and zm > 2 and zn > 2) or (zw < 2.0 and min(zm, zn) >= 4.5):
         return a + b
     return a[:-1] + b
 
@@ -154,8 +195,45 @@ def heading_level(ln):
             return lev
     return None
 
+SPACING_MARKS = {'\u00b4': '\u0301', '\u02c7': '\u030c', '\u00a8': '\u0308', '\u02dc': '\u0303'}
+
+def fix_accents(t):
+    """A letter followed by a spacing accent ("c´") is one accented letter ("ć").
+    Some typeset PDFs draw the accent as its own glyph after the letter (a textbook, Nov 18, 2026)."""
+    return unicodedata.normalize('NFC', re.sub('([A-Za-z])([%s])' % ''.join(SPACING_MARKS),
+                                               lambda m: m.group(1) + SPACING_MARKS[m.group(2)], t))
+
+def page_sides(pdf):
+    """'even'/'odd' layout for each page. The PDF page number's parity is only a guess: a chapter whose first PDF
+    page is an odd book page has its left and right pages the other way round from one whose first page is even
+    (two chapters of the same textbook, Nov 18, 2026). Body-font words that fit only one layout's body column
+    decide each page; pages with too little body text (maps, photos, review pages) follow the chapter's majority.
+    "parity": "pdf" in layout.json turns this off."""
+    guess = lambda pno: 'even' if pno % 2 == 0 else 'odd'
+    flip = lambda s: 'odd' if s == 'even' else 'even'
+    if L.get('parity') == 'pdf':
+        return {pno: guess(pno) for pno in range(1, len(pdf.pages) + 1)}
+    inside = lambda w, s: L[s]['body'][0] <= w['x0'] and w['x1'] <= L[s]['body'][1] + 3
+    sure, votes = {}, [0, 0]   # votes: [PDF parity right, PDF parity flipped]
+    for pno, pg in enumerate(pdf.pages, 1):
+        body = [w for w in get_words(pg) if L.get('body_font', '') in w['fontname'] and abs(w['size'] - L['body_size']) < 0.3
+                and L['top'] <= w['top'] and w['bottom'] <= L['bottom']]
+        g, o = guess(pno), flip(guess(pno))
+        n_g = sum(1 for w in body if inside(w, g) and not inside(w, o))
+        n_o = sum(1 for w in body if inside(w, o) and not inside(w, g))
+        if max(n_g, n_o) >= 20 and max(n_g, n_o) > 2 * min(n_g, n_o):
+            sure[pno] = g if n_g > n_o else o
+            votes[sure[pno] != g] += 1
+    flipped = votes[1] > votes[0]
+    return {pno: sure.get(pno, flip(guess(pno)) if flipped else guess(pno)) for pno in range(1, len(pdf.pages) + 1)}
+
 def clean(t):
-    t = re.sub(r'\s+', ' ', t).strip()
+    t = fix_accents(re.sub(r'\s+', ' ', t).strip())
+    # era labels set in small caps come out lowercase or spaced ("b.c.e.", "B. C. E.")
+    t = re.sub(r'\b[bB]\. ?[cC]\. ?[eE]\.?(?![a-z])', 'B.C.E.', t)
+    t = re.sub(r'(?<![A-Za-z.] )(?<![A-Za-z.])\b[cC]\. ?[eE]\.(?![a-z])', 'C.E.', t)
+    t = re.sub(r'\b[aA]\. ?[dD]\.(?= ?\d)', 'A.D.', t)
+    t = t.replace('B.C.E. .', 'B.C.E.').replace('C.E. .', 'C.E.')
     t = re.sub(r'(?<!\*)\* \*(?!\*)', ' ', t)          # *a* *b* -> *a b*
     t = re.sub(r'\*\* \*\*', ' ', t)                    # **a** **b** -> **a b**
     t = re.sub(r'^\S*-\[\s*', '', t)                      # icon debris like <i>-[
@@ -168,18 +246,46 @@ def clean(t):
     t = re.sub(r'([A-Za-z]+)-(\*+) (\*+)([a-z]+)', lambda m: m.group(1) + m.group(4) + m.group(2) if zf(m.group(1)+m.group(4),'en')>0 else m.group(0), t)
     return t
 
+BLOCKS = []
+RUNIN = [None]   # heading level of run-in heads since the last real heading
+
+def runin_split(ln):
+    """A run-in head: a phrase in the run-in font that opens a body line (a few words in bold sans, then the text).
+    It is a heading in all but layout. Kept bold inside the paragraph it merged with a bold term after it, or, at
+    the top of a page, with the paragraph before it (a textbook chapter, Nov 18, 2026).
+    layout.json "runin": [[font, size], ...]. Returns (head words, rest of the line) or (None, None)."""
+    w0 = ln['words'][0]
+    if not any(f in w0['fontname'] and abs(w0['size'] - z) < 0.3 for f, z in L.get('runin', [])):
+        return None, None
+    n = 0
+    while n < len(ln['words']) and ln['words'][n]['fontname'] == w0['fontname']:
+        n += 1
+    head = ln['words'][:n]
+    if re.fullmatch(r'[\d.\s]+', ' '.join(w['text'] for w in head)):     # a learning-objective number, not a head
+        return None, None
+    return head, ln['words'][n:]
+
+def last_level():
+    """A run-in head goes one level under the heading before it, so heading levels stay nested."""
+    for b in reversed(BLOCKS):
+        if b[0] == 'h':
+            return b[1]
+    return 1
+
 def main():
     global L, HYPH, para
     pdf_path, layout_path, out_path = sys.argv[1:4]
     L.update(json.load(open(layout_path)))
     pdf = pdfplumber.open(pdf_path)
+    load_invisible(pdf_path)
+    SIDES = page_sides(pdf)
     # Pass 1: collect all words for hyphenation evidence
     alltext = ' '.join(w['text'] for pg in pdf.pages for w in get_words(pg))
     HYPH = {}
     for tok in re.findall(r"[A-Za-z]+-?[A-Za-z]+", alltext):
         HYPH[tok.lower()] = HYPH.get(tok.lower(), 0) + 1
 
-    blocks = []          # ('h', level, text) | ('p', text) | ('m', text) | ('marker', name) | ('note', text)
+    blocks = BLOCKS      # ('h', level, text) | ('p', text) | ('m', text) | ('marker', name) | ('note', text)
     para = None          # current paragraph text
     pending = []         # floats to emit at next paragraph boundary
     body_size = L['body_size']
@@ -197,9 +303,14 @@ def main():
         pc = L.get('pages', {}).get(str(pno), {})
         if pno in L.get('manual_pages', []):
             flush(); blocks.append(('marker', f'PAGE{pno}')); continue
-        side = 'even' if pno % 2 == 0 else 'odd'
-        bx, mx = L[side]['body'], L[side]['margin']
+        if (pg.rotation or 0) % 180:
+            # a sideways page (a wide map or table): pdfplumber's text is unusable there (Nov 18, 2026, six pages of
+            # one chapter). Build it by hand: region.py prints PyMuPDF's upright reading of the page.
+            print('page %d is sideways (/Rotate %d): marked <<PAGE%d>>; build it by hand' % (pno, pg.rotation, pno), file=sys.stderr)
+            flush(); blocks.append(('marker', f'PAGE{pno}')); continue
         ws = [w for w in get_words(pg) if L['top'] <= w['top'] and w['bottom'] <= L['bottom']]
+        side = SIDES[pno]
+        bx, mx = L[side]['body'], L[side]['margin']
         ws = [w for w in ws if not any(in_box(w, b) for b in pc.get('skip', []))]
         body = [w for w in ws if bx[0] <= w['x0'] and w['x1'] <= bx[1] + 3]
         marg = [w for w in ws if mx[0] <= w['x0'] and w['x1'] <= mx[1] + 3 and w not in body]
@@ -242,7 +353,19 @@ def main():
                     h = blocks[-1]; blocks[-1] = ('h', lev, h[2] + ' ' + s.strip('*'))
                 else:
                     flush(); blocks.append(('h', lev, s.strip('*')))
-                ln['lev'] = lev; prev = ln; continue
+                ln['lev'] = lev; prev = ln; RUNIN[0] = None; continue
+            head, rest = runin_split(ln)
+            if head:
+                htxt = render(fmt_words(head, body_size)).strip('*').strip()
+                if prev is not None and prev.get('runin') and blocks and blocks[-1][0] == 'h':   # a head on two lines
+                    blocks[-1] = ('h', blocks[-1][1], blocks[-1][2] + ' ' + htxt)
+                else:
+                    flush(); RUNIN[0] = RUNIN[0] or min(4, last_level() + 1); blocks.append(('h', RUNIN[0], htxt))
+                if rest:
+                    para = render(fmt_words(rest, body_size)); para_kind[0] = 'p'
+                else:
+                    ln['runin'] = True
+                prev = ln; continue
             if ln['size'] < body_size - 1.5 and ln['top'] > 540:          # footnote
                 if para_kind[0] == 'note' and para is not None:
                     para = para + ' ' + s
@@ -252,8 +375,20 @@ def main():
             if bullet:
                 flush(); para = s; para_kind[0] = 'li'; para_kind[1] = words[0]['x0'] if words else ln['x0']
                 prev = ln; continue
-            if para_kind[0] == 'li' and para is not None and abs(ln['x0'] - para_kind[1]) < 4:
+            # a typed number in bold ("1." then the item) is a numbered list item, its turned lines follow it
+            if re.fullmatch(r'\d{1,2}\.', first['text']) and fontkind(first['fontname'])[1] and len(ln['words']) > 1:
+                flush(); para = first['text'] + ' ' + render(fmt_words(ln['words'][1:], body_size))
+                para_kind[0] = 'ol'; para_kind[1] = ln['words'][1]['x0']
+                prev = ln; continue
+            if para_kind[0] in ('li', 'ol') and para is not None and abs(ln['x0'] - para_kind[1]) < 4:
                 para = join_hyphen(para, s) if para.endswith('-') else para + ' ' + s
+                prev = ln; continue
+            # an indented block quote, set a size smaller: one quote, not one paragraph per line
+            if L.get('body_font', '') in first['fontname'] and body_size - 1.6 <= ln['size'] <= body_size - 0.4 and ln['x0'] - col_left > 8:
+                if para_kind[0] == 'q' and para is not None and prev is not None and ln['top'] - prev['bottom'] <= 6:
+                    para = join_hyphen(para, s) if para.endswith('-') else para + ' ' + s
+                else:
+                    flush(); para = s; para_kind[0] = 'q'
                 prev = ln; continue
             indent = ln['x0'] - col_left
             prev_short = prev is not None and prev['x1'] < col_right - 15
@@ -271,15 +406,85 @@ def main():
             pending.append(('marker', pc['marker_after']))
     flush()
 
+    out = []
+    for b in blocks:
+        if b[0] == 'h': out.append('#' * b[1] + ' ' + clean(b[2]))
+        elif b[0] == 'p': out.append(clean(b[1]))
+        elif b[0] == 'li': out.append('- ' + clean(b[1]))
+        elif b[0] == 'ol': out.append('  ' + clean(b[1]))
+        elif b[0] == 'q': out.append('> [quote] ' + clean(b[1]))
+        elif b[0] == 'note': out.append('> [note] ' + clean(b[1]))
+        elif b[0] == 'm': out.append('> [margin] ' + clean(b[1]))
+        elif b[0] == 'marker': out.append(f'<<{b[1]}>>')
     with open(out_path, 'w') as f:
-        for b in blocks:
-            if b[0] == 'h': f.write('#' * b[1] + ' ' + clean(b[2]) + '\n\n')
-            elif b[0] == 'p': f.write(clean(b[1]) + '\n\n')
-            elif b[0] == 'li': f.write('- ' + clean(b[1]) + '\n\n')
-            elif b[0] == 'note': f.write('> [note] ' + clean(b[1]) + '\n\n')
-            elif b[0] == 'm': f.write('> [margin] ' + clean(b[1]) + '\n\n')
-            elif b[0] == 'marker': f.write(f'<<{b[1]}>>\n\n')
+        f.write('\n\n'.join(sort_margins(out)) + '\n\n')
     print('blocks', len(blocks))
+
+
+MEDIA = r'my[a-z]+lab\.com'   # a publisher's online-lab notes in the margin ("... at mylab.com"); L['media_site'] overrides
+
+def sort_margins(out):
+    """Margin notes come out of the page as one kind. In a textbook they are three (Nov 18, 2026, three chapters):
+    learning-objective tabs, split in two by the number box ("Define" + "**1.2** and provide ..."), become one
+    '> [lo] **1.2** Define and provide ...'; an online-lab note and the glossary term printed under it, read as one
+    note ("... at **mylab.com term** —its definition ..."), are split into '[media]' and '[margin]';
+    a note that is only a lab note is '[media]'. A chapter number set smaller ("**Chapter^1^**") is plain again, and a
+    typed numbered line ("**1.** States") becomes a real list item, which Word would otherwise flag as
+    "This element should be formatted as a list"."""
+    site = L.get('media_site', MEDIA)
+    res = []
+    for b in out:
+        b = re.sub(r'\b(Chapter|Figure|Table)\^(\d+)\^', r'\1 \2', b)
+        m = re.match(r'> \[margin\] \*\*(\d+\.\d+)\*\* (.*)$', b, re.S)
+        if m and res and re.match(r'> \[margin\] [^*]{1,40}$', res[-1]):
+            res[-1] = '> [lo] **%s** %s %s' % (m.group(1), res[-1][len('> [margin] '):], m.group(2)); continue
+        if b.startswith('> [margin] ') and re.search(site, b):
+            t = b[len('> [margin] '):]
+            t = re.sub(r'(%s) (?=[^*]+\*\*)' % site, '\\1**\0**', t)    # "**lab.com Study**": split inside the bold run
+            t = re.sub(r'(%s)(\*\*)? (?=\S)' % site, '\\1\\2\0', t)      # "**lab.com** Study"
+            for part in (x.strip() for x in t.split('\0')):
+                if part and part != '****':
+                    res.append(('> [media] ' if re.search(site, part) else '> [margin] ') + part)
+            continue
+        b = re.sub(r'^\*\*(\d{1,2})\.\*\* ', r'  \1. ', b)
+        if b.startswith('> [note] '):
+            res.extend(split_notes(b[len('> [note] '):])); continue
+        res.append(b)
+    return join_page_breaks(res)
+
+
+def split_notes(t):
+    """'1The six ...' -> 'Note 1: The six ...'; two footnotes on one page read as one are split at the next number."""
+    m = re.match(r'(\d{1,2}) ?(?=\S)(.*)$', t, re.S)
+    if not m:
+        return ['> [note] ' + t]
+    n, rest = int(m.group(1)), m.group(2)
+    nxt = re.search(r' %d ?(?=[“"A-Z])' % (n + 1), rest)
+    if nxt:
+        return ['> [note] Note %d: %s' % (n, rest[:nxt.start()].strip())] + split_notes(rest[nxt.start():].strip())
+    return ['> [note] Note %d: %s' % (n, rest.strip())]
+
+
+def join_page_breaks(B):
+    """A paragraph that runs onto the next page comes out in two when a footnote, margin note, box marker or picture
+    sits between the halves (15 places in one 48-page chapter, Nov 18, 2026). A plain paragraph that doesn't end a sentence is joined with the next plain
+    paragraph, and what was between them moves after the joined paragraph."""
+    plain = lambda b: not re.match(r'(#|> |!|- |\s+\d+\. |\s+a\) |1\. |<<)', b)
+    between = lambda b: b.startswith(('> ', '!', '<<'))
+    k = 0
+    while k < len(B):
+        b = B[k]
+        if (plain(b) or re.match(r'\s+\d+\. ', b)) and not re.search(r'[.?!:;”"’)\]]\**\s*$|\^\d+\^\s*$', b):
+            j = k + 1
+            while j < len(B) and between(B[j]):
+                j += 1
+            if j < len(B) and plain(B[j]) and (j > k + 1 or re.match(r'[a-z(]', B[j])):
+                a, c = b.rstrip(), B[j]
+                joined = a[:-1] + c if re.search(r'[a-z]-$', a) and zf(re.findall(r'[A-Za-z]+-$', a)[-1][:-1] + re.match(r'[A-Za-z]*', c).group(0), 'en') > 0 else a + ' ' + c
+                B[k:j + 1] = [joined] + B[k + 1:j]
+                continue
+        k += 1
+    return B
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 WCC Canvas Ready
-Copyright 2026 Chris Pasquini, Aaron Booker, and the WCC Canvas Ready contributors
+Copyright 2026 Chris Pasquini, Aaron Booker, Monica Riess, and the WCC Canvas Ready contributors
 
 Developed for Whatcom Community College (Bellingham, Washington).
 
 This skill began as Chris Pasquini's `canvas-accessible-docx` skill
 (v1, November 6, 2026; v3, November 13, 2026). Aaron Booker rebuilt it,
 extended it to PowerPoint, Excel, PDF and HTML files, and tested it against
-Whatcom Community College's YuJa Panorama. WCC colleagues contributed test
+Whatcom Community College's Panorama, in Canvas. WCC colleagues contributed test
 files.
 
 Monica Riess is a collaborator. She shared her `pdf-accessibility-updater`
@@ -32,9 +32,9 @@ If you share or adapt the documents, CC BY 4.0 requires that you name the
 authors, link to the license, and say whether you made changes. Suggested
 credit:
 
-  "WCC Canvas Ready" by Chris Pasquini and Aaron Booker, Whatcom Community
-  College, https://github.com/aaronbooker/wcc-canvas-ready, licensed under
-  CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+  "WCC Canvas Ready" by Chris Pasquini, Aaron Booker and Monica Riess,
+  Whatcom Community College, https://github.com/aaronbooker/wcc-canvas-ready,
+  licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 
 If you changed the document, add a note such as "Adapted from the original".
 

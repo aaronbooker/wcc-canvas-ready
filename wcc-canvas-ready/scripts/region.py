@@ -40,6 +40,18 @@ def region_paras(pdf, page, bbox, gap=4.5, size=9):
 if __name__ == '__main__':
     a = sys.argv
     pdf = pdfplumber.open(a[1]); page = int(a[2]); bbox = tuple(map(float, a[3:7]))
+    P.load_invisible(a[1])
+    if (pdf.pages[page - 1].rotation or 0) % 180:
+        # a sideways page: pdfplumber's characters aren't upright there, so print PyMuPDF's upright reading of the
+        # whole page (blocks in reading order) and ignore the box. Check it against the page image.
+        try:
+            import fitz
+        except ImportError:
+            sys.exit('page %d is sideways and PyMuPDF is not installed: type it from the page image' % page)
+        for b in fitz.open(a[1])[page - 1].get_text('blocks', sort=True):
+            if b[6] == 0 and b[4].strip():
+                print(P.clean(' '.join(b[4].split())) + '\n')
+        sys.exit(0)
     if '--layout' in a:
         P.L.update(json.load(open(a[a.index('--layout') + 1])))
     gap = float(a[a.index('--gap') + 1]) if '--gap' in a else 4.5

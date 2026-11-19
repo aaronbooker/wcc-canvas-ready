@@ -2,6 +2,32 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## v1.0.11 (November 19, 2026)
+
+- The update notice no longer says only a new chat will use the update. In a test, a chat that had last run v1.0.5 reported v1.0.9 when it was reopened, so an existing chat can pick up the new version. How that happens isn't known, so the notice now recommends a new chat as the route that is sure to work, and says an existing chat may pick it up too but that isn't guaranteed. The skill's instructions tell Claude not to promise either way, and not to say whether relaunching the browser or app refreshes the skill.
+- The update steps say "If Claude asks whether to replace" instead of "When", since that question may not appear every time.
+- The README lists every file type the skill handles (older Office formats, OpenDocument, RTF, scans, flyers, fillable forms and slide decks saved as PDF), how to give it a Google file, and what it can't fix.
+- The README's "What it does not do" section is now "Limitations": which files may not reach 100% and why, and what you still need to check or do yourself.
+- The skill's description, README, NOTICE and CONTRIBUTING call it simply "Panorama", the name faculty know it by in Canvas, without the vendor's name. The README's first line also says that Canvas is WCC's learning management system (LMS).
+- The README's Credit section thanks Chris and Monica and links to each person's WCC staff directory entry and LinkedIn page.
+- Monica Riess is now named in the copyright line in `NOTICE` and in the suggested credit for anyone who shares or adapts the README or guide.
+- Textbook chapters rebuilt from scanned-and-recognized PDFs (Acrobat "Paper Capture"): three more chapters of one textbook went from 0% to 100% in Panorama, for the Word file and the PDF of each (Nov 18). Fixes found along the way:
+  - The layout settings file is now a blank template. It still held another chapter's settings, which made the next chapter silently lose its first lines.
+  - Each page's left- or right-hand layout is worked out from where the text sits. Two chapters of the same book start on opposite sides, and the old rule read every page of one of them with the wrong columns.
+  - Invisible OCR guesses that Acrobat hides in the page (for icons and maps) are dropped; they had landed in the middle of sentences.
+  - Accents drawn apart from their letter are joined again ("ć", not "c´").
+  - Margin notes are sorted into learning objectives, online-lab notes and glossary terms. Typed numbered lines become real lists, which Word's checker expects.
+  - A paragraph split by a page break with a footnote, box or picture in between is joined again. Footnotes read "Note 1:", and two footnotes run together are split.
+  - Era labels set in small capitals read "B.C.E." and "C.E.". "So-called" keeps its hyphen at a line break.
+  - New `ocr_gaps.py` reads every page image with OCR and lists words the text layer lacks or seems to misread. It works without the optional PyMuPDF and pytesseract libraries.
+  - New `layout_draft.py` drafts a chapter's layout from the page images: boxes, figures and photos to set aside, and the pages to build by hand. On the three chapters its pages matched the hand-made layouts, apart from one gray chart, which it flags for a person to mark. This was the longest step done by hand.
+  - Run-in heads (a phrase in the heading font that opens a paragraph) become headings, one level under the heading before them. Typed numbered lists become real numbered items with their turned lines, and indented block quotes become one quote.
+  - Sideways pages are marked for building by hand, and `region.py` prints a readable version of them.
+  - The skill tells the instructor that a long chapter takes a while, and offers to do it a few sections at a time.
+- New guide with pictures, `docs/install-and-update.md`: each install and update step with a screenshot of Claude and of the GitHub release page, including which download to pick under Assets. The update notice ends with a link to it, says Customize may now be called Plugins, and Claude is told to point instructors to the guide if they get stuck. Updates always come from GitHub.
+- The README's download and update steps now go through the release page (Assets, then wcc-canvas-ready.zip), as the update notice does. Its install steps match Claude's current Upload a skill screen and say to check that the skill's switch is on.
+- The README asks faculty to help by emailing their original file, before the skill, with student information taken out. Nothing else is needed.
+
 ## v1.0.10 (November 17, 2026)
 
 - Test release to check the v1.0.9 update notice end to end. Nothing about how the skill works changed.
@@ -81,7 +107,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## v1.00 (November 15, 2026)
 
-First release. Built on Chris Pasquini's `canvas-accessible-docx` (v1 November 6, v3 November 13) and rebuilt and tested against WCC's YuJa Panorama.
+First release. Built on Chris Pasquini's `canvas-accessible-docx` (v1 November 6, v3 November 13) and rebuilt and tested against WCC's Panorama.
 
 - Handles Word, PowerPoint, Excel, PDF (including scans) and HTML files.
 - Includes `docx2pdf_ua.py`, which exports a Word file to a tagged PDF with the table summaries Panorama checks.

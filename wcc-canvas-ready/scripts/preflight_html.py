@@ -1,5 +1,5 @@
 """Panorama pre-flight for an HTML page (Canvas page body or uploaded .html). Usage: python3 preflight_html.py page.html
-Checks what WCC Panorama flagged plus YuJa's published HTML checklist. Reports; changes nothing.
+Checks what WCC Panorama flagged plus Panorama's published HTML checklist. Reports; changes nothing.
 """
 import sys, re, html
 from html.parser import HTMLParser
