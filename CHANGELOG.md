@@ -2,6 +2,11 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Next release (not released yet)
+
+- Web pages: the link check now flags a link whose text is a bare `.ai` address, such as "claude.ai". Panorama flagged one as "This link should have a descriptive title" (Major) on November 19, and the check had missed it because it only knew `.com`, `.org`, `.edu`, `.net`, `.gov`, `.io` and `.us`. It now also knows `.ca` and `.uk`, and ignores capital letters. The PDF rebuild's list of addresses gains `.ai` too.
+- The skill's list of Panorama issues has a row for "Alternative description longer than 120 characters" (Major, web pages). The check already existed; the list didn't say how to fix it. An alt text of exactly 120 characters passed in Panorama.
+
 ## v1.0.11 (November 19, 2026)
 
 - The update notice no longer says only a new chat will use the update. In a test, a chat that had last run v1.0.5 reported v1.0.9 when it was reopened, so an existing chat can pick up the new version. How that happens isn't known, so the notice now recommends a new chat as the route that is sure to work, and says an existing chat may pick it up too but that isn't guaranteed. The skill's instructions tell Claude not to promise either way, and not to say whether relaunching the browser or app refreshes the skill.

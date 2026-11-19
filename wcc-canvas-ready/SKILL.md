@@ -221,7 +221,8 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panoram
 | Table does not have a header | Word, Excel | Major | `docx_captions.py` (tblLook firstRow) | WCAG 1.3.1 |
 | Table does not have a caption | Word, HTML | Major | `docx_captions.py` (visible caption) | WCC Panorama |
 | This element should be formatted as a list | Word | Major | `docx_lists.py`; a heading typed "A. Title" is flagged too: `postprocess_docx.py` makes the "A." real heading numbering. A line that **starts with an initial** ("R. Borgstrom") is flagged as well: ask the instructor how to word it ("Recipe from R. Borgstrom"). Typed numbers alone in table cells were not flagged: leave them | WCAG 1.3.1 |
-| This link should have a descriptive title | HTML | Major | link text by hand | WCAG 2.4.4 |
+| Alternative description longer than 120 characters | HTML | Major ×image | `preflight_html.py` H8: **YOU** shorten each alt to 120 characters or fewer (exactly 120 passed, Nov 19, 2026); put longer detail in the page text | Panorama |
+| This link should have a descriptive title | HTML | Major | link text by hand. A bare address as the text is flagged, including short ones such as "claude.ai" (`preflight_html.py` H1) | WCAG 2.4.4 |
 | This link is missing a text description | HTML | Major | empty `<a>`: restore its text | WCAG 2.4.4 |
 | The link is broken | HTML | Major | real broken links: fix; **429 = false positive** | Panorama |
 | Sheet does not have text in cell A1 | Excel | **Minor** (first sheet only was flagged) | **YOU** write a one-line sheet description; `xlsx_fix.py --a1` | Panorama |
