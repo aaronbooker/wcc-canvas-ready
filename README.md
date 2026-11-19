@@ -19,19 +19,20 @@ A skill for Claude that gets course files ready for Canvas, the learning managem
 
 ## Download
 
-[Download wcc-canvas-ready.zip](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest/download/wcc-canvas-ready.zip) (the latest release). Save it and do not unzip it.
+Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and, under **Assets**, select **wcc-canvas-ready.zip** (not "Source code"). Save it and do not unzip it. Updates come from the same page.
 
-A written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-17_v7.pdf).
+**[Install or update, step by step with pictures](docs/install-and-update.md).** A longer written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-17_v7.pdf).
 
 ## Install in Claude
 
 Works on Free and paid Claude accounts. Based on Anthropic's Help Center article "Use skills in Claude".
 
 1. In Claude, open Settings, then Capabilities, and make sure "Create and edit files" is on.
-2. Go to Customize, then Skills.
-3. Select + Add, then Upload skill, and choose the ZIP. Do not unzip it.
-4. If you installed Chris Pasquini's earlier `canvas-accessible-docx`, delete it first so Claude does not choose between two similar skills.
-5. Start a new chat, attach a file, and say you want it ready for Canvas.
+2. Go to Customize, then Skills. (Claude is renaming Customize to Plugins, so you may see that name.)
+3. Select + Add, then Upload skill. Drag in the ZIP or select browse to choose it, then select Upload. Do not unzip it first.
+4. Open wcc-canvas-ready in your skills list and check that its switch is on.
+5. If you installed Chris Pasquini's earlier `canvas-accessible-docx`, delete it so Claude does not choose between two similar skills.
+6. Start a new chat, attach a file, and say you want it ready for Canvas.
 
 ## Check your version and update
 
@@ -43,10 +44,12 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 **To update:**
 
-1. Download the latest ZIP from the link above. Do not unzip it.
+1. Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and download wcc-canvas-ready.zip under Assets. Do not unzip it.
 2. Upload it as in the install steps (Customize, then Skills, then + Add, then Upload skill). You do not need to delete the old version first.
 3. If Claude asks whether to replace the WCC Canvas Ready you already have, say yes.
 4. Start a new chat and check the version again.
+
+The [step-by-step guide with pictures](docs/install-and-update.md) shows each of these screens. Only download the skill from this GitHub site.
 
 ## Limitations
 
@@ -78,7 +81,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 - `wcc-canvas-ready.zip`: the installable skill, version 1.0.11.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
-- `docs/`: the faculty guide.
+- `docs/`: the faculty guide, and `install-and-update.md`, the install and update steps with pictures (in `docs/images/`).
 - `CHANGELOG.md`: what changed in each version.
 - `LICENSE` and `NOTICE`: the license and the credit that must stay with any copy.
 - `CONTRIBUTING.md`: how to suggest a fix or add your own work.
@@ -108,4 +111,4 @@ Fixes, new rules and other faculty members' skills are welcome. See [CONTRIBUTIN
 
 ## Feedback
 
-If Panorama flags something the skill missed, open an issue here or email abooker1@whatcom.edu with the exact flag text, the file type, and what cleared it.
+The best help is your files. Email your original file, the one from before you used the skill, to abooker1@whatcom.edu. Nothing else is needed: Aaron runs it through the skill himself. Take out student names, grades and records first. Files are used only for testing and are not posted here.

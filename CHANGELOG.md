@@ -24,6 +24,9 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
   - Run-in heads (a phrase in the heading font that opens a paragraph) become headings, one level under the heading before them. Typed numbered lists become real numbered items with their turned lines, and indented block quotes become one quote.
   - Sideways pages are marked for building by hand, and `region.py` prints a readable version of them.
   - The skill tells the instructor that a long chapter takes a while, and offers to do it a few sections at a time.
+- New guide with pictures, `docs/install-and-update.md`: each install and update step with a screenshot of Claude and of the GitHub release page, including which download to pick under Assets. The update notice ends with a link to it, says Customize may now be called Plugins, and Claude is told to point instructors to the guide if they get stuck. Updates always come from GitHub.
+- The README's download and update steps now go through the release page (Assets, then wcc-canvas-ready.zip), as the update notice does. Its install steps match Claude's current Upload a skill screen and say to check that the skill's switch is on.
+- The README asks faculty to help by emailing their original file, before the skill, with student information taken out. Nothing else is needed.
 
 ## v1.0.10 (November 17, 2026)
 

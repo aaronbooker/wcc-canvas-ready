@@ -36,7 +36,8 @@ the newest release number. Nothing about the instructor, their files or the chat
   Whichever you used, show it once more after the delivered report ("Update notice backstop" under Delivering). Why: in some
   claude.ai chats, text written between tool calls is summarized and never shown as written. On Nov 17, 2026 a notice written
   just before a question was lost that way. If they ask how to update, those three steps are the answer; if they get stuck,
-  walk them through one step at a time.
+  walk them through one step at a time, and point them to the guide with pictures (the notice's last line). Updates always
+  come from the GitHub releases page; never offer the ZIP from anywhere else.
 - **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
 - **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub, or GitHub only gave an out-of-date
   answer. This is normal on many accounts (Free plans, and any account with code-execution network access off) and it does
@@ -728,7 +729,8 @@ Run `preflight_pdf.py` on every PDF you deliver and treat an F6 miss as a stop.
 
 **Update notice backstop.** If the update check printed `UPDATE AVAILABLE` (directly or through `--compare`), end the reply that
 delivers the last report with this one line, with the new version filled in: "A newer version of this skill (vX.Y.Z) is
-available. To update: https://github.com/aaronbooker/wcc-canvas-ready/releases/latest". Put it after the report, never inside
+available. To update: https://github.com/aaronbooker/wcc-canvas-ready/releases/latest (steps with pictures:
+https://github.com/aaronbooker/wcc-canvas-ready/blob/main/docs/install-and-update.md)". Put it after the report, never inside
 it: the report is pasted exactly as `fix_report.py` prints it. Do this even if the notice was already shown at the start.
 
 # Testing in Canvas (optional)
@@ -839,3 +841,5 @@ lives in the title above and in this log. Bump it for each change that goes out,
   sorts margin notes (learning objectives, online-lab notes, glossary terms), makes typed numbered lines real lists, rejoins
   paragraphs split at page breaks, numbers footnotes, writes small-caps era labels in capitals and keeps "so-called" hyphenated.
   `layout.json` is now a blank template. New `ocr_gaps.py` checks the text layer against the page images.
+  **Update guide with pictures:** the update notice and its backstop line link to `docs/install-and-update.md`, which shows
+  each install and update step with a screenshot; the notice also says Customize may be called Plugins.
