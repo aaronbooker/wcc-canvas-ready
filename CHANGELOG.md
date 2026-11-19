@@ -27,6 +27,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - New guide with pictures, `docs/install-and-update.md`: each install and update step with a screenshot of Claude and of the GitHub release page, including which download to pick under Assets. The update notice ends with a link to it, says Customize may now be called Plugins, and Claude is told to point instructors to the guide if they get stuck. Updates always come from GitHub.
 - The README's download and update steps now go through the release page (Assets, then wcc-canvas-ready.zip), as the update notice does. Its install steps match Claude's current Upload a skill screen and say to check that the skill's switch is on.
 - The README asks faculty to help by emailing their original file, before the skill, with student information taken out. Nothing else is needed.
+- After the release, the same day: the faculty guide PDF in `docs/` is now version 8, for v1.0.11. The skill is downloaded only from GitHub, and the guide's install and update steps, file types, limits, timeline and request for original files are up to date. Web addresses are written out as text, not as clickable links: in Panorama tests the same day, every clickable link in a PDF exported by LibreOffice was flagged "Check reading order" (Severe), and the guide with links scored 0%. With the addresses as text it scored 100%.
 
 ## v1.0.10 (November 17, 2026)
 
