@@ -2,6 +2,11 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Next release (not released yet)
+
+- PDFs with links now pass Panorama. When the skill made a PDF from a Word file, any clickable link left the page flagged "Check reading order" (Severe), so the PDF scored 0% while the skill's report predicted 100%. In tests on November 19, nothing changed inside such a PDF cleared the flag, but the same pages printed through Chrome passed. The skill now does that by itself whenever the PDF has links, and keeps the links. An 8-page guide with 7 links went from 0% to 100% in Panorama this way. The page layout comes from Chrome afterwards, so Claude checks every page.
+- The skill's report now predicts this flag, so it no longer promises 100% for a PDF like that.
+
 ## v1.0.11 (November 19, 2026)
 
 - The update notice no longer says only a new chat will use the update. In a test, a chat that had last run v1.0.5 reported v1.0.9 when it was reopened, so an existing chat can pick up the new version. How that happens isn't known, so the notice now recommends a new chat as the route that is sure to work, and says an existing chat may pick it up too but that isn't guaranteed. The skill's instructions tell Claude not to promise either way, and not to say whether relaunching the browser or app refreshes the skill.

@@ -100,6 +100,7 @@ PDF_MAP = {'F1': ('The title is missing from the document\'s properties', 'Major
            'F11': ('Check reading order (footnote tags)', 'Severe'), 'F13': ('List item structure is missing', 'Major'),
            'F4b': ("The document's heading structure is not properly nested", 'Severe'),
            'F20': ('Check reading order (tags out of numbered order)', 'Severe'),
+           'F22': ('Check reading order (links in a PDF made with LibreOffice)', 'Severe'),
            'F21': ('Reading order may not follow the page (Panorama does not check this; a person checks it with a screen reader)', 'Possible'),
            'F18': ('Insufficient contrast between foreground text and background', 'Severe'),
            'F18b': ('Insufficient contrast between foreground text and background (text on a picture: check it by eye)', 'Possible'),
@@ -118,6 +119,8 @@ def issues_pdf(t):
                            'content. Listen to each page with Acrobat\'s Read Out Loud; '
                            'rebuilding the PDF fixes it.')
             continue
+        if m.group(1) == 'F22':                               # one flag per page that has a link
+            I.append((name, sev, max(1, len(re.findall(r'\d+', m.group(2).split(':')[-1]))))); continue
         I.append((name, sev, 1))
     return I
 
