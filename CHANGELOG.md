@@ -4,6 +4,9 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## Next release (not released yet)
 
+- PDFs with links now pass Panorama. When the skill made a PDF from a Word file, any clickable link left the page flagged "Check reading order" (Severe), so the PDF scored 0% while the skill's report predicted 100%. In tests on November 19, nothing changed inside such a PDF cleared the flag, but the same pages printed through Chrome passed. The skill now does that by itself whenever the PDF has links, and keeps the links. An 8-page guide with 7 links went from 0% to 100% in Panorama this way. The page layout comes from Chrome afterwards, so Claude checks every page.
+- The skill's report now predicts this flag, so it no longer promises 100% for a PDF like that.
+- A word with a hyphen that wrapped at the end of a line ("well-" then "known") came out with a space added ("well- known") when a PDF was printed again through Chrome. It is now joined back together.
 - Web pages: the link check now flags a link whose text is a bare `.ai` address, such as "claude.ai". Panorama flagged one as "This link should have a descriptive title" (Major) on November 19, and the check had missed it because it only knew `.com`, `.org`, `.edu`, `.net`, `.gov`, `.io` and `.us`. It now also knows `.ca` and `.uk`, and ignores capital letters. The PDF rebuild's list of addresses gains `.ai` too.
 - The skill's list of Panorama issues has a row for "Alternative description longer than 120 characters" (Major, web pages). The check already existed; the list didn't say how to fix it. An alt text of exactly 120 characters passed in Panorama.
 - Web pages: the link check now flags a bare address with any ending, not only a list of known ones. A side effect: link text like "Node.js" is flagged too, so read the list before changing anything.

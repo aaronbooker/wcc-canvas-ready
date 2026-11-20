@@ -32,9 +32,10 @@ pdf.Root.Lang = pikepdf.String('en-US')
 pdf.Root.MarkInfo = pikepdf.Dictionary(Marked=True)
 vp = pdf.Root.get('/ViewerPreferences') or pikepdf.Dictionary()
 vp.DisplayDocTitle = True; pdf.Root.ViewerPreferences = vp
-# A link that wraps onto a second line is exported by LibreOffice as two <Link> tags with the same address. WCC's Panorama
-# flagged each split as "Check reading order" (Severe, 0%): a 6-page chart with 30 links, 7 flags; the same file without
-# links scored 100% (Nov 17, 2026). Merge back-to-back <Link> siblings that go to the same address into one.
+# A link that wraps onto a second line is exported by LibreOffice as two <Link> tags with the same address. Merge
+# back-to-back <Link> siblings that go to the same address into one, so a screen reader announces one link.
+# This was written (Nov 17, 2026) to clear Panorama's "Check reading order" on pages with links. It does NOT: Nov 19
+# one-page tests scored 0% with the halves joined or not. Any LibreOffice link is flagged; see the end of this file.
 def _uri(link):
     k = link.get('/K')
     for it in (list(k) if isinstance(k, pikepdf.Array) else [k]):
@@ -71,9 +72,8 @@ if merged:
     pt = pdf.Root.StructTreeRoot.get('/ParentTree')
     if pt is not None: fix_pt(pt)
     print(f'merged {len(merged)} links split across lines')
-# Each page's /Annots in the same order as their <Link> tags. LibreOffice writes them in another order (a link near the
-# bottom of the page listed first), and WCC's Panorama flagged "Check reading order" once on every page with links
-# (7 of 7 pages; the same file without links scored 100%), Nov 17, 2026.
+# Each page's /Annots in the same order as their <Link> tags (LibreOffice writes them in another order), so Tab moves
+# through the links in reading order. Also written for "Check reading order" (Nov 17, 2026); it does not clear it either.
 _order = []
 def _objrs(el):
     if not isinstance(el, pikepdf.Dictionary): return
@@ -93,3 +93,10 @@ for pg in pdf.pages:
 if _moved: print(f'link annotations put in tag order on {_moved} page(s)')
 pdf.save(dst)
 print('tables with summary:', len(tables))
+# WCC's Panorama flags every page with a LibreOffice link "Check reading order" (Severe, 0%): 16 one-page tests,
+# Nov 19, 2026, nothing changed in the file cleared it. docx2pdf_ua.py prints such a PDF again through Chrome.
+_lp = sum(1 for pg in pdf.pages if any(a.get('/Subtype') == '/Link' for a in pg.obj.get('/Annots', [])))
+import os
+if _lp and not os.environ.get('WCC_DOCX2PDF'):     # docx2pdf_ua.py handles it itself
+    print(f'WARNING links on {_lp} page(s): Panorama will flag each "Check reading order" (Severe). Use docx2pdf_ua.py '
+          'on the .docx instead (it prints a PDF with links through Chrome), or pdf_tag2html.py -> Chrome -> pdf_tagfix.py.')

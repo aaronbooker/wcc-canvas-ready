@@ -274,3 +274,17 @@ print(ok(not inv), 'F21 tag order follows the page (top to bottom in a column, l
       {p + 1: len(v) for p, v in sorted(inv.items())} or 'yes')
 ex = [(p, a, b) for p, v in sorted(inv.items()) for a, b in v[:2]]
 for p, a, b in ex[:8]: print(f'    page {p + 1}: "{a}" is tagged before "{b}", which comes first on the page')
+
+# F22 [WCC Panorama "Check reading order" (Severe), one per page with a link]: links in a PDF that LibreOffice
+# exported. Nov 19, 2026: 16 one-page tests changed the LibreOffice file in every way we could think of (links joined,
+# reordered, /Contents, /F, the tag name and shape, the clip and underline) and all scored 0%; the same page without its
+# link scored 100%, and the same links printed by Chrome scored 100%. Fix: docx2pdf_ua.py (it prints a PDF with links
+# again through Chrome), or pdf_tag2html.py -> Chrome -> pdf_tagfix.py.
+_meta = ' '.join(str(pdf.docinfo.get(k, '')) for k in ('/Producer', '/Creator')) if pdf.trailer.get('/Info') is not None else ''
+try:
+    with pdf.open_metadata() as _md: _meta += ' ' + str(_md.get('pdf:Producer', '')) + ' ' + str(_md.get('xmp:CreatorTool', ''))
+except Exception: pass
+_lo = 'libreoffice' in _meta.lower() or 'openoffice' in _meta.lower()
+_lpages = [i + 1 for i, pg in enumerate(pdf.pages) if any(a.get('/Subtype') == '/Link' for a in pg.obj.get('/Annots', []))]
+print(ok(not (_lo and _lpages)), 'F22 links in a PDF exported by LibreOffice (Panorama flags each of these pages):',
+      _lpages[:12] if _lo and _lpages else 'none')

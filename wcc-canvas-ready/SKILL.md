@@ -188,8 +188,8 @@ Ask during the fix, showing what you'd change:
 | .pptx | `preflight_pptx.py` | `pptx_alt.py` → `pptx_links.py` → `pptx_fix.py` (run the fixer **last**, so pictures marked decorative move behind the content) | alt text, link text, slides with no heading |
 | .ppt, .odp | convert to .pptx, fix; `.ppt` → **deliver .pptx** (L1); `.odp` → convert back, then `odf_colors.py` | | |
 | .xlsx, .xls, .ods | (the fixer reports) | `xlsx_fix.py --title --a1 "Sheet::text" --link "URL::Name (domain)"` (convert .xls/.ods to .xlsx first, back after; `.ods` → then `odf_colors.py`) | title, text for an empty A1, link text |
-| PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`) | |
-| PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` | layout.json, alt text |
+| PDF made from Word/Docs | `preflight_pdf.py` | rebuild: fix the source .docx, then `docx2pdf_ua.py in.docx out.pdf` (= `export_pdf.sh` + `postprocess_pdf.py`; a PDF with links is printed again through Chrome) | |
+| PDF with no source (textbook chapter) | `preflight_pdf.py` | rebuild: `pdf2md.py`/`region.py` → `md2docx.js` → `postprocess_docx.py` → `export_pdf.sh` → `postprocess_pdf.py` (it has links: `docx2pdf_ua.py` instead of the last two) | layout.json, alt text |
 | Untagged one-column PDF (web page saved as PDF, printed report) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_flow2md.py` → `md2docx.js` → as above | check the Markdown, alt text |
 | **Slide deck** saved as an untagged PDF (Keynote or PowerPoint "Save as PDF"; one slide per page) | `preflight_pdf.py` (F3 fails) | rebuild: `pdf_slides2md.py in.pdf out.md "Title" imgs.json` (one section per slide, largest text = its heading) → `md2docx.js` → as above. Leave out template art repeated on most slides | slide titles it got wrong, which pictures to keep, alt |
 | **Fillable** PDF form (InDesign/Acrobat, untagged; `widgets` on the pages) | `preflight_pdf.py` (F3 fails) | **ask first**: the rebuild drops the fill-in boxes. Then write the Markdown by hand → `md2docx.js` → `postprocess_docx.py` → `docx2pdf_ua.py` | answer lines, check-box grids as tables, alt for logos |
@@ -211,7 +211,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panoram
 |---|---|---|---|---|
 | The item does not have an alternative description | all | **Severe** | `docx_alt.py` / `pptx_alt.py` / `pdf_tagfix.py` alt | WCAG 1.1.1 |
 | Insufficient contrast between foreground text and background | all | **Severe** (Major in Word and Excel) | postprocess/pptx_fix/html_fix/pdf_tagfix colors. **Text on a photo or banner is measured against the picture's pixels** (Panorama does; `pptx_bg.py`). **Excel:** `xlsx_fix.py` X7/X8: mixed formatting inside a colored cell is flagged whatever its colors, and colored text on a colored fill can be flagged even at 8:1, so those become plain, black or white text | WCAG 1.4.3 |
-| Check reading order (PDF) | PDF | **Severe** | see F10–F12; content numbers (MCIDs) out of tag order (F20): `pdf_tagfix.py` renumbers them (`mcid_order`, on by default) | Panorama |
+| Check reading order (PDF) | PDF | **Severe** | see F10–F12; content numbers (MCIDs) out of tag order (F20): `pdf_tagfix.py` renumbers them (`mcid_order`, on by default); any link in a PDF LibreOffice exported, one per page (F22): `docx2pdf_ua.py` prints it through Chrome | Panorama |
 | The document's heading structure is not properly nested | Word | **Severe** | `postprocess_docx.py` (levels) | Panorama (WCAG best practice) |
 | Check reading order of slide | PowerPoint | Major | `pptx_fix.py`: title first, the rest of a busy slide (3+ other shapes) grouped as one unit; other slides in column-first order. Grouping cleared three slides that stayed flagged in every order tried (Nov 15, 2026). Left over: a person checks the flagged slides and ticks **Verify Reading Order** in Panorama. After the fixer it stayed only on decks with grid-like slides (rows of separate text boxes: exam-prep cards, a Jeopardy board, stat cards) and on two slides with staggered overlapping screenshots; `fix_report.py` predicts it from that | WCAG 1.3.2 |
 | The document does not have slide titles | PowerPoint | Major | `pptx_fix.py` (title placeholders) | WCAG 2.4.2 |
@@ -524,13 +524,18 @@ column by column. `fix_report.py` lists it under "might also flag" as a check fo
 `"tag_order": true` moves only the tags that are clearly out of order and keeps the rest in place. **Ask the
 instructor first** and tell them which tags moved (the fixer prints them): it changes what a screen reader reads
 first. Running heads and page numbers that are tagged instead of marked as artifacts also fail F21.
+**F22 links in a PDF exported by LibreOffice**: Panorama flags every page that has one "Check reading order"
+(Severe), and nothing changed inside the file clears it (Nov 19, 2026). `docx2pdf_ua.py` prints such a PDF again
+through Chrome by itself; `postprocess_pdf.py` warns when it sees links. Keep the links: don't write the addresses
+out as text unless Chrome can't run and the instructor agrees.
 
 **Rebuild pipeline** (textbook chapter, 0% → 100% at WCC; three more chapters of the same book, Nov 18, 2026: 0% → 100% for both the Word file and the PDF):
 `pdf2md.py in.pdf layout.json out.md` (or `region.py` per area) → check the Markdown against the page images →
 `node md2docx.js out.md out.docx "Title" "Description"` → `postprocess_docx.py out.docx fixed.docx out.docx.tables.json`
 → `fix_baseline.py` / `inline_notes.py` if needed → `export_pdf.sh fixed.docx` (LibreOffice, tagged PDF/UA) →
 `postprocess_pdf.py fixed.pdf final.pdf tables.json` (adds table /Summary LibreOffice doesn't write; for a .docx you wrote yourself,
-`docx2pdf_ua.py in.docx out.pdf` does both and reads each table's description from the .docx) →
+`docx2pdf_ua.py in.docx out.pdf` does both and reads each table's description from the .docx; **if the chapter has links,
+use `docx2pdf_ua.py` instead of the two steps**, because it prints a PDF with links again through Chrome: F22) →
 `preflight_pdf.py final.pdf` → `content_check.py original.pdf fixed.docx`.
 
 **Setting up `layout.json` for a chapter** (three chapters of one textbook, Nov 18, 2026):
@@ -685,11 +690,17 @@ as stated at WCC. The scripts already do these unless a step says **YOU**.
   source file: 0% → 70%.
 - A link shown as a bare host ("zoom.us/my/name") is renamed by `--describe-links`; **YOU** give a better name with
   `--links`. Confirmed: 70% → 100%.
-- **Links in PDFs that LibreOffice builds** (`docx2pdf_ua.py`) get "Check reading order" (Severe) once per page with
-  links (a 7-page rebuild: 0%; without links: 100%; links only in the table, only outside it, merged, reordered,
-  without underlines: all still 0%). **A rebuild that has links goes through Chrome instead:** build the PDF with
-  `docx2pdf_ua.py`, then `pdf_tag2html.py built.pdf page.html` → Chrome print → `pdf_tagfix.py` (title, table
-  summaries). Confirmed: same file with all its links, 0% → 100%.
+- **Links in PDFs that LibreOffice exports** get "Check reading order" (Severe) once per page with links (a 7-page
+  rebuild: 0%; without links: 100%; links only in the table, only outside it, merged, reordered, without underlines:
+  all still 0%). Nov 19, 2026: 16 one-page tests changed the LibreOffice file in every way we could think of
+  (/Contents, /F, the tag name and shape, the annotation's numbers, the clip and the underline) and all scored 0%.
+  **A PDF with links goes through Chrome instead:** `docx2pdf_ua.py` now does this itself when the PDF has links
+  (`pdf_tag2html.py` → Chrome print → `pdf_tagfix.py` with the title and table summaries, then the content check).
+  Pre-flight **F22** catches a LibreOffice PDF with links. Confirmed: the same 7-page rebuild with all its links,
+  0% → 100%; an 8-page guide with 7 links, 0% → 100% (Nov 19). The layout is Chrome's afterwards: render and look.
+  The claude.ai sandbox has `/usr/bin/google-chrome` (checked Nov 19, 2026: the script ran there with no setup). If
+  Chrome is missing: `python3 -m playwright install chromium`; if that fails, deliver the .docx or ask before
+  writing the addresses out as text.
 - Slide decks saved as untagged PDFs: `pdf_slides2md.py` (routing table). `md2docx.js` now takes PNG pictures and
   `[text](url)` links, so a rebuild keeps them. Confirmed: 35-slide deck 0% → 100%.
 
@@ -775,7 +786,7 @@ read the score from the file list (the Panorama icon's label reads "Score: N%").
 | xlsx_colors.py | Excel cell colors as Panorama judges them (theme, tint, indexed) and linked cells; used by xlsx_fix.py and fix_report.py |
 | rtf_post.py | heading outline levels and 12 pt in RTF exported by LibreOffice |
 | pdf2md.py, region.py, layout.json, md2docx.js, export_pdf.sh, postprocess_pdf.py, content_check.py | PDF rebuild pipeline |
-| docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary. **Use it for every PDF you build from a .docx that has tables, including your own reports and handouts** |
+| docx2pdf_ua.py | one step: .docx → tagged PDF/UA with table /Summary; a PDF with links is printed again through Chrome (F22). **Use it for every PDF you build from a .docx that has tables or links, including your own reports and handouts** |
 | scan2md.py | OCR a scanned PDF to Markdown for the rebuild |
 | layout_draft.py | drafts a chapter's `layout.json` from the page images: skip boxes for boxes, figures and photos, manual pages |
 | ocr_gaps.py | checks a recognized (OCR'd) PDF's text layer against its page images: missing and misread words |
