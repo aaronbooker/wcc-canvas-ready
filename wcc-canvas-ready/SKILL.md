@@ -221,7 +221,8 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panoram
 | Table does not have a header | Word, Excel | Major | `docx_captions.py` (tblLook firstRow) | WCAG 1.3.1 |
 | Table does not have a caption | Word, HTML | Major | `docx_captions.py` (visible caption) | WCC Panorama |
 | This element should be formatted as a list | Word | Major | `docx_lists.py`; a heading typed "A. Title" is flagged too: `postprocess_docx.py` makes the "A." real heading numbering. A line that **starts with an initial** ("R. Borgstrom") is flagged as well: ask the instructor how to word it ("Recipe from R. Borgstrom"). Typed numbers alone in table cells were not flagged: leave them | WCAG 1.3.1 |
-| This link should have a descriptive title | HTML | Major | link text by hand | WCAG 2.4.4 |
+| Alternative description longer than 120 characters | HTML | Major ×image | `preflight_html.py` H8: **YOU** shorten each alt to 120 characters or fewer (exactly 120 passed, Nov 19, 2026); put longer detail in the page text | Panorama |
+| This link should have a descriptive title | HTML | Major | link text by hand. A bare address as the text is flagged, including short ones such as "claude.ai" (`preflight_html.py` H1) | WCAG 2.4.4 |
 | This link is missing a text description | HTML | Major | empty `<a>`: restore its text | WCAG 2.4.4 |
 | The link is broken | HTML | Major | real broken links: fix; **429 = false positive** | Panorama |
 | Sheet does not have text in cell A1 | Excel | **Minor** (first sheet only was flagged) | **YOU** write a one-line sheet description; `xlsx_fix.py --a1` | Panorama |
@@ -618,8 +619,18 @@ measures on the rendered page:
   gradient "fails" even when it doesn't); text that is `transparent` until a script shows it is reported —
   move it into CSS `::before` on the active state or set it in the script.
 - **Font size** (Minor ×elements): every px/pt/rem size below 16px raised to 16px (12 pt).
-- **YOU**, by hand: link text ("Read", bare domains like `dl.acm.org`, filenames, "click here" were flagged),
-  empty links, alt text. Canvas pages may start at H2 (Canvas supplies the H1); that passed.
+- **YOU**, by hand: link text ("Read", bare domains like `dl.acm.org` or `claude.ai`, filenames, "click here" were
+  flagged; "Claude (claude.ai)" passed), empty links, alt text. **Alt text over 120 characters is Major, one instance
+  per image** (H8 lists each with its length): shorten each to 120 or fewer and put the extra detail in the page text.
+  Confirmed: six alts cut to 101–115 characters, plus one link text, took a page from 30% to 100%. Canvas pages may
+  start at H2 (Canvas supplies the H1); that passed.
+- **A Canvas page: check the page's HTML, not the page in the browser.** A page checked by eye in the browser was
+  predicted at 100% and scored 30% (long alt texts and a bare-domain link the scripts would have caught). Get the
+  HTML as a file first: the instructor opens the page's Edit view, switches to the HTML editor (`</>`), copies all of
+  it into a `.html` file and attaches it; or, with browser access in Canvas, fetch
+  `/api/v1/courses/<course>/pages/<page>` in the page and save its `body` as a `.html` file (a Blob download), because
+  copying it out of the tool output may be blocked. Run `preflight_html.py` and `fix_report.py` on that file, and
+  keep the unfixed version (the page's revision history has it) in case the instructor wants to compare.
 - **Remove pasted Panorama report markup** (`panorama-html…`, `MuiList…`): copying from Panorama's preview
   can paste its overlay into a page.
 

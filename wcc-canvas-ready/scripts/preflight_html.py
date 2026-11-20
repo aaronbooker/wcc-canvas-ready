@@ -43,14 +43,15 @@ prev = None
 for href, t, aria, title in p.links:
     t2 = ' '.join(t.split())
     if not t2 and not aria.strip(): empty.append(href)
-    elif WEAK.match(t2) or re.fullmatch(r'(https?://|www\.)\S+', t2) or re.fullmatch(r'[\w.-]+\.(com|org|edu|net|gov|io|us)(/\S*)?', t2) \
+    elif WEAK.match(t2) or re.fullmatch(r'(https?://|www\.)\S+', t2) or re.fullmatch(r'[\w.-]+\.[a-z]{2,}(/\S*)?', t2, re.I) \
             or re.search(r'\.(pdf|docx?|pptx?|xlsx?)$', t2, re.I):
         weak.append(t2)
     if prev and prev == href and not href.startswith('#'): dup.append(href)
     prev = href
-print(ok(not weak), 'H1 link text not descriptive (Major):', weak[:10])
+print(ok(not weak), 'H1 link text not descriptive (Major):', weak)   # every one: fix_report.py counts them
 print(ok(not empty), 'H2 empty links (Major):', empty[:10])
-print(ok(not dup), 'H6 adjacent links to the same URL (Minor):', dup[:5])
+# Panorama did not flag two separate mailto links to the same address (Nov 19, 2026): fix_report.py calls it Possible
+print(ok(not dup), 'H6 adjacent links to the same URL (Minor, not confirmed):', dup[:5])
 ext = [h for h, *_ in p.links if re.match(r'https?://(www\.)?(instagram|facebook|linkedin|x|twitter|tiktok)\.com', h or '')]
 print('NOTE', 'H3 links Panorama may call broken (sites that block checkers, 429):', ext[:5])
 print(ok(words <= 3000), f'H4 page length {words} words (Minor over 3000)')
@@ -59,7 +60,9 @@ noalt = [s for s, alt, role in p.imgs if alt is None and role != 'presentation']
 badalt = [alt for s, alt, role in p.imgs if alt and (len(alt) > 120 or re.search(r'\.(png|jpe?g|gif|svg|webp)$', alt, re.I)
           or re.fullmatch(r'(image|picture|photo|graphic|img)\s*\d*', alt, re.I))]
 print(ok(not noalt), 'H7 images without alt (Major):', noalt[:5])
-print(ok(not badalt), 'H8 alt text that is a filename, a placeholder or over 120 characters (Major):', [a[:40] for a in badalt[:5]])
+# every one, with its length (over 120 is flagged; exactly 120 passed, Nov 19, 2026); fix_report.py counts them
+print(ok(not badalt), 'H8 alt text that is a filename, a placeholder or over 120 characters (Major):',
+      [(len(a), a[:40] + ('…' if len(a) > 40 else '')) for a in badalt])
 print(ok(all(t['caption'] for t in p.tables)), f'H9 tables with a <caption>: {sum(t["caption"] for t in p.tables)}/{len(p.tables)}')
 print(ok(all(t['th'] for t in p.tables)), f'H10 tables with header cells <th>: {sum(bool(t["th"]) for t in p.tables)}/{len(p.tables)}')
 print(ok(all(t['text'].strip() for t in p.tables)), 'H11 no empty tables')
