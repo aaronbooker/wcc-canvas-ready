@@ -2,11 +2,15 @@
 
 These steps work for a first install and for every update. They use Claude in a web browser at [claude.ai](https://claude.ai). A free Claude account works. Each update takes about a minute.
 
-Claude changes its menus often. These pictures were taken on November 18, 2026, and your screen may look a little different.
+Claude changes its menus often. These pictures were taken on November 18 and 19, 2026, and your screen may look a little different.
 
 ## Get updates from here
 
 The skill keeps improving, and updates may come often. Every update comes from this GitHub site. When there is a newer version, the skill tells you at the start of a chat, names the new version and gives you a link back here. Claude can't install the update for you, so you follow the steps below.
+
+The notice looks like this. This one came from the update to version 1.1.0.
+
+![Claude's update notice: v1.1.0 is out (you have v1.0.11), with three numbered steps and a link to steps with pictures.](images/10-update-notice.png)
 
 Only download the skill from [github.com/aaronbooker/wcc-canvas-ready](https://github.com/aaronbooker/wcc-canvas-ready). If an email, a message or another website offers you a WCC Canvas Ready file, don't use it.
 
@@ -64,4 +68,4 @@ Send your original file, the one from before you used the skill, to Aaron Booker
 
 ---
 
-© 2026 Aaron Booker. This guide is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Screenshots show Claude (Anthropic) and GitHub as they appeared on November 18, 2026.
+© 2026 Aaron Booker. This guide is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Screenshots show Claude (Anthropic) and GitHub as they appeared on November 18 and 19, 2026.
