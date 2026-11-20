@@ -6,7 +6,8 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 - Web pages: the link check now flags a link whose text is a bare `.ai` address, such as "claude.ai". Panorama flagged one as "This link should have a descriptive title" (Major) on November 19, and the check had missed it because it only knew `.com`, `.org`, `.edu`, `.net`, `.gov`, `.io` and `.us`. It now also knows `.ca` and `.uk`, and ignores capital letters. The PDF rebuild's list of addresses gains `.ai` too.
 - The skill's list of Panorama issues has a row for "Alternative description longer than 120 characters" (Major, web pages). The check already existed; the list didn't say how to fix it. An alt text of exactly 120 characters passed in Panorama.
-- The faculty guide PDF in `docs/` is now version 9, still for v1.0.11. Its "What it does not do" section is now "Limitations", matching the README: what Panorama's score does and doesn't tell you, which files may not reach 100% (with the 50-file test results and older Office files), and what you still need to check yourself. It also says that signing up for Claude needs a cell phone that can get texts. Web addresses are still written as text, not links.
+- The faculty guide PDF in `docs/` is now version 10, still for v1.0.11. The install steps now show a screenshot for each part, the same seven pictures as `docs/install-and-update.md`, each with alt text. It scored 100% in Panorama.
+- Before that, the same day, version 9: its "What it does not do" section is now "Limitations", matching the README: what Panorama's score does and doesn't tell you, which files may not reach 100% (with the 50-file test results and older Office files), and what you still need to check yourself. It also says that signing up for Claude needs a cell phone that can get texts. Web addresses are still written as text, not links.
 
 ## v1.0.11 (November 19, 2026)
 
