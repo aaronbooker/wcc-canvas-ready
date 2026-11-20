@@ -2,6 +2,10 @@
 
 From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the last number (v1.0.6), a new feature moves the middle number (v1.1.0), and a change that breaks how the skill is used moves the first (v2.0.0). The first five releases were numbered v1.00 to v1.04, which are the same as v1.0.0 to v1.0.4. The skill's `name` stays `wcc-canvas-ready` in every version.
 
+## Next release (not released yet)
+
+- The faculty guide PDF in `docs/` is now version 11, for v1.1.0: its version numbers and timeline are up to date, and its update section shows a screenshot of the update notice. The step-by-step page `docs/install-and-update.md` shows the same screenshot. The skill itself is unchanged.
+
 ## v1.1.0 (November 19, 2026)
 
 The middle number moves because PDFs with links are now made a new way (through Chrome). Nothing about how you install or use the skill changed.
