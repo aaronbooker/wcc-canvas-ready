@@ -123,11 +123,17 @@ def issues_pdf(t):
 
 def issues_html(t):
     I = []
-    for m in re.finditer(r'^FAIL\s+H\d+\s+(.*?)(?:\((Severe|Major|Minor)[^)]*\))?:?\s*(.*)$', t, re.M):
-        name = m.group(1).strip(' :'); sev = m.group(2) or 'Minor'
-        I.append((name, sev, 1))
+    for m in re.finditer(r'^FAIL\s+(H\d+)\s+(.*)$', t, re.M):
+        code, rest = m.group(1), m.group(2)
+        name = re.split(r'\s*\((?:Severe|Major|Minor)\b|:\s', rest)[0].strip(' :')
+        sv = re.search(r'\((Severe|Major|Minor)\b', rest); sev = sv.group(1) if sv else 'Minor'
+        if code == 'H6': sev = 'Possible'   # two mailto links to one address were not flagged (Nov 19, 2026)
+        # H1 and H8 list every link or image: one instance each (6 long alt texts were 6 Panorama instances)
+        n = len(lst(r'(\[.*\])', rest)) if code in ('H1', 'H8') else 1
+        I.append((name, sev, n or 1))
     for m in re.finditer(r'^NOTE\s+H3\s+links Panorama may call broken.*?:\s*(\[.*\])', t, re.M):
-        I.append(('The link is broken (sites that block checkers, such as Instagram, can be reported this way)', 'Possible', len(lst(r'(\[.*\])', m.group(1)))))
+        k = len(lst(r'(\[.*\])', m.group(1)))
+        k and I.append(('The link is broken (sites that block checkers, such as Instagram, can be reported this way)', 'Possible', k))
     return I
 
 def issues_xlsx(f):

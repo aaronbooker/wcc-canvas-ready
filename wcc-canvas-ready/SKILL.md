@@ -614,8 +614,18 @@ measures on the rendered page:
   gradient "fails" even when it doesn't); text that is `transparent` until a script shows it is reported —
   move it into CSS `::before` on the active state or set it in the script.
 - **Font size** (Minor ×elements): every px/pt/rem size below 16px raised to 16px (12 pt).
-- **YOU**, by hand: link text ("Read", bare domains like `dl.acm.org`, filenames, "click here" were flagged),
-  empty links, alt text. Canvas pages may start at H2 (Canvas supplies the H1); that passed.
+- **YOU**, by hand: link text ("Read", bare domains like `dl.acm.org` or `claude.ai`, filenames, "click here" were
+  flagged; "Claude (claude.ai)" passed), empty links, alt text. **Alt text over 120 characters is Major, one instance
+  per image** (H8 lists each with its length): shorten each to 120 or fewer and put the extra detail in the page text.
+  Confirmed: six alts cut to 101–115 characters, plus one link text, took a page from 30% to 100%. Canvas pages may
+  start at H2 (Canvas supplies the H1); that passed.
+- **A Canvas page: check the page's HTML, not the page in the browser.** A page checked by eye in the browser was
+  predicted at 100% and scored 30% (long alt texts and a bare-domain link the scripts would have caught). Get the
+  HTML as a file first: the instructor opens the page's Edit view, switches to the HTML editor (`</>`), copies all of
+  it into a `.html` file and attaches it; or, with browser access in Canvas, fetch
+  `/api/v1/courses/<course>/pages/<page>` in the page and save its `body` as a `.html` file (a Blob download), because
+  copying it out of the tool output may be blocked. Run `preflight_html.py` and `fix_report.py` on that file, and
+  keep the unfixed version (the page's revision history has it) in case the instructor wants to compare.
 - **Remove pasted Panorama report markup** (`panorama-html…`, `MuiList…`): copying from Panorama's preview
   can paste its overlay into a page.
 
