@@ -9,6 +9,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 - The README and `docs/install-and-update.md` describe Claude's new screens: Plugins in the sidebar, Add, then Upload plugin for a first install, an "Added" label instead of an on/off switch, and Upload new version for updates. Seven screenshots were replaced or added, including the GitHub release page with the .skill file outlined.
 
 - The faculty guide PDF in `docs/` is now version 11, for v1.1.0: its version numbers and timeline are up to date, and its update section shows a screenshot of the update notice. The step-by-step page `docs/install-and-update.md` shows the same screenshot. The skill itself is unchanged.
+- The faculty guide PDF in `docs/` is now version 13 (still for v1.1.0). Its setup steps match the Canvas setup page in six parts, including making a Claude account and keeping chats out of AI training. It downloads `wcc-canvas-ready.skill`, installs through Plugins, updates with Upload new version, and shows Claude's screens as of November 19 and 20, 2026. It scored 100% in Panorama.
 
 ## v1.1.0 (November 19, 2026)
 
