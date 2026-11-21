@@ -2,7 +2,7 @@
 
 These steps cover a first install and every update. They use Claude in a web browser at [claude.ai](https://claude.ai). A free Claude account works. An update takes about a minute.
 
-Claude changes its menus often. These pictures were taken on November 20, 2026, and your screen may look a little different.
+Claude changes its menus often. The pictures of Claude were taken on November 21, 2026, and your screen may look a little different.
 
 ## Get updates from here
 
@@ -42,13 +42,13 @@ The release may also list **wcc-canvas-ready.zip**. It's the same skill in the o
 
    ![The Plugins page. The Add menu is open and lists Upload plugin, Add custom connector, Create a plugin, Create with Claude and Add marketplace.](images/04-add-upload-plugin.png)
 
-3. On the **Upload a plugin** page, drag **wcc-canvas-ready.skill** from your Downloads folder into the box under **Plugin file**, or select **browse** and choose it. Then select **Upload**.
+3. On the **Upload a plugin** page, drag **wcc-canvas-ready.skill** from your Downloads folder into the box under **Plugin file**, or select **browse** and choose it. A **Preview** shows the skill's name and description. Then select **Upload**.
 
-   ![The Upload a plugin page. It says a skill can come from a .skill, .zip or .md file. A dashed box says Drag and drop plugin or skill files here, or browse. Upload and Cancel are below it.](images/05-upload-a-plugin.png)
+   ![The Upload a plugin page with wcc-canvas-ready.skill (204 kB) chosen. A Preview box shows wcc-canvas-ready and its description. Upload and Cancel are below it.](images/05-upload-a-plugin.png)
 
-4. When the upload finishes, go back to the Plugins page. The skill is listed under **Your plugins** as **Wcc canvas ready**. Open it and check that it says **Added** at the top right.
+4. Claude says **Wcc canvas ready is added and ready to use.** The skill is listed under **Your plugins** on the Plugins page. Open it and check that it says **Added** at the top right. A blue **New** label may show next to its name.
 
-   ![The Wcc canvas ready page with its description, an Added label at the top right, and the skill listed under Skills.](images/06-skill-added.png)
+   ![The Wcc canvas ready page with a New label next to its name, an Added label at the top right, its description, and the skill listed under Skills.](images/06-skill-added.png)
 
 ## Step 2 instead: Update the copy you have
 
@@ -61,9 +61,23 @@ The release may also list **wcc-canvas-ready.zip**. It's the same skill in the o
 
    ![The Upload a new version of Wcc canvas ready window. It says to pick a .skill file or a SKILL.md with this skill's name, and that earlier versions stay in the version history.](images/11-upload-new-version.png)
 
+4. Claude says **Replaced Wcc canvas ready**.
+
+   ![The bottom of the Wcc canvas ready page. Version shows v2, and a notice says Replaced Wcc canvas ready.](images/12-replaced.png)
+
+The **Version** on that page (v1, v2 and so on) only counts how many times you've uploaded the skill. It isn't the skill's version number. Step 3 shows how to check that.
+
+If you choose **Add**, then **Upload plugin** for an update by mistake, that works too. Claude asks **Replace existing plugin?** Select **Replace**.
+
+![A window titled Replace existing plugin? It says a plugin named Wcc canvas ready is already installed and this replaces it with the new version. Cancel and Replace buttons.](images/13-replace-existing-plugin.png)
+
 ## Step 3: Start a new chat
 
 The new version is sure to work in a new chat. To check, type: **Use the WCC Canvas Ready skill and tell me which version it is and whether there is an update.** The version should match the one on the GitHub page.
+
+![Claude's answer in a new chat: You have WCC Canvas Ready v1.1.1. It says it couldn't confirm whether a newer version exists and gives the link to the latest release.](images/14-version-check.png)
+
+On many accounts Claude can't reach GitHub to check for updates. Then it tells you which version you have and gives you the link, and you can compare the number yourself.
 
 To use the skill, select the **+** button and choose **Upload or add files** (or drag your file into the chat box), then type **Get this file ready for Canvas.** Take out student names, grades and records first.
 
@@ -75,4 +89,4 @@ Send your original file, the one from before you used the skill, to Aaron Booker
 
 ---
 
-© 2026 Aaron Booker. This guide is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Screenshots show Claude (Anthropic) and GitHub as they appeared on November 19 and 20, 2026.
+© 2026 Aaron Booker. This guide is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). Screenshots show Claude (Anthropic) and GitHub as they appeared on November 19, 20 and 21, 2026.

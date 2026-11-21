@@ -4,6 +4,8 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## Next release (not released yet)
 
+- `docs/install-and-update.md` has new pictures of Claude from November 21, 2026, taken during the v1.1.1 test installs. It now says what Claude shows after each upload ("added and ready to use", "Replaced Wcc canvas ready"), that the plugin page's Version counts uploads rather than naming the skill's version, that Add, then Upload plugin also updates an installed copy (Claude asks to replace it), and what the version check looks like in a new chat. The skill itself is unchanged.
+
 ## v1.1.1 (November 21, 2026)
 
 The last number moves: the skill now comes as a .skill file and its update steps match Claude's new Plugins screens. Nothing about how files are fixed changed.
