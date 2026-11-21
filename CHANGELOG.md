@@ -5,6 +5,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 ## Next release (not released yet)
 
 - `docs/install-and-update.md` has new pictures of Claude from November 21, 2026, taken during the v1.1.1 test installs. It now says what Claude shows after each upload ("added and ready to use", "Replaced Wcc canvas ready"), that the plugin page's Version counts uploads rather than naming the skill's version, that Add, then Upload plugin also updates an installed copy (Claude asks to replace it), and what the version check looks like in a new chat. The skill itself is unchanged.
+- The faculty guide PDF in `docs/` is now version 14, for v1.1.1. Its pictures of Claude were retaken on November 21, 2026, with four new ones (the upload preview, the version check, the message after an update, and Replace existing plugin). Its steps now mention the Preview box, the New label, what Claude says after an install or update, that the plugin page's Version counts uploads, that Upload plugin can also replace an installed copy, and that the skill can't check for updates by itself when "Use the internet while making files" is off.
 
 ## v1.1.1 (November 21, 2026)
 
