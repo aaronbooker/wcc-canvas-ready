@@ -3,7 +3,7 @@ name: wcc-canvas-ready
 description: "Get WCC course files ready for Canvas: fixes accessibility so Word, PowerPoint, Excel, PDF and HTML files pass Panorama, the accessibility checker in Whatcom Community College's Canvas. Asks before big changes and reports what changed and what Panorama may still flag. Use when a file is headed for WCC's Canvas, when someone asks to make a file accessible or Canvas ready, or when Panorama flagged it. Handles .docx/.doc/.rtf/.odt, .pptx/.ppt/.odp, .xlsx/.xls/.ods, PDFs (including scans and designed flyers) and HTML pages."
 ---
 
-# WCC Canvas Ready, v1.1.0
+# WCC Canvas Ready, v1.1.1
 
 **Goal:** a file that scores **100% in Panorama** (in Canvas) at Whatcom Community College on its first upload, with
 nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It is **not** a WCAG audit:
@@ -14,7 +14,7 @@ nothing in it rewritten, summarized or lost. This skill clears **Panorama**. It 
 - Panorama can't judge some WCAG requirements (is the alt text accurate, does the reading order make sense,
   are video captions right). **A 100% score is not proof of WCAG 2.2 AA.**
 
-**WCC Canvas Ready v1.1.0** (Nov 19, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
+**WCC Canvas Ready v1.1.1** (Nov 21, 2026; first released as v1.00 on Nov 15), developed as `panorama-preflight-office` (internal drafts v4 and v5). Based on Chris Pasquini's (WCC) `canvas-accessible-docx` v1 (Nov 6) and v3 (Nov 13); rebuilt and tested by Aaron Booker against WCC's
 Panorama in Nov 2026 on 59 files: 49 real course, college, committee, business and community files and 10 generated
 ones that fill gaps (legacy and OpenDocument formats, a simulated scan, charts, tables and embedded video). A slide deck
 with labeled maps and photos then taught the PowerPoint picture-contrast and grouping rules (0% → 100%). The PDF tag-wiring and
@@ -44,10 +44,10 @@ the newest release number. Nothing about the instructor, their files or the chat
   **not** mean the skill is current. Do the web fallback once, quietly:
   1. If you have a web fetch tool, fetch `https://raw.githubusercontent.com/aaronbooker/wcc-canvas-ready/main/VERSION`. Your web
      tools run outside the sandbox, so this can work when the script can't. It is one line with the newest version number,
-     such as `1.1.0`. Only if that fetch fails or doesn't show a version, fetch
+     such as `1.1.1`. Only if that fetch fails or doesn't show a version, fetch
      `https://github.com/aaronbooker/wcc-canvas-ready/releases/latest` instead and read the release number from the page.
      (A web tool can return a cached copy of the releases page: on Nov 17, 2026 it read v1.01 when the latest was v1.0.6.)
-  2. Run `python3 -I scripts/check_update.py --compare 1.1.0` with the number you read. It needs no network and compares
+  2. Run `python3 -I scripts/check_update.py --compare 1.1.1` with the number you read. It needs no network and compares
      correctly (v1.10.0 is newer than v1.9.0, and v1.0.5 is newer than the old-style v1.04). If it prints `UPDATE AVAILABLE`,
      show the whole message, placed as above. If it prints nothing, this copy is current: say nothing. If it prints
      `UPDATE CHECK BLOCKED`, the number you read is older than this copy, so the page was out of date and the check is not
@@ -874,3 +874,6 @@ lives in the title above and in this log. Bump it for each change that goes out,
   instance per link or image, and treats two adjacent links to one address as Possible. New rule: check a Canvas page's
   HTML with the scripts, not by eye in the browser (30% scored after a 100% prediction). Alt text over 120 characters is
   in the issue table.
+- **v1.1.1** (Nov 21, 2026): the skill now comes as `wcc-canvas-ready.skill` (the same ZIP archive, renamed), because
+  Claude moved skills under Plugins and its Upload new version button takes only a .skill file. The update notice now says
+  to download the .skill file and use Plugins, the three dots, then Upload new version. No change to how files are fixed.
