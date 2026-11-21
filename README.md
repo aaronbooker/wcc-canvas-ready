@@ -2,7 +2,7 @@
 
 A skill for Claude that gets course files ready for Canvas, the learning management system (LMS) at Whatcom Community College. You give Claude a Word, PowerPoint, Excel, PDF or HTML file. The skill fixes what Panorama flags in Canvas, asks you before it makes any big change, and reports everything it did. The goal is a file that scores 100% in Panorama the first time you upload it, with nothing rewritten, summarized or lost.
 
-**Current version: 1.1.0** (November 19, 2026). See the [changelog](CHANGELOG.md).
+**Current version: 1.1.1** (November 21, 2026). See the [changelog](CHANGELOG.md).
 
 ## Files it handles
 
@@ -78,7 +78,7 @@ The [step-by-step guide with pictures](docs/install-and-update.md) shows each of
 
 ## Folder layout
 
-- `wcc-canvas-ready.skill`: the installable skill, version 1.1.0. A .skill file is a ZIP archive with a different name.
+- `wcc-canvas-ready.skill`: the installable skill, version 1.1.1. A .skill file is a ZIP archive with a different name.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide, and `install-and-update.md`, the install and update steps with pictures (in `docs/images/`).
