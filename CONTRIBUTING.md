@@ -16,7 +16,7 @@ Do not put files with student names, grades, ID numbers or other student records
 
 1. Open an issue first for anything larger than a typo, so we can agree on the approach.
 2. Fork the repository, or create a branch if you have write access. Do not commit to `main` directly.
-3. Make the change under `wcc-canvas-ready/` (the skill source). Do not edit `wcc-canvas-ready.zip` by hand. The zip is rebuilt from the source at release time.
+3. Make the change under `wcc-canvas-ready/` (the skill source). Do not edit `wcc-canvas-ready.skill` by hand. It is rebuilt from the source at release time.
 4. Test it (see the next section).
 5. Open a pull request that says what changed, which files you tested, and each file's Panorama score before and after.
 
@@ -43,8 +43,8 @@ Contributors do not need to bump the version. The maintainer does it at release 
 - The title, the "Delivered by" line and the Version log in `wcc-canvas-ready/SKILL.md`
 - `CHANGELOG.md`
 - `README.md` (two places)
-- `wcc-canvas-ready.zip`, rebuilt from `wcc-canvas-ready/`
-- A GitHub release tagged `vX.Y.Z` with the zip attached
+- `wcc-canvas-ready.skill`, rebuilt from `wcc-canvas-ready/`
+- A GitHub release tagged `vX.Y.Z` with `wcc-canvas-ready.skill` attached
 
 ## Licensing of contributions
 

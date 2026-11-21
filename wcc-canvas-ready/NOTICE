@@ -19,7 +19,7 @@ Licensing:
 The software and the written documents are licensed separately.
 
 - Software: the skill (everything under `wcc-canvas-ready/`, the packaged
-  `wcc-canvas-ready.zip`, and the other files in this repository unless noted
+  `wcc-canvas-ready.skill`, and the other files in this repository unless noted
   below) is licensed under the Apache License, Version 2.0. See `LICENSE`.
 - Documents: `README.md` and everything under `docs/`, including the faculty
   guide (handout), are licensed under the Creative Commons Attribution 4.0

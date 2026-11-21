@@ -141,10 +141,10 @@ def age_note(text, have):
 def report(have, new, how, verbose):
     if key(new) > key(have):
         print('UPDATE AVAILABLE: WCC Canvas Ready v%s is out (you have v%s). It takes about a minute to update:\n'
-              '1. Open this link and click wcc-canvas-ready.zip under Assets: %s\n'
-              '2. Save the file. Do not unzip it.\n'
-              '3. In Claude, go to Customize (or Plugins), then Skills. Select + Add, then Upload skill, and choose that file.\n'
-              '   If Claude asks whether to replace the WCC Canvas Ready you have, say yes.\n'
+              '1. Open this link and click wcc-canvas-ready.skill under Assets: %s\n'
+              '2. Save the file. Leave it as it is.\n'
+              '3. In Claude, choose Plugins and open Wcc canvas ready. Select the three dots (...), then Upload new version,\n'
+              '   and choose that file. It replaces the old version.\n'
               'To be sure you\'re on the new version, start a new chat. An existing chat may pick it up too, but that isn\'t guaranteed.\n'
               'The same steps with pictures: %s' % (new, have, DOWNLOAD_URL, GUIDE_URL))
     elif verbose:
