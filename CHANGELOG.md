@@ -4,6 +4,10 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## Next release (not released yet)
 
+- The skill now comes as `wcc-canvas-ready.skill` instead of `wcc-canvas-ready.zip`. A .skill file is the same ZIP archive with a different name. Claude moved skills under Plugins on November 20, 2026, and its new **Upload new version** button accepts only a .skill file (or a single SKILL.md), so a ZIP can no longer be used to update. A first install still takes either, through Plugins, then Add, then Upload plugin. The v1.1.0 release had `wcc-canvas-ready.skill` added beside its ZIP on November 20, and its download note now names the .skill file.
+- The update notice now says to download `wcc-canvas-ready.skill` and upload it with Plugins, the skill's three dots (…), then Upload new version. Copies at v1.1.0 or earlier still show the old notice, which names the ZIP and the old Customize menu, so the release keeps the ZIP for now.
+- The README and `docs/install-and-update.md` describe Claude's new screens: Plugins in the sidebar, Add, then Upload plugin for a first install, an "Added" label instead of an on/off switch, and Upload new version for updates. Seven screenshots were replaced or added, including the GitHub release page with the .skill file outlined.
+
 - The faculty guide PDF in `docs/` is now version 11, for v1.1.0: its version numbers and timeline are up to date, and its update section shows a screenshot of the update notice. The step-by-step page `docs/install-and-update.md` shows the same screenshot. The skill itself is unchanged.
 
 ## v1.1.0 (November 19, 2026)

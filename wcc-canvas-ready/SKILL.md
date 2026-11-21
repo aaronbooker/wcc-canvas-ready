@@ -37,7 +37,7 @@ the newest release number. Nothing about the instructor, their files or the chat
   claude.ai chats, text written between tool calls is summarized and never shown as written. On Nov 17, 2026 a notice written
   just before a question was lost that way. If they ask how to update, those three steps are the answer; if they get stuck,
   walk them through one step at a time, and point them to the guide with pictures (the notice's last line). Updates always
-  come from the GitHub releases page; never offer the ZIP from anywhere else.
+  come from the GitHub releases page; never offer the skill file from anywhere else.
 - **Nothing:** GitHub answered and this copy is current. Say nothing and carry on.
 - **`UPDATE CHECK BLOCKED` line:** the sandbox that runs scripts has no route to GitHub, or GitHub only gave an out-of-date
   answer. This is normal on many accounts (Free plans, and any account with code-execution network access off) and it does
@@ -61,7 +61,7 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **Never say or imply the skill is up to date unless** the script printed nothing, or `--verbose` said "You are up to date".
   A BLOCKED line means the check couldn't be confirmed, even after a web fetch. "The check couldn't run" and "no update" are
   different facts. A recent date on this copy is not evidence either.
-- **After they update:** a new chat is guaranteed to use the new zip. An existing chat may also pick it up (on Nov 17, 2026 a
+- **After they update:** a new chat is guaranteed to use the new version. An existing chat may also pick it up (on Nov 17, 2026 a
   chat that last ran v1.0.5 reported v1.0.9 when reopened), but how and when isn't known, so don't promise it either way. If
   asked, say you can't tell from inside the chat, and that asking the chat to run
   `python3 -I scripts/check_update.py --verbose` shows the version *that chat* is running (the copy it loaded), not
@@ -73,9 +73,9 @@ the newest release number. Nothing about the instructor, their files or the chat
 - **A question about the skill itself is not a request to fix a file.** When the instructor only asks about the skill (which
   version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
   file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
-- You can't update the skill yourself: they download the latest zip from the link and upload it (Customize, then Skills,
-  then + Add, then Upload skill). If Claude asks whether to replace the installed copy, they say yes. Don't tell them to
-  delete the old one first.
+- You can't update the skill yourself: they download `wcc-canvas-ready.skill` from the link and upload it (Plugins, open
+  Wcc canvas ready, the three dots, then Upload new version). That button takes only a .skill file, not the ZIP. A first
+  install is Plugins, then Add, then Upload plugin. Don't tell them to delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
 ## No file in the chat? Show them how to add one
