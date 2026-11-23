@@ -288,3 +288,22 @@ _lo = 'libreoffice' in _meta.lower() or 'openoffice' in _meta.lower()
 _lpages = [i + 1 for i, pg in enumerate(pdf.pages) if any(a.get('/Subtype') == '/Link' for a in pg.obj.get('/Annots', []))]
 print(ok(not (_lo and _lpages)), 'F22 links in a PDF exported by LibreOffice (Panorama flags each of these pages):',
       _lpages[:12] if _lo and _lpages else 'none')
+
+# F23 [Panorama "The hyperlink text is not descriptive", Minor, one per link]: link text that is only a web address.
+# Nov 22, 2026: a guide's two links reading "claude.ai" were flagged (70%); "LinkedIn (Chris Pasquini)", "GitHub" and
+# an email address were not. Same pattern pdf_tag2html.py uses for Canvas pages. Fix: name the page in the link text.
+_BARE = re.compile(r'^\s*(https?://|www\.|[\w-]+(\.[\w-]+)*\.(com|org|edu|net|gov|us|io|ca|uk|ai)(/|\s*$))\S?')
+_bare = []
+for _i, _pg in enumerate(pl.pages):
+    _by = collections.defaultdict(list)                       # a link that wraps is two annotations with one address
+    for _h in (_pg.hyperlinks or []):
+        _by[_h.get('uri')].append(_h)
+    for _u, _hs in _by.items():
+        if not _u or str(_u).startswith('mailto:'): continue
+        for _h in _hs:
+            _bb = (max(0, _h['x0']), max(0, _h['top']), min(_pg.width, _h['x1']), min(_pg.height, _h['bottom']))
+            _t = (_pg.crop(_bb).extract_text() or '').strip() if _bb[2] > _bb[0] and _bb[3] > _bb[1] else ''
+            _t = _t.rstrip('.,;:)”"\'')                  # the box can take in the period after the link
+            if _t and _BARE.match(_t): _bare.append((_i + 1, _t))
+print(ok(not _bare), 'F23 link text that is only a web address (Panorama: "The hyperlink text is not descriptive"):',
+      _bare[:8] or 'none')

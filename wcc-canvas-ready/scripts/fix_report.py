@@ -104,7 +104,8 @@ PDF_MAP = {'F1': ('The title is missing from the document\'s properties', 'Major
            'F21': ('Reading order may not follow the page (Panorama does not check this; a person checks it with a screen reader)', 'Possible'),
            'F18': ('Insufficient contrast between foreground text and background', 'Severe'),
            'F18b': ('Insufficient contrast between foreground text and background (text on a picture: check it by eye)', 'Possible'),
-           'F19': ('This link does not have a URL (footnote numbers tagged as links; not flagged at WCC in a Nov 16 test)', 'Possible')}
+           'F19': ('This link does not have a URL (footnote numbers tagged as links; not flagged at WCC in a Nov 16 test)', 'Possible'),
+           'F23': ('The hyperlink text is not descriptive (link text that is only a web address)', 'Minor')}
 HAND = {}    # things a person must check that Panorama doesn't score (F17), from the last pre-flight run
 def issues_pdf(t):
     I = []
@@ -121,6 +122,8 @@ def issues_pdf(t):
             continue
         if m.group(1) == 'F22':                               # one flag per page that has a link
             I.append((name, sev, max(1, len(re.findall(r'\d+', m.group(2).split(':')[-1]))))); continue
+        if m.group(1) == 'F23':                               # one flag per link (Nov 22, 2026: 2 links, 2 flags)
+            I.append((name, sev, max(1, len(re.findall(r'\(\d+, ', m.group(2)))))); continue
         I.append((name, sev, 1))
     return I
 

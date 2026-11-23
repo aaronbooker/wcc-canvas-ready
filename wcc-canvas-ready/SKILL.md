@@ -232,7 +232,7 @@ Severity is what WCC's Panorama showed (Nov 2026), which can differ from Panoram
 | The hyperlink text is not descriptive | Word | **Major** | `docx_links.py` | WCAG 2.4.4 |
 | The hyperlink text is not descriptive | Excel | **Major** | `xlsx_fix.py --link` (X9) | WCAG 2.4.4 |
 | The Image is not inline with the text | Word | **Major** ×picture | `docx_inline.py` | WCAG 1.3.2 |
-| The hyperlink text is not descriptive | PDF | Minor | fix in the source; can't be fixed in place | WCAG 2.4.4 |
+| The hyperlink text is not descriptive | PDF | Minor ×links | link text that is only a web address ("claude.ai"; `preflight_pdf.py` F23, Nov 22, 2026): fix in the source; can't be fixed in place | WCAG 2.4.4 |
 | This link does not have a URL | PDF | **not flagged at WCC** (Nov 16: a footnote number tagged as a link with no URL passed; Minor elsewhere) | `pdf_tagfix.py` still retags such links `<Reference>` (`link_refs`, default) for screen readers; `preflight_pdf.py` F19, reported as Possible | Panorama |
 | The content is longer than 3000 words | HTML | Minor | `html_split.py` (ask first: the page becomes two) | Panorama |
 | The font size is smaller than 11 points | PDF | Minor ×runs | browser prints: `pdf_tag2html.py` rebuild at 12 pt; designed PDFs: the design file | Panorama |
@@ -460,7 +460,7 @@ the layout. Rebuild from the tags instead (Nov 15: three Chrome prints, 30–70%
 `pdf_tag2html.py in.pdf out.html [--landscape] [--describe-links]` → `google-chrome --headless=new
 --no-pdf-header-footer --print-to-pdf=raw.pdf out.html` → `pdf_tagfix.py raw.pdf fixed.pdf fix.json` (table
 summaries) → `content_check.py in.pdf out.html` (only the page footers and repeated table headers may be
-missing). The rebuild reads the structure tree (headings, tables with header scopes, lists, links, bold and
+missing, and the picture counts must match: a WARNING pictures line means pictures were dropped). The rebuild reads the structure tree (headings, tables with header scopes, lists, links, bold and
 italic), prints everything at 12 pt or more, writes bullets as text (a drawn disc leaves an empty list label),
 puts "—" in empty table cells (an empty cell is an empty tag), and turns bare-address link text into labels like
 "Facebook post (facebook.com)" with `--describe-links` (**YOU** read the printed list). Use `--landscape` for

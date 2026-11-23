@@ -118,7 +118,9 @@ class Node:
 pk = pikepdf.open(src)
 pg_index = {p.obj.objgen: i for i, p in enumerate(pk.pages)}
 root = pk.Root.get('/StructTreeRoot')
-rolemap = {str(k): str(v) for k, v in (root.get('/RoleMap') or {}).items()} if root is not None else {}
+# Keys without the slash: tags are looked up as 'Standard', and LibreOffice's map says '/Standard' -> '/P'. With the
+# slash kept, a Word file's body paragraphs never became <p> and ran together in the Chrome PDF (Nov 22, 2026).
+rolemap = {str(k).lstrip('/'): str(v) for k, v in (root.get('/RoleMap') or {}).items()} if root is not None else {}
 def role(t):
     seen = 0
     while t in rolemap and seen < 10: t = rolemap[t].lstrip('/'); seen += 1
@@ -228,6 +230,10 @@ def render(e):
         return f'<div class="fig"><img src="{src_}" alt="{html.escape(alt)}"></div>' if src_ else ''
     if t == 'Lbl':
         return ''                      # the browser draws the bullet or number again
+    if not plain and '<img' in body:
+        return body                    # a picture with no text around it: LibreOffice tags a Word picture as a Figure
+                                       # inside a P, and the text-only test below dropped all 16 pictures of a guide
+                                       # (Nov 22, 2026). The bare <div class="fig"> keeps it; a <p> can't hold a <div>.
     if not plain and t not in ('TD', 'TH'):
         return ''                      # empty tags are dropped (Panorama: "The tag is empty")
     if t in INLINE:

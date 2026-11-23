@@ -21,7 +21,7 @@ A skill for Claude that gets course files ready for Canvas, the learning managem
 
 Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and, under **Assets**, select **wcc-canvas-ready.skill** (not "Source code"). Save it and leave it as it is. Updates come from the same page. The release may also list wcc-canvas-ready.zip, the same skill in the older file type; use the .skill file.
 
-**[Install or update, step by step with pictures](docs/install-and-update.md).** A longer written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-21_v14.pdf).
+**[Install or update, step by step with pictures](docs/install-and-update.md).** A longer written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-22_v15.pdf).
 
 ## Install in Claude
 
