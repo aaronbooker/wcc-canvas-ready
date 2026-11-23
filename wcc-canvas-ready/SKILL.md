@@ -460,7 +460,7 @@ the layout. Rebuild from the tags instead (Nov 15: three Chrome prints, 30–70%
 `pdf_tag2html.py in.pdf out.html [--landscape] [--describe-links]` → `google-chrome --headless=new
 --no-pdf-header-footer --print-to-pdf=raw.pdf out.html` → `pdf_tagfix.py raw.pdf fixed.pdf fix.json` (table
 summaries) → `content_check.py in.pdf out.html` (only the page footers and repeated table headers may be
-missing). The rebuild reads the structure tree (headings, tables with header scopes, lists, links, bold and
+missing, and the picture counts must match: a WARNING pictures line means pictures were dropped). The rebuild reads the structure tree (headings, tables with header scopes, lists, links, bold and
 italic), prints everything at 12 pt or more, writes bullets as text (a drawn disc leaves an empty list label),
 puts "—" in empty table cells (an empty cell is an empty tag), and turns bare-address link text into labels like
 "Facebook post (facebook.com)" with `--describe-links` (**YOU** read the printed list). Use `--landscape` for

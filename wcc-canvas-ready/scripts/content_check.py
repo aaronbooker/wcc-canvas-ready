@@ -22,6 +22,18 @@ elif sys.argv[2].endswith(('.html', '.htm')):
     ntext = html.unescape(re.sub(r'<[^>]+>', ' ', x[x.find('<body'):]))
 else:
     ntext = ' '.join(pg.extract_text() or '' for pg in pdfplumber.open(sys.argv[2]).pages)
+# Pictures count too: a rebuild once dropped all 16 pictures of a guide while every word matched (Nov 22, 2026).
+opics = sum(len(pg.images) for pg in pdf.pages)
+if sys.argv[2].endswith('.docx'):
+    npics = len(re.findall(r'<pic:pic\b', x))
+elif sys.argv[2].endswith(('.html', '.htm')):
+    npics = len(re.findall(r'<img\b', open(sys.argv[2]).read()))
+else:
+    npics = sum(len(pg.images) for pg in pdfplumber.open(sys.argv[2]).pages)
+print('pictures in original:', opics, ' in rebuild:', npics)
+if npics < opics:
+    print('WARNING pictures: the rebuild has %d fewer picture(s) than the original. Find what is missing before '
+          'you deliver it.' % (opics - npics))
 norm = lambda t: [re.sub(r'[^a-z0-9]', '', w.lower()) for w in re.split(r'[\s—–/]+', t)]
 O = collections.Counter(w for w in norm(otext) if w)
 N = collections.Counter(w for w in norm(ntext) if w)
