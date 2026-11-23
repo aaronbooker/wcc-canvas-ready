@@ -4,6 +4,7 @@ From v1.0.5 on, versions have three parts: major.minor.patch. A fix moves the la
 
 ## Next release (not released yet)
 
+- The skill comes only as `wcc-canvas-ready.skill` now. The ZIP copy was taken off the v1.1.0 and v1.1.1 releases on November 22, 2026, and the README, the install steps, the faculty guide (now version 16 in `docs/`) and SKILL.md no longer mention it. The picture of the release page in `docs/install-and-update.md` was retaken from v1.1.1, and the picture of the old update notice, which named the ZIP, was taken out. Copies at v1.1.0 or earlier still show an update notice that names the ZIP; the v1.1.1 release notes tell those readers to download the .skill file.
 - Fix: a Word file with both pictures and links lost every picture when the skill made it into a PDF. Since v1.1.0, a PDF with links is printed again through Chrome so that Panorama doesn't flag "Check reading order". On the way, `pdf_tag2html.py` dropped any paragraph with no text, which is where LibreOffice puts a Word picture. It now keeps pictures. Found on the faculty guide: all 16 screenshots were missing, and nothing warned about it.
 - Fix: in the same Chrome route, body paragraphs ran together into one block. `pdf_tag2html.py` looked up a tag's role without the leading slash that PDF role maps use, so LibreOffice's "Standard is a paragraph" mapping was never found. It now finds it, and each paragraph prints as its own paragraph.
 - `content_check.py` now counts pictures as well as words, and prints a WARNING when the rebuilt file has fewer pictures than the original.

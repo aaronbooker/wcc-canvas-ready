@@ -8,9 +8,7 @@ Claude changes its menus often. The pictures of Claude were taken on November 21
 
 The skill keeps improving, and updates may come often. Every update comes from this GitHub site. When there is a newer version, the skill tells you at the start of a chat, names the new version and gives you a link back here. Claude can't install the update for you, so you follow the steps below.
 
-The notice looks like this. This one came from the update to version 1.1.0. Notices from later versions name the .skill file.
-
-![Claude's update notice: v1.1.0 is out (you have v1.0.11), with three numbered steps and a link to steps with pictures.](images/10-update-notice.png)
+The notice names the new version and the one you have, lists the steps to update, and links back to these steps.
 
 Only download the skill from [github.com/aaronbooker/wcc-canvas-ready](https://github.com/aaronbooker/wcc-canvas-ready). If an email, a message or another website offers you a WCC Canvas Ready file, don't use it.
 
@@ -28,9 +26,7 @@ Only download the skill from [github.com/aaronbooker/wcc-canvas-ready](https://g
 2. Under **Assets**, select **wcc-canvas-ready.skill**. Don't choose either **Source code** download. Those won't work in Claude.
 3. It goes into your Downloads folder. Leave it as it is. Don't open it.
 
-![The GitHub release page for WCC Canvas Ready. At the top are the version number and a Latest label, then short notes on what's new. At the bottom, under Assets, wcc-canvas-ready.skill is outlined. A ZIP of the same skill and two Source code downloads are listed below it.](images/08-github-release.png)
-
-The release may also list **wcc-canvas-ready.zip**. It's the same skill in the older file type. Use the .skill file: Claude's **Upload new version** button accepts only that.
+![The GitHub release page for WCC Canvas Ready. At the top are the version number and a Latest label, then short notes on what's new. At the bottom, under Assets, wcc-canvas-ready.skill is outlined, with two Source code downloads below it.](images/08-github-release.png)
 
 ## Step 2: Add it to Claude (first install)
 

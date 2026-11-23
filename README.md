@@ -19,9 +19,9 @@ A skill for Claude that gets course files ready for Canvas, the learning managem
 
 ## Download
 
-Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and, under **Assets**, select **wcc-canvas-ready.skill** (not "Source code"). Save it and leave it as it is. Updates come from the same page. The release may also list wcc-canvas-ready.zip, the same skill in the older file type; use the .skill file.
+Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and, under **Assets**, select **wcc-canvas-ready.skill** (not "Source code"). Save it and leave it as it is. Updates come from the same page.
 
-**[Install or update, step by step with pictures](docs/install-and-update.md).** A longer written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-22_v15.pdf).
+**[Install or update, step by step with pictures](docs/install-and-update.md).** A longer written guide for faculty is in [docs](docs/WCC_Canvas_Ready_Skill_Guide_2026-11-22_v16.pdf).
 
 ## Install in Claude
 
@@ -46,7 +46,7 @@ Works on Free and paid Claude accounts. Based on Anthropic's Help Center article
 
 1. Open the [latest release](https://github.com/aaronbooker/wcc-canvas-ready/releases/latest) and download wcc-canvas-ready.skill under Assets.
 2. In Claude, choose Plugins, then open Wcc canvas ready under Your plugins.
-3. Select the three dots (…), then Upload new version, and choose the file. It replaces the old version; you do not need to delete anything first. (This button accepts only a .skill file, not a ZIP.)
+3. Select the three dots (…), then Upload new version, and choose the file. It replaces the old version; you do not need to delete anything first. (This button accepts only a .skill file.)
 4. Start a new chat and check the version again.
 
 The [step-by-step guide with pictures](docs/install-and-update.md) shows each of these screens. Only download the skill from this GitHub site.
@@ -78,7 +78,7 @@ The [step-by-step guide with pictures](docs/install-and-update.md) shows each of
 
 ## Folder layout
 
-- `wcc-canvas-ready.skill`: the installable skill, version 1.1.1. A .skill file is a ZIP archive with a different name.
+- `wcc-canvas-ready.skill`: the installable skill, version 1.1.1.
 - `VERSION`: the current version number, read by the skill's update check.
 - `wcc-canvas-ready/`: the same skill as plain files (`SKILL.md` and `scripts/`) so you can read what it does.
 - `docs/`: the faculty guide, and `install-and-update.md`, the install and update steps with pictures (in `docs/images/`).
