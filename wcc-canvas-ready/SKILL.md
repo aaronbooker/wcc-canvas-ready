@@ -74,7 +74,7 @@ the newest release number. Nothing about the instructor, their files or the chat
   version, whether there is an update, what it does, how to install or update it), answer that and stop. Don't ask for a
   file, don't show the steps for adding one, and don't mention or suggest any particular document, course or task.
 - You can't update the skill yourself: they download `wcc-canvas-ready.skill` from the link and upload it (Plugins, open
-  Wcc canvas ready, the three dots, then Upload new version). That button takes only a .skill file, not the ZIP. A first
+  Wcc canvas ready, the three dots, then Upload new version). That button takes only a .skill file. A first
   install is Plugins, then Add, then Upload plugin. Don't tell them to delete the old one first.
 - If the instructor says not to check for updates, skip it for the rest of the chat.
 
